@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.pytest_cache/
+
+# Docker
+.docker/
+
+# AI Models
+*.pt
+*.pth
+*.pkl
+*.npy
+*.h5
+!ai/models/.gitkeep
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Temp
+tmp/
+temp/
+*.tmp
