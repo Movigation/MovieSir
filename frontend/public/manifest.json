@@ -1,0 +1,47 @@
+{
+    "name": "Movisr - AI 영화 추천",
+    "short_name": "Movisr",
+    "description": "AI 기반 영화 추천 챗봇 서비스 - 취향에 맞는 영화를 추천받으세요",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "ko",
+    "dir": "ltr",
+    "categories": [
+        "entertainment",
+        "lifestyle"
+    ],
+    "icons": [
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "영화 추천받기",
+            "short_name": "추천",
+            "description": "AI 챗봇으로 영화 추천받기",
+            "url": "/chatbot",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false
+}

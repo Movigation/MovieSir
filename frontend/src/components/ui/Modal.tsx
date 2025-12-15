@@ -1,0 +1,32 @@
+import React from 'react';
+import { X } from 'lucide-react';
+
+interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    children: React.ReactNode;
+}
+
+export default function Modal({ isOpen, onClose, children }: ModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div
+            className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-0 md:p-4"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[calc(100vh-100px)] md:rounded-xl shadow-2xl overflow-hidden relative"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white z-10 bg-white/80 dark:bg-gray-800/80 rounded-full p-1 backdrop-blur-sm"
+                >
+                    <X size={24} />
+                </button>
+                {children}
+            </div>
+        </div>
+    );
+}
