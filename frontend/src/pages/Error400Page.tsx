@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Home } from 'lucide-react';
+import ChatbotErrorButton from '@/services/chatbot/components/ChatbotErrorButton';
 
 export default function Error400Page() {
     const navigate = useNavigate();
@@ -9,19 +10,7 @@ export default function Error400Page() {
             <div className="max-w-md w-full text-center">
                 {/* Chatbot with X eyes */}
                 <div className="mb-8 flex justify-center">
-                    <div className="relative">
-                        {/* Chatbot body */}
-                        <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform">
-                            {/* X eyes */}
-                            <div className="flex gap-6">
-                                <div className="text-4xl font-bold text-white">✕</div>
-                                <div className="text-4xl font-bold text-white">✕</div>
-                            </div>
-                        </div>
-                        {/* Antenna */}
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-1 h-6 bg-blue-400"></div>
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    </div>
+                    <ChatbotErrorButton isDark={true} />
                 </div>
 
                 {/* Error code */}

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Home } from 'lucide-react';
-import Chatbot from '@/services/chatbot/components/Chatbot';
+import ChatbotErrorButton from '@/services/chatbot/components/ChatbotErrorButton';
 
 export default function Error500Page() {
     const navigate = useNavigate();
@@ -12,7 +12,11 @@ export default function Error500Page() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
             <div className="max-w-md w-full text-center">
-                <Chatbot />
+                {/* Chatbot with X eyes */}
+                <div className="mb-8 flex justify-center">
+                    <ChatbotErrorButton isDark={true} />
+                </div>
+
                 {/* Error code */}
                 <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-purple-600 mb-4 animate-pulse">
                     500
