@@ -2,7 +2,6 @@
 name: 기능 요청
 about: 새로운 기능 추가
 title: '[FE/BE/AI/DB] '
-labels: Feature
 ---
 
 ## 설명
