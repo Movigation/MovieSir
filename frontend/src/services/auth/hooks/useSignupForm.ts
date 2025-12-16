@@ -1,0 +1,242 @@
+import { useState, useCallback } from 'react';
+import { signup } from '@/api/authApi';
+import { authAxiosInstance } from '@/api/axiosInstance';
+import { useAuth } from '@/app/providers/AuthContext';
+import { useEmailValidation } from '@/services/auth/hooks/useEmailValidation';
+import { useNicknameValidation } from '@/services/auth/hooks/useNicknameValidation';
+import { usePasswordValidation } from '@/services/auth/hooks/usePasswordValidation';
+import { useVerificationCode } from '@/services/auth/hooks/useVerificationCode';
+
+export function useSignupForm() {
+    const { loadUserFromStorage } = useAuth();
+
+    // 각 필드별 검증 훅
+    const emailValidation = useEmailValidation();
+    const nicknameValidation = useNicknameValidation();
+    const passwordValidation = usePasswordValidation();
+    const codeValidation = useVerificationCode();
+
+    // 공통 상태
+    const [generalError, setGeneralError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // 회원가입 가능 여부
+    const canSignup =
+        emailValidation.isEmailValid &&
+        nicknameValidation.isNicknameValid &&
+        passwordValidation.isPasswordValid &&
+        passwordValidation.isPasswordMatch &&
+        codeValidation.codeVerified;
+
+    // 진행 상황
+    const progress = {
+        email: emailValidation.isEmailValid && codeValidation.codeVerified,
+        info: nicknameValidation.isNicknameValid &&
+            passwordValidation.isPasswordValid &&
+            passwordValidation.isPasswordMatch,
+    };
+
+    // 이메일 변경 핸들러 (코드 상태 리셋 포함)
+    const handleEmailChange = useCallback((value: string) => {
+        emailValidation.handleEmailChange(value);
+        codeValidation.handleEmailChange();
+    }, [emailValidation, codeValidation]);
+
+    // 인증 코드 전송 (중복 체크 포함)
+    const handleSendCode = useCallback(async () => {
+        // 클라이언트 검증
+        if (!emailValidation.isEmailValid) {
+            setGeneralError('올바른 이메일 형식이 아닙니다');
+            return;
+        }
+
+        if (nicknameValidation.nicknameStatus !== 'valid') {
+            setGeneralError('올바른 닉네임을 입력해주세요');
+            return;
+        }
+
+        if (!passwordValidation.isPasswordValid) {
+            setGeneralError('올바른 비밀번호를 입력해주세요');
+            return;
+        }
+
+        try {
+            codeValidation.setLoading(true);
+            setGeneralError('');
+
+            // ✅ UX 개선: 인증번호 입력창을 먼저 띄움
+            codeValidation.setCodeSent(true);
+
+            // 백엔드로 전체 정보 전송 (중복 체크 + 인증번호 발송)
+            // 백그라운드에서 실행되며, 사용자는 이메일을 확인하는 동안 입력창이 준비됨
+            await signup({
+                email: emailValidation.email,
+                nickname: nicknameValidation.nickname,
+                password: passwordValidation.password,
+            });
+
+        } catch (err: any) {
+            // 에러 발생 시 입력창 다시 숨김
+            codeValidation.setCodeSent(false);
+
+            // 백엔드 에러 메시지 파싱
+            const errorMsg = err.response?.data?.detail || err.message || '인증번호 발송 중 오류가 발생했습니다';
+            setGeneralError(errorMsg);
+
+            console.error('회원가입 요청 에러:', err);
+            console.log('에러 메시지:', errorMsg);
+
+            // 이메일/닉네임 중복 에러인 경우 상태 업데이트
+            if (errorMsg.includes('이메일') || errorMsg.includes('email')) {
+                emailValidation.setEmailStatus('duplicate');
+                emailValidation.setEmailError(errorMsg);
+            } else if (errorMsg.includes('닉네임') || errorMsg.includes('nickname')) {
+                nicknameValidation.setNicknameStatus('duplicate');
+                nicknameValidation.setNicknameError(errorMsg);
+            }
+        } finally {
+            codeValidation.setLoading(false);
+        }
+    }, [
+        emailValidation.isEmailValid,
+        emailValidation.email,
+        nicknameValidation.nicknameStatus,
+        nicknameValidation.nickname,
+        passwordValidation.isPasswordValid,
+        passwordValidation.password,
+        codeValidation,
+    ]);
+
+    // 인증 코드 확인 (+ 회원가입 완료)
+    const handleVerifyCode = useCallback(async () => {
+        console.log('🔍 [useSignupForm] handleVerifyCode 시작');
+
+        const result = await codeValidation.verifyCode(
+            emailValidation.email,
+            codeValidation.code
+        );
+
+        console.log('🔍 [useSignupForm] verifyCode 결과:', result);
+
+        if (!result.success) {
+            console.log('❌ [useSignupForm] 인증 실패:', result.error);
+            setGeneralError(result.error || '');
+        } else {
+            console.log('✅ [useSignupForm] 인증 성공!');
+            setGeneralError('');
+
+            // 회원가입 완료!
+            if (result.completed) {
+                console.log('✅ [useSignupForm] 회원가입 완료! AuthContext 업데이트 시작');
+
+                // AuthContext 업데이트
+                await loadUserFromStorage();
+
+                console.log('✅ [useSignupForm] AuthContext 업데이트 완료');
+                console.log('✅ [useSignupForm] codeVerified 상태:', codeValidation.codeVerified);
+
+                // 온보딩 페이지로 이동은 SignupModal에서 처리
+            }
+        }
+    }, [emailValidation.email, codeValidation, loadUserFromStorage]);
+
+    // 회원가입 최종 완료 (인증 코드 확인)
+    const handleSignup = useCallback(async () => {
+        if (!canSignup) return;
+
+        try {
+            setIsSubmitting(true);
+            setGeneralError('');
+
+            // 인증 코드 확인 및 실제 회원가입
+            const response = await authAxiosInstance.post('/auth/signup/confirm', {
+                email: emailValidation.email,
+                code: codeValidation.code,
+            });
+
+            const { user_id, email, onboarding_completed, token } = response.data;
+
+            // 토큰 저장
+            localStorage.setItem('accessToken', token.access_token);
+
+            // 유저 정보 저장
+            const userData = {
+                id: user_id,
+                email: email,
+                onboarding_completed,
+            };
+            localStorage.setItem('user', JSON.stringify(userData));
+
+            await loadUserFromStorage();
+
+            return { success: true };
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.detail || err.message || '회원가입 중 오류';
+            setGeneralError(errorMsg);
+            return { success: false, error: errorMsg };
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [canSignup, emailValidation.email, codeValidation.code, loadUserFromStorage]);
+
+    // 폼 초기화
+    const resetForm = useCallback(() => {
+        emailValidation.resetEmail();
+        nicknameValidation.resetNickname();
+        passwordValidation.resetPassword();
+        codeValidation.resetCode();
+        setGeneralError('');
+    }, [emailValidation, nicknameValidation, passwordValidation, codeValidation]);
+
+    return {
+        // 이메일
+        email: emailValidation.email,
+        emailId: emailValidation.emailId,
+        emailDomain: emailValidation.emailDomain,
+        customDomain: emailValidation.customDomain,
+        emailStatus: emailValidation.emailStatus,
+        emailError: emailValidation.emailError,
+        isEmailValid: emailValidation.isEmailValid,
+        handleEmailChange,
+        handleEmailIdChange: emailValidation.handleEmailIdChange,
+        handleEmailDomainChange: emailValidation.handleEmailDomainChange,
+        handleCustomDomainChange: emailValidation.handleCustomDomainChange,
+
+        // 닉네임
+        nickname: nicknameValidation.nickname,
+        nicknameStatus: nicknameValidation.nicknameStatus,
+        nicknameError: nicknameValidation.nicknameError,
+        isNicknameValid: nicknameValidation.isNicknameValid,
+        handleNicknameChange: nicknameValidation.handleNicknameChange,
+
+        // 비밀번호
+        password: passwordValidation.password,
+        passwordConfirm: passwordValidation.passwordConfirm,
+        passwordError: passwordValidation.passwordError,
+        passwordConfirmError: passwordValidation.passwordConfirmError,
+        isPasswordValid: passwordValidation.isPasswordValid,
+        isPasswordMatch: passwordValidation.isPasswordMatch,
+        handlePasswordChange: passwordValidation.handlePasswordChange,
+        handlePasswordConfirmChange: passwordValidation.handlePasswordConfirmChange,
+
+        // 인증 코드
+        code: codeValidation.code,
+        codeSent: codeValidation.codeSent,
+        codeVerified: codeValidation.codeVerified,
+        codeError: codeValidation.codeError,
+        setCode: codeValidation.setCode,
+        handleSendCode,
+        handleVerifyCode,
+
+        // 공통
+        generalError,
+        isSubmitting,
+        isLoading: codeValidation.isLoading,
+        canSignup,
+        progress,
+
+        // 액션
+        handleSignup,
+        resetForm,
+    };
+}
