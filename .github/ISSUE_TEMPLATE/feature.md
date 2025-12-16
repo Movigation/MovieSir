@@ -1,6 +1,6 @@
 ---
-name: 기능 요청
-about: 새로운 기능 추가
+name: 무비게이션 이슈 템플릿
+about: 이슈 템플릿
 title: '[FE/BE/AI/DB] '
 ---
 
