@@ -1,0 +1,434 @@
+// [용도] 영화 관련 API 함수 정의
+// [사용법] import { postRecommendations, getMovieDetail, addWatchHistory } from "@/api/movieApi";
+
+import axiosInstance from "@/api/axiosInstance";
+import type {
+    Movie,
+    WatchHistory,
+    WatchHistoryWithMovie,
+    Recommendation,
+    RecommendationWithMovie,
+    UserStats,
+    MovieRecommendationResult,
+    BackendRecommendResponse,
+    BackendMovieRecommendation,
+    GenreMapping,
+    MovieDetail
+} from "@/api/movieApi.type";
+
+// [상수] 장르 이름 ↔ 장르 ID 매핑 (백엔드 dummy_movies.json 기준)
+// 백엔드의 장르 ID와 정확히 일치해야 함
+const GENRE_NAME_TO_ID: GenreMapping = {
+    "액션": 1,
+    "모험": 2,
+    "애니메이션": 3,
+    "코미디": 4,
+    "범죄": 5,
+    "다큐멘터리": 6,
+    "드라마": 7,
+    "가족": 8,
+    "판타지": 9,
+    "역사": 10,
+    "공포": 11,
+    "음악": 12,
+    "미스터리": 13,
+    "로맨스": 14,
+    "SF": 15,
+    "스릴러": 16,
+    "전쟁": 17,
+    "서부": 18
+};
+
+
+
+// 특정 영화 조회
+export const getMovie = async (movieId: number): Promise<Movie> => {
+    const response = await axiosInstance.get(`/movies/${movieId}`);
+    const movie = response.data;
+
+    // 백엔드 응답을 프론트엔드 Movie 타입으로 변환
+    return {
+        id: movie.movie_id,
+        title: movie.title,
+        genres: movie.genres,
+        year: movie.release_date ? new Date(movie.release_date).getFullYear() : undefined,
+        rating: movie.vote_average,
+        popularity: movie.popularity,
+        poster: movie.poster_url,
+        description: movie.overview,
+        popular: false,
+        watched: false
+    };
+};
+
+// [용도] 영화 상세 정보 조회
+// [사용법] const detail = await getMovieDetail(123);
+export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
+    try {
+        const response = await axiosInstance.get(`/movies/${movieId}`);
+        const movie = response.data;
+
+        // 백엔드 응답을 MovieDetail 타입으로 변환
+        return {
+            movie_id: movie.movie_id,
+            title: movie.title,
+            overview: movie.overview,
+            genres: movie.genres,
+            release_date: movie.release_date,
+            runtime: movie.runtime,
+            vote_average: movie.vote_average,
+            vote_count: movie.vote_count,
+            popularity: movie.popularity,
+            poster_url: movie.poster_url,
+            backdrop_url: movie.backdrop_url,
+            director: movie.director,
+            cast: movie.cast,
+            tagline: movie.tagline,
+            ott_providers: movie.ott_providers,
+            user_status: movie.user_status || {
+                liked: false,
+                watched: false,
+                bookmarked: false
+            }
+        };
+    } catch (error) {
+        console.error("영화 상세 정보 로드 실패:", error);
+
+        // 임시 데이터 반환 (개발용)
+        return {
+            movie_id: movieId,
+            title: "인터스텔라",
+            overview: "세계 각국의 정부와 경제가 완전히 붕괴된 미래가 다가온다. 지구 대기권에서 극심한 먼지 폭풍이 일어나고, 결국 지구에서의 삶은 불가능하게 된다. 여전히 남아있는 자들을 위한 최후의 희망은 우주 저편에 살 수 있는 새로운 행성을 찾는 것이다. 지구의 미래를 짊어진 그들의 위대한 도전이 시작된다.",
+            genres: ["SF", "드라마", "모험"],
+            release_date: "2014-11-06",
+            runtime: 169,
+            vote_average: 8.6,
+            vote_count: 28500,
+            popularity: 584.0,
+            poster_url: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+            backdrop_url: "https://image.tmdb.org/t/p/original/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
+            director: "크리스토퍼 놀란",
+            cast: [
+                { name: "매튜 맥커너히", character: "쿠퍼", profile_url: "https://image.tmdb.org/t/p/w185/cnqwv5Uz3d8c4TxVGxGkjOJuFPb.jpg" },
+                { name: "앤 해서웨이", character: "아멜리아 브랜드", profile_url: "https://image.tmdb.org/t/p/w185/tLelacaCxfRFRpGLYkdEY3d1mrq.jpg" },
+                { name: "제시카 차스테인", character: "머피 쿠퍼", profile_url: "https://image.tmdb.org/t/p/w185/vOFtVlCUyMMBXJ0RvJkS7lKoPVG.jpg" },
+                { name: "마이클 케인", character: "브랜드 교수", profile_url: "https://image.tmdb.org/t/p/w185/bVZRMlpjTAO2pJK6v90buFgVbSW.jpg" },
+                { name: "맷 데이먼", character: "맨 박사", profile_url: "https://image.tmdb.org/t/p/w185/ehwS5WvU5yL5vKcUEqbzGK8Fh8B.jpg" }
+            ],
+            tagline: "Mankind was born on Earth. It was never meant to die here.",
+            ott_providers: [
+                {
+                    ott_id: 1,
+                    ott_name: "Netflix",
+                    ott_logo: "https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.png",
+                    watch_url: "https://www.netflix.com"
+                },
+                {
+                    ott_id: 2,
+                    ott_name: "Disney+",
+                    ott_logo: "https://image.tmdb.org/t/p/original/dgPueyEdOwpQ10fjuhL2WYFQwQs.png",
+                    watch_url: "https://www.disneyplus.com"
+                }
+            ],
+            tags: ["우주", "시간여행", "감동", "SF 걸작"],
+            user_status: {
+                liked: false,
+                watched: false,
+                bookmarked: false
+            }
+        };
+    }
+};
+
+// [용도] 백엔드 API를 통한 영화 추천
+// [사용법] const result = await postRecommendations({ time: "02:30", genres: ["SF", "드라마"], userId: 1, excludeAdult: true });
+export const postRecommendations = async (filters: {
+    time: string;      // "HH:MM" 형식
+    genres: string[];  // 장르 이름 배열 ["SF", "드라마"]
+    userId: number;
+    excludeAdult?: boolean;  // 성인 콘텐츠 제외 여부 (기본값: false)
+}): Promise<MovieRecommendationResult> => {
+    try {
+        // 1. 시간 변환: "02:30" -> 150분
+        const [hours, minutes] = filters.time.split(':').map(Number);
+        const runtime = hours * 60 + minutes;
+
+        // 2. 장르 변환: ["SF", "드라마"] -> [15, 7]
+        const genreIds = filters.genres
+            .map(genreName => GENRE_NAME_TO_ID[genreName])
+            .filter(id => id !== undefined);  // 매핑되지 않은 장르 제외
+
+        // 3. 백엔드 API 호출
+        const response = await axiosInstance.post<BackendRecommendResponse>("/chatbot/recommend", {
+            runtime,
+            genres: genreIds,
+            include_adult: !filters.excludeAdult  // excludeAdult의 반대로 전달
+        });
+
+        // 4. 백엔드 응답을 프론트엔드 Movie 타입으로 변환
+        const backendMovies = response.data.recommendations;
+
+        // Movie 타입으로 변환하는 헬퍼 함수
+        const convertToMovie = (backendMovie: BackendMovieRecommendation): Movie => ({
+            id: backendMovie.movie_id,
+            title: backendMovie.title,
+            genres: backendMovie.genres,
+            rating: backendMovie.vote_average,
+            poster: backendMovie.poster_url,
+            description: backendMovie.overview,
+            popular: false,  // 백엔드에서 구분하지 않으므로 기본값
+            watched: false   // 시청 여부는 별도로 관리
+        })
+
+        // 5. algorithmic과 popular로 분리
+        // 백엔드가 vote_average 기준으로 정렬해서 주므로:
+        // - 상위 3개: algorithmic (필터 기반 추천)
+        // - 그 다음 3개: popular (인기 영화)
+        const allMovies = backendMovies.map(convertToMovie);
+
+        console.log('전체 추천 영화 개수:', allMovies.length);
+
+        return {
+            algorithmic: allMovies.slice(0, 3),  // 상위 3개
+            popular: allMovies.slice(3, 6)       // 다음 3개
+        };
+    } catch (error: any) {
+        console.error("영화 추천 API 호출 중 오류 (백엔드 연결 실패, 임시 데이터 사용):", error);
+
+        // 🔧 임시 데이터: 백엔드 연결 실패 시 사용 (404 포함)
+        console.warn("⚠️ 백엔드 연결 실패 - 임시 추천 데이터 사용");
+        console.warn(`   에러 상태: ${error?.response?.status || '네트워크 오류'}`);
+
+
+        // 장르별 맞춤 영화 생성
+        const mockMovies: Movie[] = [
+            // Algorithmic (필터 기반 추천) - 3개
+            {
+                id: 1001,
+                title: "인터스텔라",
+                genres: ["SF", "드라마", "모험"],
+                rating: 8.6,
+                poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+                description: "우주를 배경으로 펼쳐지는 감동적인 SF 대작. 시간과 공간을 초월한 사랑 이야기.",
+                popular: false,
+                watched: false
+            },
+            {
+                id: 1002,
+                title: "인셉션",
+                genres: ["SF", "액션", "스릴러"],
+                rating: 8.8,
+                poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
+                description: "꿈 속의 꿈을 파고드는 독창적인 스토리. 놀란 감독의 걸작.",
+                popular: false,
+                watched: false
+            },
+            {
+                id: 1003,
+                title: "매트릭스",
+                genres: ["SF", "액션"],
+                rating: 8.7,
+                poster: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+                description: "현실과 가상을 넘나드는 혁명적인 SF 액션.",
+                popular: false,
+                watched: false
+            },
+            // Popular (인기 영화) - 3개
+            {
+                id: 2001,
+                title: "어벤져스: 엔드게임",
+                genres: ["액션", "SF", "어드벤처"],
+                rating: 8.4,
+                poster: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+                description: "마블 시네마틱 유니버스의 대서사시. 역대급 블록버스터.",
+                popular: true,
+                watched: false
+            },
+            {
+                id: 2002,
+                title: "기생충",
+                genres: ["드라마", "스릴러"],
+                rating: 8.5,
+                poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+                description: "아카데미 4관왕에 빛나는 봉준호 감독의 작품.",
+                popular: true,
+                watched: false
+            },
+            {
+                id: 2003,
+                title: "조커",
+                genres: ["드라마", "범죄", "스릴러"],
+                rating: 8.4,
+                poster: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
+                description: "조커의 탄생을 그린 강렬한 캐릭터 드라마.",
+                popular: true,
+                watched: false
+            }
+        ];
+
+        // 필터 조건에 맞는 영화들 선택 (간단한 장르 매칭)
+        const filteredAlgorithmic = mockMovies
+            .filter(m => !m.popular)
+            .filter(m => {
+                // 요청한 장르 중 하나라도 포함되면 선택
+                if (filters.genres.length === 0) return true;
+                return m.genres.some(g => filters.genres.includes(g));
+            })
+            .slice(0, 3);
+
+        const filteredPopular = mockMovies
+            .filter(m => m.popular)
+            .slice(0, 3);
+
+        // 필터 조건에 맞는 영화가 부족하면 모든 영화에서 채우기
+        const allAlgorithmic = filteredAlgorithmic.length >= 3
+            ? filteredAlgorithmic
+            : mockMovies.filter(m => !m.popular).slice(0, 3);
+
+        return {
+            algorithmic: allAlgorithmic,
+            popular: filteredPopular
+        };
+    }
+};
+
+
+// 추천 기록 추가
+export const addRecommendation = async (
+    userId: number,
+    movieId: number,
+    reason: string
+): Promise<Recommendation> => {
+    const newRecommendation = {
+        userId,
+        movieId,
+        recommendedAt: new Date().toISOString(),
+        reason
+    };
+
+    const response = await axiosInstance.post<Recommendation>("/recommendations", newRecommendation);
+    return response.data;
+};
+
+// 사용자별 시청 기록 조회 (영화 정보 포함)
+export const getWatchHistory = async (userId: string): Promise<WatchHistoryWithMovie[]> => {
+    try {
+        const response = await axiosInstance.get<WatchHistory[]>(`/watchHistory?userId=${userId}`);
+        const watchHistory = response.data;
+
+        // 각 시청 기록에 영화 정보 추가
+        const historyWithMovies = await Promise.all(
+            watchHistory.map(async (history) => {
+                const movie = await getMovie(history.movieId);
+                return {
+                    ...history,
+                    movie
+                };
+            })
+        );
+
+        // 최신순으로 정렬
+        return historyWithMovies.sort((a, b) =>
+            new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime()
+        );
+    } catch (error) {
+        console.error("시청 기록 조회 중 오류:", error);
+        throw new Error("시청 기록을 가져오는 중 오류가 발생했습니다");
+    }
+};
+
+// 시청 기록 추가
+export const addWatchHistory = async (
+    userId: number,
+    movieId: number,
+    rating: number
+): Promise<WatchHistory> => {
+    const newHistory = {
+        userId,
+        movieId,
+        watchedAt: new Date().toISOString(),
+        rating
+    };
+
+    const response = await axiosInstance.post<WatchHistory>("/watchHistory", newHistory);
+    return response.data;
+};
+
+// 사용자 통계 조회
+export const getUserStats = async (userId: string): Promise<UserStats> => {
+    try {
+        const watchHistory = await getWatchHistory(userId);
+
+        if (watchHistory.length === 0) {
+            return {
+                totalWatched: 0,
+                averageRating: 0,
+                favoriteGenre: "없음",
+                watchedByGenre: {}
+            };
+        }
+
+        // 총 시청 횟수
+        const totalWatched = watchHistory.length;
+
+        // 평균 평점
+        const averageRating = watchHistory.reduce((sum, h) => sum + h.rating, 0) / totalWatched;
+
+        // 장르별 시청 횟수
+        const watchedByGenre: { [genre: string]: number } = {};
+        watchHistory.forEach(h => {
+            const genres = h.movie.genres;
+            genres.forEach(genre => {
+                watchedByGenre[genre] = (watchedByGenre[genre] || 0) + 1;
+            });
+        });
+
+        // 가장 많이 본 장르
+        const favoriteGenre = Object.entries(watchedByGenre)
+            .sort(([, a], [, b]) => b - a)[0]?.[0] || "없음";
+
+        // [변경 필요] 백엔드 이관 권장
+        // 통계 계산 로직도 백엔드로 옮기는 것이 좋습니다. (GET /users/stats)
+        return {
+            totalWatched,
+            averageRating: Math.round(averageRating * 10) / 10,
+            favoriteGenre,
+            watchedByGenre
+        };
+    } catch (error) {
+        console.error("사용자 통계 조회 중 오류:", error);
+        throw new Error("사용자 통계를 가져오는 중 오류가 발생했습니다");
+    }
+};
+
+// 사용자별 추천 기록 조회 (영화 정보 포함)
+export const getUserRecommendations = async (userId: number): Promise<RecommendationWithMovie[]> => {
+    try {
+        const response = await axiosInstance.get<Recommendation[]>(`/recommendations?userId=${userId}`);
+        const recommendations = response.data;
+
+        // 각 추천에 영화 정보 추가
+        const recommendationsWithMovies = await Promise.all(
+            recommendations.map(async (rec) => {
+                const movie = await getMovie(rec.movieId);
+                return {
+                    ...rec,
+                    movie
+                };
+            })
+        );
+
+        // 최신순으로 정렬
+        return recommendationsWithMovies.sort((a, b) =>
+            new Date(b.recommendedAt).getTime() - new Date(a.recommendedAt).getTime()
+        );
+    } catch (error) {
+        console.error("추천 기록 조회 중 오류:", error);
+        throw new Error("추천 기록을 가져오는 중 오류가 발생했습니다");
+    }
+};
+
+// ============================================================
+// [영화 상세 정보 API]
+// ============================================================
+

@@ -1,13 +1,99 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+
+  <!-- ===== PWA 기본 설정 ===== -->
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- ===== 반응형 웹 표준: 뷰포트 설정 ===== -->
+  <!-- initial-scale=1.0: 초기 확대/축소 비율 1:1 -->
+  <!-- width=device-width: 뷰포트 너비를 기기 화면 너비에 맞춤 -->
+  <!-- maximum-scale=5.0: 최대 5배까지 확대 가능 (접근성) -->
+  <!-- user-scalable=yes: 사용자 확대/축소 허용 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+
+  <!-- ===== 🔒 보안: Content Security Policy (XSS 방지) ===== -->
+  <!-- script-src: 인라인 스크립트와 같은 도메인 허용 -->
+  <!-- style-src: 인라인 스타일 허용 (Tailwind, emotion 등) -->
+  <!-- img-src: 모든 이미지 소스 허용 (영화 포스터 등) -->
+  <!-- connect-src: API 엔드포인트 허용 -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; 
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                 font-src 'self' https://fonts.gstatic.com; 
+                 img-src 'self' data: https: http:; 
+                 connect-src 'self' http://localhost:8000 http://localhost:8001 https://api.movisr.com https://auth.movisr.com;" />
+
+  <!-- ===== PWA: 모바일 브라우저 테마 색상 (오버스크롤 영역 색상) ===== -->
+  <!-- Android Chrome (기본) -->
+  <meta name="theme-color" content="#111827" />
+  <!-- iOS Safari (Light Mode) -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafb" />
+  <!-- iOS Safari (Dark Mode) -->
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827" />
+
+  <!-- ===== PWA: iOS 전용 설정 ===== -->
+  <!-- 홈 화면 추가 시 전체화면 모드 (크로스 플랫폼) -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <!-- 상태바 스타일 -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- 홈 화면 앱 타이틀 -->
+  <meta name="apple-mobile-web-app-title" content="Movisir" />
+  <!-- iOS 홈 화면 아이콘 -->
+  <link rel="apple-touch-icon" href="/icon-192x192.png" />
+
+  <!-- ===== SEO & 소셜 미디어 메타태그 ===== -->
+  <meta name="description" content="AI 기반 영화 추천 챗봇 서비스 - 취향에 맞는 영화를 추천받으세요" />
+  <meta name="keywords" content="영화추천, 챗봇, AI, 무비, OTT" />
+  <meta name="author" content="Movisir Team" />
+
+  <!-- Open Graph (Facebook, LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Movisir - AI 영화 추천" />
+  <meta property="og:description" content="AI 기반 영화 추천 챗봇 서비스" />
+  <meta property="og:url" content="https://movisir.app" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Movisir - AI 영화 추천" />
+  <meta name="twitter:description" content="AI 기반 영화 추천 챗봇 서비스" />
+
+  <title>Movisir - AI 영화 추천</title>
+
+  <!-- 다크모드 FOUC 방지: DOM 렌더링 전에 테마 적용 (blocking script) -->
+  <script>
+    // localStorage에서 테마를 읽어 즉시 적용
+    (function () {
+      try {
+        const theme = localStorage.getItem('theme');
+        const isDark = theme === 'dark';
+
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        }
+
+        // body가 아직 없으므로 DOMContentLoaded 전에 실행될 inline style 추가
+        // CSS가 로드되기 전에 body 배경색 즉시 적용
+        const style = document.createElement('style');
+        style.textContent = isDark
+          ? 'body { background-color: #111827 !important; color: white !important; }'
+          : 'body { background-color: #f9fafb !important; color: black !important; }';
+        document.head.appendChild(style);
+
+      } catch (e) {
+        // localStorage 접근 실패 시 무시 (프라이빗 브라우징 등)
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
