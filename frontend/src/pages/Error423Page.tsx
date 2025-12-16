@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
+import ChatbotErrorButton from '@/services/chatbot/components/ChatbotErrorButton';
 
 export default function Error423Page() {
     const navigate = useNavigate();
@@ -12,24 +13,9 @@ export default function Error423Page() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-amber-900 via-orange-900 to-red-900 flex items-center justify-center p-4">
             <div className="max-w-md w-full text-center">
-                {/* Chatbot with sweat */}
+                {/* Chatbot with X eyes */}
                 <div className="mb-8 flex justify-center">
-                    <div className="relative">
-                        {/* Chatbot body */}
-                        <div className="w-32 h-32 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-3xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform">
-                            {/* Worried eyes */}
-                            <div className="flex gap-6">
-                                <div className="text-3xl">😰</div>
-                            </div>
-                        </div>
-                        {/* Sweat drops */}
-                        <div className="absolute top-2 right-2 text-2xl animate-bounce">💧</div>
-                        <div className="absolute top-8 right-0 text-xl animate-bounce" style={{ animationDelay: '0.2s' }}>💧</div>
-                        <div className="absolute top-4 left-2 text-lg animate-bounce" style={{ animationDelay: '0.4s' }}>💧</div>
-                        {/* Antenna */}
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-1 h-6 bg-orange-400"></div>
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    </div>
+                    <ChatbotErrorButton isDark={false} />
                 </div>
 
                 {/* Error code */}

@@ -27,6 +27,7 @@ interface MovieState {
 
     loadRecommended: () => Promise<void>;
     removeRecommendedMovie: (movieId: number) => void;
+    removePopularMovie: (movieId: number) => void;  // 인기 영화 제거
 
     setDetailMovieId: (movieId: number | null) => void;  // 영화 ID만 설정
     resetFilters: () => void;
@@ -136,6 +137,13 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         }
 
         return { recommendedMovies: newRecommended };
+    }),
+
+    // [함수] 인기 영화 제거
+    removePopularMovie: (movieId) => set((state) => {
+        console.log('🔄 인기 영화 제거: ID:', movieId);
+        const newPopular = state.popularMovies.filter(m => m.id !== movieId);
+        return { popularMovies: newPopular };
     }),
 
     setDetailMovieId: (movieId) => {
