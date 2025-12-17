@@ -19,6 +19,7 @@ import type { ReactNode } from 'react';
 import * as authApi from '@/api/authApi';
 import * as userApi from '@/api/userApi';
 import type { User } from '@/api/authApi.type';
+import { useMovieStore } from '@/store/useMovieStore';
 
 interface AuthContextType {
     user: Omit<User, 'password'> | null;
@@ -41,18 +42,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // MovieStore의 setUserId 가져오기
+    const setMovieStoreUserId = useMovieStore((state) => state.setUserId);
+
     // 컴포넌트 마운트 시 localStorage에서 사용자 정보 복원
     useEffect(() => {
         const loadUser = async () => {
             const savedUser = await authApi.getCurrentUser();
             if (savedUser) {
                 setUser(savedUser);
+                // MovieStore에 userId 설정 (문자열 ID를 숫자로 변환)
+                const userId = savedUser.id || (savedUser as any).user_id;
+                if (userId) {
+                    setMovieStoreUserId(typeof userId === 'number' ? userId : parseInt(userId as string, 10));
+                }
             }
             setIsLoading(false);
         };
 
         loadUser();
-    }, []);
+    }, [setMovieStoreUserId]);
 
     // 로그인 (rememberMe 추가)
     const login = async (email: string, password: string, rememberMe: boolean = true) => {
@@ -60,6 +69,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const response = await authApi.login({ email, password }, rememberMe);
             setUser(response.user);
             authApi.saveUser(response.user, rememberMe);
+
+            // MovieStore에 userId 설정 (문자열 ID를 숫자로 변환)
+            const userId = response.user.id || (response.user as any).user_id;
+            if (userId) {
+                setMovieStoreUserId(typeof userId === 'number' ? userId : parseInt(userId as string, 10));
+            }
         } catch (error) {
             if (error instanceof Error) {
                 throw error;
