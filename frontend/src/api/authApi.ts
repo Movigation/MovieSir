@@ -29,22 +29,28 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
             skipErrorRedirect: true,
         } as any);
 
-        const { accessToken, refreshToken, user } = response.data;
+        const { access_token, refresh_token, user } = response.data;
 
         // 토큰 저장 (rememberMe에 따라 localStorage 또는 sessionStorage)
         const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem("accessToken", accessToken);
-        storage.setItem("refreshToken", refreshToken);
-        storage.setItem("user", JSON.stringify(user));
+        storage.setItem("accessToken", access_token);
+        storage.setItem("refreshToken", refresh_token);
+        
+        // user 데이터를 올바른 형식으로 변환하여 저장
+        const userData = {
+            id: user.user_id,
+            email: user.email,
+            nickname: user.nickname,
+            onboarding_completed: user.onboarding_completed,
+        };
+        storage.setItem("user", JSON.stringify(userData));
+        
         // 로그인 방식 저장 (나중에 확인용)
         storage.setItem("rememberMe", rememberMe ? "true" : "false");
 
-        secureLog('로그인 성공', { userId: user.id });  // 민감 정보 제외 로깅
+        secureLog('로그인 성공', { userId: user.user_id });  // 민감 정보 제외 로깅
 
-        return {
-            user,
-            message: "로그인 성공",
-        };
+        return response.data;
     } catch (error: any) {
         // 🛡️ 보안 강화: 에러 메시지 정보 노출 최소화
         const secureMessage = getSecureErrorMessage(error);

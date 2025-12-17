@@ -18,9 +18,6 @@ from backend.utils.password import hash_password
 from backend.utils.redis import get_redis_client
 
 from .schema import (
-    OnboardingCompleteResponse,
-    OnboardingOTTRequest,
-    OnboardingSurveyRequest,
     SignupConfirm,
     SignupConfirmResponse,
     SignupRequest,
@@ -194,81 +191,4 @@ def confirm_signup(
     )
 
 
-# ========================================
-# REG-03-01 온보딩 – OTT 선택
-# ========================================
-def save_user_ott(
-    db: Session, user: User, payload: OnboardingOTTRequest
-) -> None:  # 선택한 ott 저장
 
-    # 기존 데이터 삭제 후 다시 저장 (idempotent)
-    db.execute(delete(UserOttMap).where(UserOttMap.user_id == user.user_id))
-
-    for provider_id in payload.provider_ids:
-        db.add(UserOttMap(user_id=user.user_id, provider_id=provider_id))
-
-    db.commit()
-
-
-# ========================================
-# REG-04-01 온보딩 – 영화 포스터 설문
-# ========================================
-def save_onboarding_answers(
-    db: Session,
-    user: User,
-    payload: OnboardingSurveyRequest,
-) -> None:  # 선택한 영화 저장
-
-    # 기존 기록 삭제 후 새로 저장
-    db.execute(
-        delete(UserOnboardingAnswer).where(UserOnboardingAnswer.user_id == user.user_id)
-    )
-
-    for movie_id in payload.movie_ids:
-        db.add(
-            UserOnboardingAnswer(
-                user_id=user.user_id,
-                movie_id=movie_id,
-                # created_at은 DB에서 자동 생성
-            )
-        )
-
-    # 설문 완료 시 온보딩 완료 처리
-    user.onboarding_completed_at = datetime.utcnow()
-    db.add(user)
-    db.commit()
-
-
-# ========================================
-# REG-05-01 온보딩 완료
-# ========================================
-def complete_onboarding(
-    db: Session, user: User
-) -> OnboardingCompleteResponse:  # 온보딩 완료
-    user.onboarding_completed_at = datetime.utcnow()
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    return OnboardingCompleteResponse(
-        user_id=str(user.user_id),
-        onboarding_completed=user.onboarding_completed_at is not None,
-    )
-
-
-# ========================================
-# REG-05-02 온보딩 스킵
-# ========================================
-def skip_onboarding(
-    db: Session, user: User
-) -> OnboardingCompleteResponse:  # 온보딩 스킵으로 완료
-    # 스킵 시에도 온보딩 완료 처리 (메인 진입 허용)
-    user.onboarding_completed_at = datetime.utcnow()
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    return OnboardingCompleteResponse(
-        user_id=str(user.user_id),
-        onboarding_completed=user.onboarding_completed_at is not None,
-    )
