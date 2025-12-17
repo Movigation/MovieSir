@@ -1,5 +1,5 @@
 // [용도] 영화 관련 API 함수 정의
-// [사용법] import { postRecommendations, getMovieDetail, addWatchHistory } from "@/api/movieApi";
+// [사용법] import { postRecommendations, getMovieDetail, markMovieAsWatched } from "@/api/movieApi";
 
 import axiosInstance from "@/api/axiosInstance";
 import type {
@@ -176,6 +176,7 @@ export const postRecommendations = async (filters: {
             rating: backendMovie.vote_average,
             poster: backendMovie.poster_url,
             description: backendMovie.overview,
+            runtime: backendMovie.runtime,  // 러닝타임 추가
             popular: false,  // 백엔드에서 구분하지 않으므로 기본값
             watched: false   // 시청 여부는 별도로 관리
         })
@@ -208,6 +209,7 @@ export const postRecommendations = async (filters: {
                 title: "인터스텔라",
                 genres: ["SF", "드라마", "모험"],
                 rating: 8.6,
+                runtime: 169,  // 2시간 49분
                 poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
                 description: "우주를 배경으로 펼쳐지는 감동적인 SF 대작. 시간과 공간을 초월한 사랑 이야기.",
                 popular: false,
@@ -218,6 +220,7 @@ export const postRecommendations = async (filters: {
                 title: "인셉션",
                 genres: ["SF", "액션", "스릴러"],
                 rating: 8.8,
+                runtime: 148,  // 2시간 28분
                 poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
                 description: "꿈 속의 꿈을 파고드는 독창적인 스토리. 놀란 감독의 걸작.",
                 popular: false,
@@ -228,6 +231,7 @@ export const postRecommendations = async (filters: {
                 title: "매트릭스",
                 genres: ["SF", "액션"],
                 rating: 8.7,
+                runtime: 136,  // 2시간 16분
                 poster: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
                 description: "현실과 가상을 넘나드는 혁명적인 SF 액션.",
                 popular: false,
@@ -239,6 +243,7 @@ export const postRecommendations = async (filters: {
                 title: "어벤져스: 엔드게임",
                 genres: ["액션", "SF", "어드벤처"],
                 rating: 8.4,
+                runtime: 181,  // 3시간 1분
                 poster: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
                 description: "마블 시네마틱 유니버스의 대서사시. 역대급 블록버스터.",
                 popular: true,
@@ -249,6 +254,7 @@ export const postRecommendations = async (filters: {
                 title: "기생충",
                 genres: ["드라마", "스릴러"],
                 rating: 8.5,
+                runtime: 132,  // 2시간 12분
                 poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
                 description: "아카데미 4관왕에 빛나는 봉준호 감독의 작품.",
                 popular: true,
@@ -259,6 +265,7 @@ export const postRecommendations = async (filters: {
                 title: "조커",
                 genres: ["드라마", "범죄", "스릴러"],
                 rating: 8.4,
+                runtime: 122,  // 2시간 2분
                 poster: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
                 description: "조커의 탄생을 그린 강렬한 캐릭터 드라마.",
                 popular: true,
@@ -337,7 +344,7 @@ export const getWatchHistory = async (userId: string): Promise<WatchHistoryWithM
     }
 };
 
-// 시청 기록 추가
+// 시청 기록 추가 (기존 함수 - 삭제 예정)
 export const addWatchHistory = async (
     userId: number,
     movieId: number,
@@ -429,6 +436,21 @@ export const getUserRecommendations = async (userId: number): Promise<Recommenda
 };
 
 // ============================================================
-// [영화 상세 정보 API]
+// [영화 봤어요 체크 API] - REC-03-04
 // ============================================================
 
+// [용도] 영화 봤어요 체크 (백엔드에 기록)
+// [API 스펙] POST /movies/{movie_id}/watched
+// [사용법] await markMovieAsWatched(550);
+// ⚠️ 현재 주석처리됨 - 필요 시 주석 해제하여 사용
+/*
+export const markMovieAsWatched = async (movieId: number): Promise<void> => {
+    try {
+        await axiosInstance.post(`/movies/${movieId}/watched`);
+        console.log('✅ 영화 봤어요 체크 완료:', movieId);
+    } catch (error) {
+        console.error('❌ 영화 봤어요 체크 실패:', error);
+        throw error;
+    }
+};
+*/

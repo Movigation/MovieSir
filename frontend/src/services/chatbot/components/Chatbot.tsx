@@ -46,7 +46,7 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
 
     if (isMobile) {
       // 모바일: 좌상단으로 작아지며 이동
-      return "translate-x-[-30vw] translate-y-[-120px] scale-75";
+      return "translate-x-[-35vw] translate-y-[-120px] scale-50";
     } else if (isTablet) {
       // 타블렛: 적당히 왼쪽으로 이동 (안 짤리게)
       return "-translate-x-[300px] translate-y-[-30px]";
