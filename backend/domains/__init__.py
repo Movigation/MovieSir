@@ -3,7 +3,8 @@
 
 from backend.domains.user.models import User, UserOttMap, UserOnboardingAnswer
 from backend.domains.movie.models import Movie, MovieVector, OttProvider, MovieOttMap
-from backend.domains.recommendation.models import MovieLog, MovieClick
+from backend.domains.recommendation.models import MovieLog, MovieClick, RecommendationSession
+from backend.domains.onboarding.models import OnboardingCandidate
 
 __all__ = [
     "User",
@@ -15,4 +16,6 @@ __all__ = [
     "MovieOttMap",
     "MovieLog",
     "MovieClick",
+    "RecommendationSession",
+    "OnboardingCandidate",
 ]
