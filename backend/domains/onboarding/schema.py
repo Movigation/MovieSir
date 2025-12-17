@@ -14,7 +14,10 @@ class SurveyMovieItem(BaseModel):
     movie_id: int
     mood_tag: str
     title: str
+<<<<<<< HEAD
     poster_path: Union[str, None] = None
+=======
+>>>>>>> origin/be-dev
 
 class SurveyMoviesResponse(BaseModel):
     movies: List[SurveyMovieItem]
