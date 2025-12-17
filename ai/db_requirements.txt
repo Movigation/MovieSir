@@ -1,0 +1,26 @@
+# db_conn_movie_reco_v1.py의 requirements.txt
+
+# PyTorch (CPU 버전 - 더 가벼움)
+torch>=2.0.0
+
+# PostgreSQL 연결
+psycopg2-binary>=2.9.0
+
+# pgvector (PostgreSQL 벡터 확장)
+pgvector>=0.2.0
+
+# 데이터 처리 및 머신러닝
+numpy>=1.23.0,<2.0.0
+scikit-learn>=1.2.0
+
+# 환경 변수 관리
+python-dotenv>=1.0.0
+
+# 기본 라이브러리 (Python 3.11 기본 포함, 명시적 설치 불필요)
+# - pickle (표준 라이브러리)
+# - pathlib (표준 라이브러리)
+# - typing (표준 라이브러리)
+# - itertools (표준 라이브러리)
+# - math (표준 라이브러리)
+# - time (표준 라이브러리)
+# - os (표준 라이브러리)
