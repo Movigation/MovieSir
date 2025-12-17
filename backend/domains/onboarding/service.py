@@ -82,6 +82,11 @@ def complete_onboarding(
 def skip_onboarding(
     db: Session, user: User
 ) -> OnboardingCompleteResponse:  # 온보딩 스킵으로 완료
+    # 스킵 시 기존 선택 내역 삭제
+    db.execute(
+        delete(UserOnboardingAnswer).where(UserOnboardingAnswer.user_id == user.user_id)
+    )
+
     # 스킵 시에도 온보딩 완료 처리 (메인 진입 허용)
     user.onboarding_completed_at = datetime.utcnow()
     db.add(user)
@@ -148,10 +153,7 @@ def get_onboarding_survey_movies(db: Session) -> SurveyMoviesResponse:
                 movie_id=selected_movie.movie_id,
                 mood_tag=mood_tag,
                 title=selected_movie.title,
-<<<<<<< HEAD
                 poster_path=selected_movie.poster_path,
-=======
->>>>>>> origin/be-dev
             )
         )
 
