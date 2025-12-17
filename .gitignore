@@ -45,7 +45,7 @@ coverage/
 *.npy
 *.h5
 !ai/models/.gitkeep
-
+ 
 # lightgcn 데이터 무시
 ai/training/lightgcn_data/*
 !ai/training/lightgcn_data/.gitkeep
