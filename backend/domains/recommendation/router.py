@@ -19,7 +19,7 @@ ai_model = MockAIModel() # 실제 모델 로드 코드로 교체 필요
 
 router = APIRouter(tags=["recommendation"])
 
-@router.post("/api/recommend")
+@router.post("/api/recommend", response_model=schema.RecommendationResponse)
 def recommend_movies(
     req: schema.RecommendationRequest,
     db: Session = Depends(get_db),
@@ -60,7 +60,7 @@ def mark_watched(
     return {"status": "success"}
 
 
-@router.get("/api/movies/{movie_id}")
+@router.get("/api/movies/{movie_id}", response_model=schema.MovieDetailResponse)
 def get_movie_detail(
     movie_id: int,
     db: Session = Depends(get_db),
@@ -88,17 +88,7 @@ def get_movie_detail(
     ).fetchall()
     
     return {
-        "info": {
-            "movie_id": movie.movie_id,
-            "tmdb_id": movie.tmdb_id,
-            "title": movie.title,
-            "overview": movie.overview,
-            "poster_path": movie.poster_path,
-            "vote_average": movie.vote_average,
-            "runtime": movie.runtime,
-            "genres": movie.genres,
-            "adult": movie.adult,
-        },
+        "info": movie, # SQLAlchemy 객체 그대로 반환 (Pydantic이 변환)
         "otts": [
             {
                 "provider_id": row.provider_id,
