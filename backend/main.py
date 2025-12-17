@@ -17,18 +17,16 @@ from backend.domains.recommendation.router import router as recommendation_route
 
 app = FastAPI()
 
-# ========================================
-# CORS 설정 - 프론트엔드에서 API 호출 허용
-# ========================================
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Vite 개발 서버
+        "http://localhost:5173",  # Vite dev server
         "http://localhost:3000",  # 다른 프론트엔드 포트
     ],
-    allow_credentials=True,  # 쿠키, 인증 헤더 등 허용
-    allow_methods=["*"],     # 모든 HTTP 메서드 허용 (GET, POST, PUT, DELETE 등)
-    allow_headers=["*"],     # 모든 헤더 허용
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 HTTP 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
 )
 
 # 라우터 등록

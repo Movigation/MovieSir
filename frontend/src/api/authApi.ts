@@ -27,6 +27,7 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
             password: data.password,
         }, {
             skipErrorRedirect: true,
+            skipAuth: true,  // 👈 로그인 실패 시 자동 로그아웃 방지
         } as any);
 
         const { access_token, refresh_token, user } = response.data;
@@ -35,7 +36,7 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
         const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem("accessToken", access_token);
         storage.setItem("refreshToken", refresh_token);
-        
+
         // user 데이터를 올바른 형식으로 변환하여 저장
         const userData = {
             id: user.user_id,
@@ -44,7 +45,7 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
             onboarding_completed: user.onboarding_completed,
         };
         storage.setItem("user", JSON.stringify(userData));
-        
+
         // 로그인 방식 저장 (나중에 확인용)
         storage.setItem("rememberMe", rememberMe ? "true" : "false");
 
@@ -87,6 +88,7 @@ export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
         // ✅ backend_sw (포트 8001, PostgreSQL DB)로 요청
         const response = await authAxiosInstance.post("/auth/signup/request", data, {
             skipErrorRedirect: true,
+            skipAuth: true,  // 회원가입 실패 시 자동 로그아웃 방지
         } as any);
 
         const { user, message } = response.data;
@@ -164,8 +166,8 @@ export const getCurrentUser = async () => {
         if (userStr && storage) {
             try {
                 const user = JSON.parse(userStr);
-                if (user && user.id) {
-                    return user;
+                if (user && (user.id || user.user_id)) {
+                    return user;  // ✅ localStorage의 user 정보 반환
                 }
             } catch (parseError) {
                 console.error("user 파싱 오류:", parseError);
@@ -173,7 +175,10 @@ export const getCurrentUser = async () => {
             }
         }
 
-        // 2. accessToken 확인 (localStorage 또는 sessionStorage)
+        // 2. ⚠️ /auth/me 호출 부분 주석처리 (백엔드 엔드포인트 없음)
+        // 장점: 새로고침 시 토큰이 삭제되지 않고 로그인 유지
+        // 단점: 서버의 최신 사용자 정보를 가져오지 못함
+        /*
         const accessToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
         if (accessToken) {
             const tokenStorage = localStorage.getItem("accessToken") ? localStorage : sessionStorage;
@@ -186,6 +191,7 @@ export const getCurrentUser = async () => {
                 console.error("사용자 정보 가져오기 실패:", error);
             }
         }
+        */
 
         return null;
     } catch (error) {

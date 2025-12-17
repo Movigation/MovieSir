@@ -1,22 +1,23 @@
 import axios from "axios";
 
-// skipErrorRedirect 속성을 위한 타입 확장
+// skipErrorRedirect 및 skipAuth 속성을 위한 타입 확장
 declare module 'axios' {
     export interface AxiosRequestConfig {
         skipErrorRedirect?: boolean;
+        skipAuth?: boolean;  // 로그인/회원가입 요청은 401 인터셉터 스킵
     }
 }
 
 // 메인 API 베이스 URL (영화, 추천 등)
 const API_BASE_URL =
     process.env.NODE_ENV === "development"
-        ? "http://localhost:8000"  // Backend (더미 DB)
+        ? "http://localhost:8000"  // Backend
         : "https://api.movisr.com";
 
 // 회원가입 전용 API 베이스 URL (PostgreSQL 연동)
 const AUTH_BASE_URL =
     process.env.NODE_ENV === "development"
-        ? "http://localhost:8001"  // Backend_SW (PostgreSQL)
+        ? "http://localhost:8000"  // Backend
         : "https://auth.movisr.com";
 
 // 메인 axios 인스턴스 (영화, 추천 등)
@@ -93,7 +94,20 @@ axiosInstance.interceptors.response.use(
         const originalRequest = error.config;
 
         // 401 에러이고 아직 재시도하지 않은 경우
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // ⚠️ 단, 로그인/회원가입 요청은 제외 (skipAuth 플래그)
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !originalRequest.skipAuth  // 👈 로그인/회원가입 요청은 스킵
+        ) {
+            // 이미 로그인된 사용자의 인증 토큰이 만료된 경우에만 처리
+            const hasToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+
+            if (!hasToken) {
+                // 토큰이 없는데 401이면 그냥 에러 반환 (로그인 필요)
+                return Promise.reject(error);
+            }
+
             if (isRefreshing) {
                 // 이미 토큰 갱신 중이면 대기열에 추가
                 return new Promise((resolve, reject) => {
@@ -111,13 +125,16 @@ axiosInstance.interceptors.response.use(
             originalRequest._retry = true;
             isRefreshing = true;
 
-            const refreshToken = localStorage.getItem("refreshToken");
+            const refreshToken = localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken");
 
             if (!refreshToken) {
                 // Refresh token이 없으면 로그아웃 처리
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
                 localStorage.removeItem("user");
+                sessionStorage.removeItem("accessToken");
+                sessionStorage.removeItem("refreshToken");
+                sessionStorage.removeItem("user");
                 window.location.href = "/";
                 return Promise.reject(error);
             }
@@ -132,8 +149,9 @@ axiosInstance.interceptors.response.use(
 
                 const { accessToken: newAccessToken } = response.data;
 
-                // 새 토큰 저장
-                localStorage.setItem("accessToken", newAccessToken);
+                // 새 토큰 저장 (원래 저장된 storage에)
+                const storage = localStorage.getItem("accessToken") ? localStorage : sessionStorage;
+                storage.setItem("accessToken", newAccessToken);
 
                 // 대기열의 요청들 처리
                 processQueue(null, newAccessToken);
@@ -147,6 +165,9 @@ axiosInstance.interceptors.response.use(
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
                 localStorage.removeItem("user");
+                sessionStorage.removeItem("accessToken");
+                sessionStorage.removeItem("refreshToken");
+                sessionStorage.removeItem("user");
                 window.location.href = "/";
                 return Promise.reject(refreshError);
             } finally {

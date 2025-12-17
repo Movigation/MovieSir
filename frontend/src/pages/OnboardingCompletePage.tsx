@@ -1,13 +1,12 @@
 // [용도] 온보딩 완료 및 데이터 제출 페이지
 // [사용법] /onboarding/complete 라우트에서 사용
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { completeOnboarding, skipOnboarding } from "@/api/onboardingApi";
 import ChatbotButton from '@/services/chatbot/components/ChatbotButton';
-import type { OnboardingMovie } from "@/api/onboardingApi.type";
-import axiosInstance from "@/api/axiosInstance";
+import { RotateCcw, Undo2, Check } from 'lucide-react';
 
 // OTT 로고 SVG imports
 import NetflixLogoSvg from "@/assets/logos/NETFLEX_Logo.svg";
@@ -31,40 +30,11 @@ const OTT_PLATFORMS_MAP: Record<number, { name: string; logo: string; bg: string
 
 export default function OnboardingCompletePage() {
     const navigate = useNavigate();
-    // const { loadUserFromStorage } = useAuth();
-    const { provider_ids, movie_ids, reset } = useOnboardingStore();
+    const { provider_ids, movie_ids, reset, movies } = useOnboardingStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
-    const [movies, setMovies] = useState<OnboardingMovie[]>([]);
 
-    // 선택한 영화 데이터 로드
-    useEffect(() => {
-        const loadMovies = async () => {
-            try {
-                const data = await axiosInstance.get("/onboarding/survey", { params: { limit: 10 } });
-                setMovies(data.data);
-            } catch (err) {
-                console.error("영화 로딩 에러 (백엔드 연결 실패, 임시 데이터 사용):", err);
-
-                // 임시 데이터
-                const mockMovies: OnboardingMovie[] = [
-                    { id: 1, title: "인터스텔라", posterUrl: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", genres: ["SF", "드라마"] },
-                    { id: 2, title: "인셉션", posterUrl: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg", genres: ["SF", "액션"] },
-                    { id: 3, title: "다크 나이트", posterUrl: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg", genres: ["액션", "범죄"] },
-                    { id: 4, title: "기생충", posterUrl: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", genres: ["드라마", "스릴러"] },
-                    { id: 5, title: "어벤져스: 엔드게임", posterUrl: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg", genres: ["액션", "SF"] },
-                    { id: 6, title: "타이타닉", posterUrl: "https://image.tmdb.org/t/p/w500/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg", genres: ["로맨스", "드라마"] },
-                    { id: 7, title: "매트릭스", posterUrl: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg", genres: ["SF", "액션"] },
-                    { id: 8, title: "라라랜드", posterUrl: "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg", genres: ["로맨스", "뮤지컬"] },
-                    { id: 9, title: "조커", posterUrl: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", genres: ["드라마", "범죄"] },
-                    { id: 10, title: "아바타", posterUrl: "https://image.tmdb.org/t/p/w500/kyeqWdyUXW608qlYkRqosgbbJyK.jpg", genres: ["SF", "액션"] }
-                ];
-                setMovies(mockMovies);
-            }
-        };
-
-        loadMovies();
-    }, []);
+    // 선택한 영화 데이터는 store(movies)에서 직접 사용하므로 별도 로딩 필요 없음
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -87,7 +57,6 @@ export default function OnboardingCompletePage() {
                 console.log("  - movie_ids:", movie_ids);
 
                 // 백엔드에 온보딩 완료 요청
-                // (이전 단계에서 이미 provider_ids와 movie_ids가 저장되었음)
                 response = await completeOnboarding();
             }
 
@@ -164,7 +133,7 @@ export default function OnboardingCompletePage() {
                         {movie_ids.length > 0 ? (
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                 {movie_ids.map((movieId) => {
-                                    const movie = movies.find(m => m.id === movieId);
+                                    const movie = movies.find(m => m.movie_id === movieId);
                                     if (!movie) return null;
 
                                     return (
@@ -172,9 +141,9 @@ export default function OnboardingCompletePage() {
                                             key={movieId}
                                             className="relative overflow-hidden rounded-lg aspect-[2/3] bg-gray-800"
                                         >
-                                            {movie.posterUrl ? (
+                                            {movie.poster_path ? (
                                                 <img
-                                                    src={movie.posterUrl}
+                                                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
                                                     alt={movie.title}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -217,20 +186,35 @@ export default function OnboardingCompletePage() {
                         }}
                         className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
                     >
-                        다시 선택하기
+                        <RotateCcw size={20} className="sm:hidden" />
+                        <span className="hidden sm:inline">
+                            다시 선택하기
+                        </span>
                     </button>
                     <button
                         onClick={() => navigate("/onboarding/movies")}
                         className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
                     >
-                        이전 단계
+                        <Undo2 size={20} className="sm:hidden" />
+                        <span className="hidden sm:inline">
+                            이전 단계
+                        </span>
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
                         className="px-8 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isSubmitting ? "처리 중..." : "완료하기 🚀"}
+                        {isSubmitting ? (
+                            "처리 중..."
+                        ) : (
+                            <>
+                                <Check size={20} className="sm:hidden" />
+                                <span className="hidden sm:inline">
+                                    완료하기 🚀
+                                </span>
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
