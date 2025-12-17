@@ -74,3 +74,6 @@ ai/training/sbert_data/index/*
 tmp/
 temp/
 *.tmp
+
+# Duplicate/Nested
+MovieSir/
