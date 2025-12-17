@@ -1,0 +1,10 @@
+from sqlalchemy import Column, Integer, String, ForeignKey
+from backend.core.db import Base
+
+class OnboardingCandidate(Base):
+    __tablename__ = "onboarding_candidates"
+    __table_args__ = {"schema": "public"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    movie_id = Column(Integer, ForeignKey("movies.movie_id"), nullable=False)
+    mood_tag = Column(String, nullable=False)

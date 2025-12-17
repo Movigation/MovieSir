@@ -9,9 +9,6 @@ from backend.domains.user.models import User
 
 from . import service
 from .schema import (
-    OnboardingCompleteResponse,
-    OnboardingOTTRequest,
-    OnboardingSurveyRequest,
     SignupConfirm,
     SignupConfirmResponse,
     SignupRequest,
@@ -65,63 +62,4 @@ def confirm_signup(
     return service.confirm_signup(db, payload)
 
 
-# =========================
-# REG-03-01 온보딩 – OTT 선택
-# =========================
-@router.post(
-    "/onboarding/ott",
-    summary="온보딩: 구독 중인 OTT 플랫폼 선택",
-)
-def select_ott(
-    payload: OnboardingOTTRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> dict:
-    service.save_user_ott(db, current_user, payload)
-    return {"status": "ok"}
 
-
-# =========================
-# REG-04-01 온보딩 – 취향 설문
-# =========================
-@router.post(
-    "/onboarding/survey",
-    summary="온보딩: 영화 포스터 설문 응답 저장",
-)
-def survey(
-    payload: OnboardingSurveyRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> dict:
-    service.save_onboarding_answers(db, current_user, payload)
-    return {"status": "ok"}
-
-
-# =========================
-# REG-05-01 온보딩 완료
-# =========================
-@router.post(
-    "/onboarding/complete",
-    response_model=OnboardingCompleteResponse,
-    summary="온보딩 완료 처리",
-)
-def complete(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> OnboardingCompleteResponse:
-    return service.complete_onboarding(db, current_user)
-
-
-# =========================
-# REG-05-02 온보딩 스킵
-# =========================
-@router.post(
-    "/onboarding/skip",
-    response_model=OnboardingCompleteResponse,
-    summary="온보딩 스킵 처리",
-)
-def skip(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> OnboardingCompleteResponse:
-    return service.skip_onboarding(db, current_user)

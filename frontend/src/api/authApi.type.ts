@@ -26,8 +26,15 @@ export interface LoginRequest {
 
 // 로그인 응답
 export interface LoginResponse {
-    user: Omit<User, 'password'>;
-    message: string;
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    user: {
+        user_id: string;
+        email: string;
+        nickname: string;
+        onboarding_completed: boolean;
+    };
 }
 
 // 회원가입 요청

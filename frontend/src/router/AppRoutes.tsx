@@ -15,6 +15,12 @@ import Error500Page from '@/pages/Error500Page';
 import OTTSelectionPage from '@/pages/OTTSelectionPage';
 import MovieSelectionPage from '@/pages/MovieSelectionPage';
 import OnboardingCompletePage from '@/pages/OnboardingCompletePage';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import TmdbSyncPage from '@/pages/admin/TmdbSyncPage';
+import PopularityUpdatePage from '@/pages/admin/PopularityUpdatePage';
+import LearningMonitorPage from '@/pages/admin/LearningMonitorPage';
+import VectorRetrainPage from '@/pages/admin/VectorRetrainPage';
+import TagModelRetrainPage from '@/pages/admin/TagModelRetrainPage';
 
 // 스크롤 복원 컴포넌트
 function ScrollToTop() {
@@ -51,6 +57,15 @@ export default function AppRoutes() {
                 <Route path="/onboarding/movies" element={<MovieSelectionPage />} />
                 <Route path="/onboarding/complete" element={<OnboardingCompletePage />} />
 
+                {/* Admin Dashboard - 메인만 사이드바 포함 */}
+                <Route path="/admin" element={<AdminDashboard />} />
+
+                {/* Admin 기능 페이지 - 독립 페이지로 표시 */}
+                <Route path="/admin/tmdb-sync" element={<TmdbSyncPage />} />
+                <Route path="/admin/popularity" element={<PopularityUpdatePage />} />
+                <Route path="/admin/learning-monitor" element={<LearningMonitorPage />} />
+                <Route path="/admin/vector-retrain" element={<VectorRetrainPage />} />
+                <Route path="/admin/tag-retrain" element={<TagModelRetrainPage />} />
 
                 {/* Error pages */}
                 <Route path="/error/400" element={<Error400Page />} />
