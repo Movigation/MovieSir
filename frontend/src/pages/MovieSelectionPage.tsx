@@ -10,7 +10,7 @@ import axiosInstance from "@/api/axiosInstance";
 
 export default function MovieSelectionPage() {
     const navigate = useNavigate();
-    const { addLikedMovie, removeLikedMovie, likedMovieIds } = useOnboardingStore();
+    const { addLikedMovie, removeLikedMovie, movie_ids } = useOnboardingStore();
 
     const [movies, setMovies] = useState<OnboardingMovie[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +53,7 @@ export default function MovieSelectionPage() {
 
     // 영화 선택/해제 토글
     const handleToggleMovie = (movieId: number) => {
-        if (likedMovieIds.includes(movieId)) {
+        if (movie_ids.includes(movieId)) {
             removeLikedMovie(movieId);
         } else {
             addLikedMovie(movieId);
@@ -66,6 +66,10 @@ export default function MovieSelectionPage() {
 
     const handleSkip = () => {
         navigate("/onboarding/complete");
+    };
+
+    const handlePrevious = () => {
+        navigate("/onboarding/ott");
     };
 
     if (isLoading) {
@@ -96,17 +100,30 @@ export default function MovieSelectionPage() {
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
             <div className="max-w-6xl w-full">
                 {/* 헤더 */}
-                <div className="text-center mb-12">
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
-                        영화 선택
-                    </h1>
-                    <p className="text-gray-400 text-base">좋아하는 영화를 선택해주세요</p>
+                <div className="mb-12">
+                    {/* 제목과 건너뛰기 버튼을 포함하는 컨테이너 */}
+                    <div className="relative mb-4">
+                        {/* 건너뛰기 버튼 - 오른쪽 상단에 고정 */}
+                        <button
+                            onClick={handleSkip}
+                            className="absolute right-0 top-0 px-4 md:px-8 py-2 md:py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors text-sm md:text-base"
+                        >
+                            건너뛰기
+                        </button>
+
+                        {/* 제목 - 중앙 정렬 */}
+                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight text-center">
+                            영화 선택
+                        </h1>
+                    </div>
+
+                    <p className="text-gray-400 text-base text-center">좋아하는 영화를 선택해주세요</p>
                 </div>
 
                 {/* 영화 그리드 - 2줄 5개씩 */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-10">
                     {movies.map((movie) => {
-                        const isSelected = likedMovieIds.includes(movie.id);
+                        const isSelected = movie_ids.includes(movie.id);
 
                         return (
                             <button
@@ -168,21 +185,25 @@ export default function MovieSelectionPage() {
                 {/* 선택 개수 */}
                 <div className="text-center mb-8">
                     <p className="text-gray-400 text-sm">
-                        <span className="text-white font-semibold text-lg">{likedMovieIds.length}</span>개 선택됨
+                        <span className="text-white font-semibold text-lg">{movie_ids.length}</span>개 선택됨
                     </p>
                 </div>
 
                 {/* 버튼 */}
                 <div className="flex gap-4 justify-center">
                     <button
-                        onClick={handleSkip}
+                        onClick={handlePrevious}
                         className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
                     >
-                        건너뛰기
+                        이전 단계
                     </button>
                     <button
                         onClick={handleNext}
-                        className="px-8 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+                        disabled={movie_ids.length === 0}
+                        className={`px-8 py-3 font-semibold rounded-xl transition-colors ${movie_ids.length === 0
+                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                            : 'bg-white text-black hover:bg-gray-100'
+                            }`}
                     >
                         다음 단계
                     </button>

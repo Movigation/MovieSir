@@ -82,17 +82,12 @@ export const submitSurvey = async (
 // ------------------------------
 // ✅ 온보딩 완료
 // ------------------------------
-export const completeOnboarding = async (
-    ottIds: string[],
-    movieIds: number[]
-): Promise<OnboardingCompleteResponse> => {
+// 주의: 백엔드는 이전 단계에서 저장된 provider_ids와 movie_ids를 사용하므로
+// 이 함수는 파라미터 없이 완료 처리만 요청합니다.
+export const completeOnboarding = async (): Promise<OnboardingCompleteResponse> => {
     try {
         const response = await authAxiosInstance.post<OnboardingCompleteResponse>(
-            "/onboarding/complete",
-            {
-                ott_ids: ottIds.map(Number),  // string[] → number[]
-                movie_ids: movieIds
-            }
+            "/onboarding/complete"
         );
 
         return response.data;

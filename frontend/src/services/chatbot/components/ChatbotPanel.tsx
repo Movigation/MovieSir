@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { ChatbotPanelProps } from "@/services/chatbot/components/chatbot.types";
 import FilterChatBlock from '@/services/chatbot/FilterBlock/FilterChatBlock';
-import MovieCard from '@/services/chatbot/components/MovieCard';
+import RecommendedMoviesSection from '@/services/chatbot/components/RecommendedMoviesSection';
+import PopularMoviesSection from '@/services/chatbot/components/PopularMoviesSection';
 import { useMovieStore } from '@/store/useMovieStore';
 
 // [타입] 메시지 인터페이스
@@ -40,7 +41,7 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
   // - 데스크탑: 130px (챗봇 버튼 + 간격)
   const getBotMessageMarginLeft = () => {
     if (isMobile) {
-      return '0';  // 모바일: 여백 없음
+      return '70px';  // 모바일: 여백 없음
     }
 
     if (isTablet) {
@@ -97,7 +98,7 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
     const initialMessages: Message[] = [
       {
         id: '1',
-        type: 'bot',
+        type: 'bot',  // ✅ 'user'에서 'bot'으로 수정
         content: '영화 추천을 받으시려면 아래 필터를 선택해주세요!'
       },
       {
@@ -150,8 +151,8 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
     loadRecommended().then(() => {
       console.log('✅ 추천 완료');
 
-      setMessages(prev => [
-        ...prev.filter(m => !m.id.startsWith('loading-')), // 로딩 메시지 제거
+      // 초기 메시지(welcome)와 로딩 메시지 모두 제거 후 추천 결과만 표시
+      setMessages([
         {
           id: `result-${Date.now()}`,
           type: 'bot',
@@ -159,27 +160,21 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
             <div className="w-full mx-auto space-y-6 overflow-visible">
               {/* 추천 완료 메시지 */}
               <div className="text-center mb-4">
-                <p className="text-white text-lg font-semibold">🎉 추천이 완료되었습니다!</p>
-                <p className="text-gray-400 text-sm mt-1">마음에 드는 영화를 선택해보세요</p>
+                <p className="text-lg font-semibold">🎉 추천이 완료되었습니다!</p>
+                <p className="text-sm mt-1">마음에 드는 영화를 선택해보세요</p>
               </div>
 
               {/* 맞춤 추천 섹션 */}
               <div className="flex flex-col items-center w-full">
                 <div className="w-full max-w-fit">
-                  <h3 className="text-white font-bold text-lg mb-3 text-left">🎯 맞춤 추천</h3>
-                  <div className="flex gap-2 md:gap-3">
-                    <RecommendedList />
-                  </div>
+                  <RecommendedMoviesSection />
                 </div>
               </div>
 
               {/* 인기 영화 섹션 */}
               <div className="flex flex-col items-center w-full">
                 <div className="w-full max-w-fit">
-                  <h3 className="text-white font-bold text-lg mb-3 text-left">🔥 인기 영화</h3>
-                  <div className="flex gap-2 md:gap-3">
-                    <PopularList />
-                  </div>
+                  <PopularMoviesSection />
                 </div>
               </div>
 
@@ -187,9 +182,9 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
               <div className="flex justify-center mt-6">
                 <button
                   onClick={() => handleResetFilters()}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
-                  🔄 필터 다시 설정하기
+                  다시 추천받기
                 </button>
               </div>
             </div>
@@ -300,7 +295,7 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
                 // - 현재: 단순 중앙 정렬
                 // - 왼쪽 정렬로 바꾸려면: justify-start 사용
                 // - 오른쪽 정렬로 바꾸려면: justify-end 사용
-                <div className="w-full flex justify-center">
+                <div className="text-gray-800 dark:text-white w-full flex justify-center">
                   {msg.content}
                 </div>
               )}
@@ -312,103 +307,4 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
   );
 }
 
-// Helper components to subscribe to store changes within the chat bubble
-function RecommendedList() {
-  const { recommendedMovies, setDetailMovieId, removeRecommendedMovie, userId } = useMovieStore();
-
-  // localStorage에서 봤어요 목록 가져오기
-  const getWatchedMovies = (): number[] => {
-    if (!userId) return [];
-    const stored = localStorage.getItem(`watchedMovies_${userId}`);
-    return stored ? JSON.parse(stored) : [];
-  };
-
-  // localStorage에 봤어요 목록 저장하기
-  const saveWatchedMovie = (movieId: number) => {
-    if (!userId) return;
-    const watched = getWatchedMovies();
-    if (!watched.includes(movieId)) {
-      watched.push(movieId);
-      localStorage.setItem(`watchedMovies_${userId}`, JSON.stringify(watched));
-      console.log('✅ 봤어요 리스트에 추가:', movieId);
-    }
-  };
-
-  const handleAddToWatched = (movieId: number) => {
-    saveWatchedMovie(movieId);
-    // TODO: 추후 백엔드 API 호출로 교체
-    // await addWatchHistory(userId, movieId, 0);
-  };
-
-  const watchedMovieIds = getWatchedMovies();
-
-  // 항상 3칸 유지: 부족하면 빈 카드로 채우기
-  const createEmptyCard = (index: number) => ({
-    id: -100 - index,
-    title: "",
-    genres: [],
-    poster: "",
-    description: "조건에 맞는 영화가 없습니다",
-    popular: false,
-    watched: false,
-    isEmpty: true
-  });
-
-  const displayMovies = [...recommendedMovies];
-  while (displayMovies.length < 3) {
-    displayMovies.push(createEmptyCard(displayMovies.length));
-  }
-
-  return (
-    <>
-      {displayMovies.slice(0, 3).map((movie) => (
-        <MovieCard
-          key={movie.id}
-          movie={{
-            ...movie,
-            watched: movie.isEmpty ? false : watchedMovieIds.includes(movie.id)
-          }}
-          onClick={movie.isEmpty ? () => { } : () => setDetailMovieId(movie.id)}
-          onReRecommend={movie.isEmpty ? undefined : () => removeRecommendedMovie(movie.id)}
-          onAddToWatched={movie.isEmpty ? undefined : () => handleAddToWatched(movie.id)}
-          showReRecommend={!movie.isEmpty}
-        />
-      ))}
-    </>
-  );
-}
-
-function PopularList() {
-  const { popularMovies, setDetailMovieId } = useMovieStore();
-
-  // 항상 3칸 유지: 부족하면 빈 카드로 채우기
-  const createEmptyCard = (index: number) => ({
-    id: -200 - index,
-    title: "",
-    genres: [],
-    poster: "",
-    description: "인기 영화가 없습니다",
-    popular: true,
-    watched: false,
-    isEmpty: true
-  });
-
-  const displayMovies = [...popularMovies];
-  while (displayMovies.length < 3) {
-    displayMovies.push(createEmptyCard(displayMovies.length));
-  }
-
-  return (
-    <>
-      {displayMovies.slice(0, 3).map(movie => (
-        <MovieCard
-          key={movie.id}
-          movie={movie}
-          onClick={movie.isEmpty ? () => { } : () => setDetailMovieId(movie.id)}
-          showReRecommend={false}
-        />
-      ))}
-    </>
-  );
-}
 
