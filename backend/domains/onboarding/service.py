@@ -148,6 +148,10 @@ def get_onboarding_survey_movies(db: Session) -> SurveyMoviesResponse:
                 movie_id=selected_movie.movie_id,
                 mood_tag=mood_tag,
                 title=selected_movie.title,
+<<<<<<< HEAD
+                poster_path=selected_movie.poster_path,
+=======
+>>>>>>> origin/be-dev
             )
         )
 

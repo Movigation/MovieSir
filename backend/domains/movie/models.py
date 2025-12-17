@@ -30,6 +30,13 @@ class Movie(Base):
     popularity = Column(Float, nullable=True)
     tag_genome = Column(JSONB, nullable=True)
 
+    # [ERD 추가]
+    # Date, DateTime 임포트 필요할 수 있음 (상단 확인)
+    from sqlalchemy import Date, DateTime
+    from sqlalchemy.sql import func
+    release_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
     # === Relationships ===
     
     # [Set B] 온보딩 설문 답변 관계
@@ -64,6 +71,10 @@ class MovieVector(Base):
 
     movie_id = Column(Integer, ForeignKey("movies.movie_id", ondelete="CASCADE"), primary_key=True)
     embedding = Column(Vector(768))  # 모델 차원수에 맞춰 설정 (예: 768)
+    
+    # [ERD 추가]
+    from sqlalchemy import DateTime
+    updated_at = Column(DateTime, nullable=True)
 
     movie = relationship("Movie", back_populates="vectors")
 
@@ -79,6 +90,9 @@ class OttProvider(Base):
     
     # [Set B] 로고 경로 (프론트엔드 표시용)
     logo_path = Column(String, nullable=True)
+    
+    # [ERD 추가]
+    display_priority = Column(Integer, default=100)
 
     # [Set B] 유저가 구독 중인 OTT
     user_mappings = relationship(

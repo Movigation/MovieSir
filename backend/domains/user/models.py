@@ -40,6 +40,16 @@ class User(Base):
         DateTime,
         nullable=True,  # 탈퇴 안 했으면 NULL
     )
+    
+    # [Level 1 로그아웃 구현용]
+    refresh_token = Column(String, nullable=True)
+
+    # [ERD 추가]
+    role = Column(String, default="USER")
+    is_email_verified = Column(Boolean, default=False)
+    profile_image_url = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # === REG 도메인에서 쓰는 관계들 ===
     ott_subscriptions = relationship(
@@ -76,19 +86,19 @@ class UserOnboardingAnswer(Base):
 
     __tablename__ = "user_onboarding_answers"
 
+    from sqlalchemy import Integer
+    
+    # [ERD 일치 수정] SERIAL id PK 추가
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.user_id", ondelete="CASCADE"),
-        primary_key=True,
+        nullable=False,
     )
     movie_id = Column(
         ForeignKey("movies.movie_id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    selected_at = Column(
-        DateTime,
         nullable=False,
-        server_default=func.now(),
     )
 
     user = relationship("User", back_populates="onboarding_answers")
