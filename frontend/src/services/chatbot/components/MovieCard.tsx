@@ -95,8 +95,8 @@ export default function MovieCard({ movie, onClick, onReRecommend, onAddToWatche
                         </div>
                     )}
 
-                    {/* 봤어요 버튼 */}
-                    {showReRecommend && onAddToWatched && (
+                    {/* 봤어요 버튼 - 주석처리됨 */}
+                    {/* {showReRecommend && onAddToWatched && (
                         <button
                             onClick={handleAddToWatched}
                             className={`absolute top-2 right-2 p-2 rounded-full shadow-md transition-all duration-300 backdrop-blur-sm z-10 ${isWatched
@@ -108,7 +108,7 @@ export default function MovieCard({ movie, onClick, onReRecommend, onAddToWatche
                         >
                             <Eye size={16} />
                         </button>
-                    )}
+                    )} */}
                 </div>
 
                 {/* 제목 및 장르 */}

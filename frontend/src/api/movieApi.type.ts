@@ -64,13 +64,7 @@ export interface BackendMovieRecommendation {
 }
 
 export interface BackendRecommendResponse {
-    recommendations: BackendMovieRecommendation[];
-    total: number;
-    filters_applied: {
-        runtime: number;
-        genres: number[];
-        include_adult: boolean;
-    };
+    results: BackendMovieRecommendation[];  // ✅ recommendations → results
 }
 
 // [용도] 장르 매핑: 한글 이름 <-> ID

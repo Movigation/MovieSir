@@ -9,7 +9,7 @@ interface GenreFilterStepProps {
     onRecommend: () => void;
 }
 
-const GENRES = ["모험", "애니메이션", "청소년", "코미디", "판타지", "로맨스", "드라마", "액션", "범죄", "스릴러", "호러", "미스터리", "SF", "가족", "다큐멘터리", "전쟁", "뮤지컬", "서부", "기타"];
+const GENRES = ["드라마", "코미디", "스릴러", "로맨스", "액션", "다큐멘터리", "공포", "범죄", "모험", "가족", "SF", "미스터리", "TV 영화", "애니메이션", "판타지", "음악", "역사", "전쟁", "서부"];
 
 export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStepProps) {
     const { filters, toggleGenre, toggleExcludeAdult } = useMovieStore();

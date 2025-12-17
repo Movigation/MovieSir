@@ -12,38 +12,14 @@ import type {
     MovieRecommendationResult,
     BackendRecommendResponse,
     BackendMovieRecommendation,
-    GenreMapping,
     MovieDetail
 } from "@/api/movieApi.type";
-
-// [상수] 장르 이름 ↔ 장르 ID 매핑 (백엔드 dummy_movies.json 기준)
-// 백엔드의 장르 ID와 정확히 일치해야 함
-const GENRE_NAME_TO_ID: GenreMapping = {
-    "액션": 1,
-    "모험": 2,
-    "애니메이션": 3,
-    "코미디": 4,
-    "범죄": 5,
-    "다큐멘터리": 6,
-    "드라마": 7,
-    "가족": 8,
-    "판타지": 9,
-    "역사": 10,
-    "공포": 11,
-    "음악": 12,
-    "미스터리": 13,
-    "로맨스": 14,
-    "SF": 15,
-    "스릴러": 16,
-    "전쟁": 17,
-    "서부": 18
-};
 
 
 
 // 특정 영화 조회
 export const getMovie = async (movieId: number): Promise<Movie> => {
-    const response = await axiosInstance.get(`/movies/${movieId}`);
+    const response = await axiosInstance.get(`api/movies/${movieId}`);
     const movie = response.data;
 
     // 백엔드 응답을 프론트엔드 Movie 타입으로 변환
@@ -65,26 +41,33 @@ export const getMovie = async (movieId: number): Promise<Movie> => {
 // [사용법] const detail = await getMovieDetail(123);
 export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
     try {
-        const response = await axiosInstance.get(`/movies/${movieId}`);
-        const movie = response.data;
+        const response = await axiosInstance.get(`/api/movies/${movieId}`);
+        const data = response.data;
+        const movie = data.info;  // ✅ info 객체에서 영화 정보 추출
+        const otts = data.otts || [];  // ✅ otts 배열 추출
 
         // 백엔드 응답을 MovieDetail 타입으로 변환
         return {
             movie_id: movie.movie_id,
             title: movie.title,
-            overview: movie.overview,
-            genres: movie.genres,
-            release_date: movie.release_date,
-            runtime: movie.runtime,
-            vote_average: movie.vote_average,
-            vote_count: movie.vote_count,
-            popularity: movie.popularity,
-            poster_url: movie.poster_url,
-            backdrop_url: movie.backdrop_url,
+            overview: movie.overview || "줄거리 정보가 없습니다.",  // ✅ 디폴트값
+            genres: movie.genres || [],  // ✅ 디폴트값
+            release_date: movie.release_date || "2000-01-01",  // ✅ 디폴트값
+            runtime: movie.runtime || 0,
+            vote_average: movie.vote_average || 0,
+            vote_count: movie.vote_count || 0,
+            popularity: movie.popularity || 0,
+            poster_url: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "",  // ✅ URL 조합
+            backdrop_url: movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : "",
             director: movie.director,
             cast: movie.cast,
             tagline: movie.tagline,
-            ott_providers: movie.ott_providers,
+            ott_providers: otts.map((ott: any) => ({  // ✅ otts → ott_providers 변환
+                ott_id: ott.provider_id,
+                ott_name: ott.provider_name,
+                ott_logo: "",  // 백엔드에서 제공 안 함
+                watch_url: ott.url
+            })),
             user_status: movie.user_status || {
                 liked: false,
                 watched: false,
@@ -151,40 +134,40 @@ export const postRecommendations = async (filters: {
     try {
         // 1. 시간 변환: "02:30" -> 150분
         const [hours, minutes] = filters.time.split(':').map(Number);
-        const runtime = hours * 60 + minutes;
+        const runtimeLimit = hours * 60 + minutes;
 
-        // 2. 장르 변환: ["SF", "드라마"] -> [15, 7]
+        // 2. 장르: 문자열 배열 그대로 사용 (ID 변환 불필요)
         const genreIds = filters.genres
-            .map(genreName => GENRE_NAME_TO_ID[genreName])
-            .filter(id => id !== undefined);  // 매핑되지 않은 장르 제외
+            .map(genreName => genreName)
+            .filter(id => id !== undefined);  // undefined 제외
 
         // 3. 백엔드 API 호출
-        const response = await axiosInstance.post<BackendRecommendResponse>("/chatbot/recommend", {
-            runtime,
-            genres: genreIds,
-            include_adult: !filters.excludeAdult  // excludeAdult의 반대로 전달
+        const response = await axiosInstance.post<BackendRecommendResponse>("/api/recommend", {
+            runtime_limit: runtimeLimit,  // ✅ 수정 1/5: runtime → runtime_limit
+            genres: genreIds,  // ✅ 수정 2/5: 문자열 배열 그대로
+            exclude_adult: filters.excludeAdult || false  // ✅ 수정 3/5: include_adult → exclude_adult (반대 아님!)
         });
 
         // 4. 백엔드 응답을 프론트엔드 Movie 타입으로 변환
-        const backendMovies = response.data.recommendations;
+        const backendMovies = response.data.results;  // ✅ 수정 4/5: recommendations → results
 
         // Movie 타입으로 변환하는 헬퍼 함수
-        const convertToMovie = (backendMovie: BackendMovieRecommendation): Movie => ({
-            id: backendMovie.movie_id,
+        const convertToMovie = (backendMovie: any): Movie => ({
+            id: backendMovie.movie_id,  // ✅ 수정 4/5: movie_id 매핑
             title: backendMovie.title,
             genres: backendMovie.genres,
             rating: backendMovie.vote_average,
-            poster: backendMovie.poster_url,
+            poster: `https://image.tmdb.org/t/p/w500${backendMovie.poster_path}`,  // ✅ 수정 5/5: URL 조합
             description: backendMovie.overview,
-            runtime: backendMovie.runtime,  // 러닝타임 추가
-            popular: false,  // 백엔드에서 구분하지 않으므로 기본값
-            watched: false   // 시청 여부는 별도로 관리
+            runtime: backendMovie.runtime,
+            popular: false,
+            watched: false
         })
 
         // 5. algorithmic과 popular로 분리
-        // 백엔드가 vote_average 기준으로 정렬해서 주므로:
-        // - 상위 3개: algorithmic (필터 기반 추천)
-        // - 그 다음 3개: popular (인기 영화)
+        // 백엔드가 AI 추천 순서대로 반환하므로:
+        // - 전체를 algorithmic으로 사용
+        // - popular는 별도 로직 필요 (일단 빈 배열)
         const allMovies = backendMovies.map(convertToMovie);
 
         console.log('전체 추천 영화 개수:', allMovies.length);
@@ -440,13 +423,13 @@ export const getUserRecommendations = async (userId: number): Promise<Recommenda
 // ============================================================
 
 // [용도] 영화 봤어요 체크 (백엔드에 기록)
-// [API 스펙] POST /movies/{movie_id}/watched
+// [API 스펙] POST api/movies/{movie_id}/watched
 // [사용법] await markMovieAsWatched(550);
 // ⚠️ 현재 주석처리됨 - 필요 시 주석 해제하여 사용
 /*
 export const markMovieAsWatched = async (movieId: number): Promise<void> => {
     try {
-        await axiosInstance.post(`/movies/${movieId}/watched`);
+        await axiosInstance.post(`api/movies/${movieId}/watched`);
         console.log('✅ 영화 봤어요 체크 완료:', movieId);
     } catch (error) {
         console.error('❌ 영화 봤어요 체크 실패:', error);
