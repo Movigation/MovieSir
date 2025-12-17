@@ -12,6 +12,7 @@ export interface Movie {
     description: string;
     popular: boolean;
     watched?: boolean;
+    runtime?: number;  // 러닝타임 (분 단위)
     isEmpty?: boolean;  // 빈 카드 플래그 (추천 결과 없을 때 사용)
 }
 

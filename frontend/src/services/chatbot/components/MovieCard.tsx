@@ -116,6 +116,14 @@ export default function MovieCard({ movie, onClick, onReRecommend, onAddToWatche
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {movie.title}
                     </h3>
+
+                    {/* 러닝타임 */}
+                    {movie.runtime && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+                            <span>{movie.runtime}분</span>
+                        </p>
+                    )}
+
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {movie.genres.join(", ")}
                     </p>
