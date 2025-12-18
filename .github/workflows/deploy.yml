@@ -40,37 +40,34 @@ jobs:
 
   deploy-gpu-server:
     runs-on: ubuntu-latest
-    name: Deploy to GPU Server (via App Server)
-    needs: deploy-app-server  # App Server 배포 후 실행
+    name: Deploy to GPU Server
+    needs: deploy-app-server
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Deploy to GPU Server via App Server (Jump Host)
+      - name: Deploy to GPU Server via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.APP_HOST }}
-          username: ${{ secrets.APP_USER }}
+          host: ${{ secrets.GPU_HOST }}
+          username: ${{ secrets.GPU_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "📌 SSH to GPU Server via App Server"
-            ssh -o StrictHostKeyChecking=no ${{ secrets.GPU_USER }}@${{ secrets.GPU_HOST }} << 'ENDSSH'
-              cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+            cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
 
-              echo "📌 Fetch latest code"
-              cd ~/MovieSir-middle
-              git fetch --all
-              git reset --hard origin/main
+            echo "📌 Fetch latest code"
+            cd ~/MovieSir-middle
+            git fetch --all
+            git reset --hard origin/main
 
-              echo "📌 Stop old containers"
-              docker compose -f docker-compose.gpu.yml down || true
+            echo "📌 Stop old containers"
+            docker compose -f docker-compose.gpu.yml down || true
 
-              echo "📌 Cleanup docker cache"
-              docker system prune -af || true
+            echo "📌 Cleanup docker cache"
+            docker system prune -af || true
 
-              echo "📌 Build & start AI container"
-              docker compose -f docker-compose.gpu.yml up -d --build
+            echo "📌 Build & start AI container"
+            docker compose -f docker-compose.gpu.yml up -d --build
 
-              echo "✅ GPU Server deployment complete"
-            ENDSSH
+            echo "✅ GPU Server deployment complete"
