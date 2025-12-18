@@ -42,9 +42,9 @@ def health_check():
 
 class RecommendRequest(BaseModel):
     user_movie_ids: List[int]
-    top_k: int = 50
+    available_time: int = 180
+    top_k: int = 20
     preferred_genres: Optional[List[str]] = None
-    max_runtime: Optional[int] = None
     preferred_otts: Optional[List[str]] = None
 
 class RecommendResponse(BaseModel):
@@ -58,11 +58,11 @@ def recommend(request: RecommendRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
 
     try:
-        result = recommender.recommend(
+        recommendation_type, result = recommender.recommend(
             user_movie_ids=request.user_movie_ids,
+            available_time=request.available_time,
             top_k=request.top_k,
             preferred_genres=request.preferred_genres,
-            max_runtime=request.max_runtime,
             preferred_otts=request.preferred_otts
         )
 
