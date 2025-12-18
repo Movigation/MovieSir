@@ -2,14 +2,18 @@
 // [사용법] import { OnboardingMovie, OTTSubmitRequest } from "@/api/onboardingApi.type";
 
 // ------------------------------
-// 온보딩 영화 카드 타입
+// 온보딩 영화 카드 타입 (백엔드 응답)
 // ------------------------------
 export interface OnboardingMovie {
-    id: number;
+    movie_id: number;
+    mood_tag: string;
     title: string;
-    genres: string[];
-    posterUrl?: string;
-    popularity?: number;
+    poster_path?: string; // TMDB 포스터 경로 (예: "/abc123.jpg")
+}
+
+// 온보딩 설문 영화 리스트 응답
+export interface SurveyMoviesResponse {
+    movies: OnboardingMovie[];
 }
 
 // ------------------------------

@@ -26,7 +26,7 @@ export default function PopularMoviesSection() {
         <>
             <div className="flex items-center gap-2 mb-3">
                 <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left">
-                    🔥 인기 영화
+                    인기 영화
                 </h3>
                 {totalRuntime > 0 && (
                     <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">

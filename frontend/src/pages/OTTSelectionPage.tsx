@@ -1,13 +1,15 @@
 // [용도] OTT 플랫폼 선택 페이지 - 영화관 스타일
 // [사용법] /onboarding/ott 라우트에서 사용
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingStore } from "@/store/onboardingStore";
+import { authAxiosInstance } from "@/api/axiosInstance";
 
 // OTT 로고 SVG imports
 import NetflixLogoSvg from "@/assets/logos/NETFLEX_Logo.svg";
 import DisneyLogoSvg from "@/assets/logos/Disney+_logo.svg";
-import PrimeLogoSvg from "@/assets/logos/Amazon_Prime_Logo.svg";
+// import googleMovieLogoSvg from "@/assets/logos/google_movie.svg";
 import WavveLogoSvg from "@/assets/logos/WAVVE_Logo.svg";
 import TvingLogoSvg from "@/assets/logos/TVING_Logo.svg";
 import WatchaLogoSvg from "@/assets/logos/WATCHA_Logo_Main.svg";
@@ -17,7 +19,7 @@ import AppleLogoSvg from "@/assets/logos/Apple_TV_logo.svg";
 // OTT 로고 컴포넌트 - 실제 SVG 파일 사용
 const NetflixLogo = () => <img src={NetflixLogoSvg} alt="Netflix" className="h-32 w-auto" />;
 const DisneyLogo = () => <img src={DisneyLogoSvg} alt="Disney+" className="h-16 w-auto" />;
-const PrimeLogo = () => <img src={PrimeLogoSvg} alt="Prime Video" className="h-8 w-auto" />;
+// const googleMovieLogo = () => <img src={googleMovieLogoSvg} alt="google movie" className="h-8 w-auto" />;
 const WavveLogo = () => <img src={WavveLogoSvg} alt="Wavve" className="h-8 w-auto" />;
 const TvingLogo = () => <img src={TvingLogoSvg} alt="TVING" className="h-8 w-auto" />;
 const WatchaLogo = () => <img src={WatchaLogoSvg} alt="Watcha" className="h-8 w-auto" />;
@@ -32,16 +34,33 @@ const OTT_PLATFORMS = [
     { provider_id: 1883, name: "TVING", Logo: TvingLogo },
     // { provider_id: 0, name: "Coupang Play", Logo: CoupangLogo, bg: "bg-[#0D0D0D]" },
     { provider_id: 350, name: "Apple TV+", Logo: AppleLogo },
-    { provider_id: 119, name: "Prime Video", Logo: PrimeLogo }
+    // { provider_id: 3, name: "google movie", Logo: googleMovieLogo }
 ];
 
 export default function OTTSelectionPage() {
     const navigate = useNavigate();
     const { provider_ids, toggleOTT } = useOnboardingStore();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleNext = () => {
-        // OTT 선택 완료 후 다음 단계로 이동
-        navigate("/onboarding/movies");
+    const handleNext = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            // OTT 선택 데이터를 백엔드에 저장
+            await authAxiosInstance.post('/onboarding/ott', {
+                provider_ids: provider_ids
+            });
+
+            // 저장 성공 후 다음 단계로 이동
+            navigate("/onboarding/movies");
+        } catch (err: any) {
+            console.error('OTT 선택 저장 실패:', err);
+            setError(err.response?.data?.message || 'OTT 선택 저장에 실패했습니다.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -107,13 +126,24 @@ export default function OTTSelectionPage() {
                     </p>
                 </div>
 
+                {/* 에러 메시지 */}
+                {error && (
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
+                        <p className="text-red-400 text-sm text-center">{error}</p>
+                    </div>
+                )}
+
                 {/* 버튼 - 미니멀 스타일 */}
                 <div className="flex gap-4 justify-center">
                     <button
                         onClick={handleNext}
-                        className="px-8 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+                        disabled={isLoading}
+                        className={`px-8 py-3 font-semibold rounded-xl transition-colors ${isLoading
+                            ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                            : "bg-white text-black hover:bg-gray-100"
+                            }`}
                     >
-                        다음 단계
+                        {isLoading ? "저장 중..." : "다음 단계"}
                     </button>
                 </div>
             </div>

@@ -61,6 +61,8 @@ ai/training/original_data/*
 ai/training/sbert_data/index/*
 # 그 중에서 .gitkeep만 다시 살림
 !ai/training/sbert_data/index/.gitkeep
+ai/training/lightgcn_model/*
+!ai/training/lightgcn_model/.gitkeep
 
 
 # Secrets
@@ -77,3 +79,6 @@ temp/
 
 # Duplicate/Nested
 MovieSir/
+
+#sql
+movigation.sql

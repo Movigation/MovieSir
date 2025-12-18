@@ -6,11 +6,7 @@ from sqlalchemy.orm import Session
 from backend.core.db import get_db
 from backend.domains.user.models import User
 from backend.domains.auth.schemas import LoginRequest, LoginResponse, UserResponse
-from backend.domains.auth.utils import create_access_token
-<<<<<<< HEAD
-from backend.domains.auth import utils as from_utils # alias for clarity
-=======
->>>>>>> origin/be-dev
+from backend.domains.auth.utils import create_access_token, get_current_user
 from backend.utils.password import verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -46,7 +42,6 @@ def login(
             detail="탈퇴한 회원입니다",
         )
     
-<<<<<<< HEAD
     # 4. JWT 토큰 생성 (둘 다 새로 발급)
     access_token = create_access_token(data={"sub": str(user.user_id)})
     refresh_token = create_access_token(data={"sub": str(user.user_id)}) # 실제로는 만료시간을 다르게 설정해야 함 (예: 7일)
@@ -55,13 +50,6 @@ def login(
     user.refresh_token = refresh_token
     db.add(user)
     db.commit()
-=======
-    # 4. JWT 토큰 생성
-    access_token = create_access_token(data={"sub": str(user.user_id)})
-    
-    # refresh_token은 일단 access_token과 동일하게 설정 (나중에 개선 가능)
-    refresh_token = access_token
->>>>>>> origin/be-dev
     
     # 5. 사용자 정보 응답
     user_response = UserResponse(
@@ -76,13 +64,12 @@ def login(
         refresh_token=refresh_token,
         user=user_response,
     )
-<<<<<<< HEAD
 
 @router.post("/logout", summary="로그아웃")
 def logout(
     db: Session = Depends(get_db),
     # 현재 로그인한 유저를 가져옴 (토큰 검증 포함)
-    current_user: User = Depends(from_utils.get_current_user) 
+    current_user: User = Depends(get_current_user) 
 ):
     """
     로그아웃 API (Level 1)
@@ -95,5 +82,3 @@ def logout(
     db.commit()
     
     return {"message": "로그아웃 되었습니다."}
-=======
->>>>>>> origin/be-dev

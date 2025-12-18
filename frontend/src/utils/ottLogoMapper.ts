@@ -41,6 +41,13 @@ const OTT_LOGO_MAP: Record<string, string> = {
     'WAVVE': '/src/assets/logos/WAVVE_Logo.svg',
     'Wavve': '/src/assets/logos/WAVVE_Logo.svg',
     '웨이브': '/src/assets/logos/WAVVE_Logo.svg',
+
+    // ✅ 구글 플레이 무비 추가
+    'Google Play Movies': '/src/assets/logos/google_movie.svg',
+    'Google Play': '/src/assets/logos/google_movie.svg',
+    'Google Movies': '/src/assets/logos/google_movie.svg',
+    'GOOGLE_PLAY': '/src/assets/logos/google_movie.svg',
+    '구글 플레이': '/src/assets/logos/google_movie.svg',
 };
 
 /**
