@@ -38,12 +38,12 @@ class AuthToken(BaseModel):  # JWT 토큰 응답 포맷
 
 class SignupConfirmResponse(
     BaseModel
-):  # 회원가입, 회원가입 완료시 별도 로그인 필요 없이 로그인된 상태로 전환
+):  # 회원가입 완료 응답 - 토큰은 HttpOnly 쿠키로 전달
 
     user_id: str
     email: EmailStr
+    nickname: str  # ✅ 닉네임 추가
     onboarding_completed: bool
-    token: AuthToken
 
 
 

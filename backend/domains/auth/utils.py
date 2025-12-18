@@ -6,8 +6,7 @@ from typing import Optional
 
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.core.db import get_db
@@ -21,9 +20,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 # 일단은 단일토큰에 일주일로 설정
 # 자동로그인 기능 추가할때는 refresh 토큰을 추가해서 access 토큰을 갱신하는 방향으로 수정
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 # ======================================================
@@ -47,17 +43,26 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 # ======================================================
-# 현재 로그인된 유저 조회
+# 현재 로그인된 유저 조회 (쿠키 기반)
 # ======================================================
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    access_token: Optional[str] = Cookie(None),  # HttpOnly 쿠키에서 자동 추출
     db: Session = Depends(get_db),
 ) -> User:
+    # -----------------------------
+    # 토큰 존재 여부 확인
+    # -----------------------------
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="인증이 필요합니다.",
+        )
+    
     # -----------------------------
     # 토큰 디코딩
     # -----------------------------
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
     except ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
