@@ -178,9 +178,6 @@ def confirm_signup(
     redis.delete(key)
 
     # JWT 발급
-<<<<<<< Updated upstream
-    token = create_access_token({"sub": str(user.user_id)})
-=======
     token = create_access_token({"sub": str(user.user_id), "nickname": user.nickname})
     
     # 환경별 쿠키 보안 설정
@@ -207,17 +204,14 @@ def confirm_signup(
         max_age=604800,  # 7일
         path="/",
     )
->>>>>>> Stashed changes
 
     return SignupConfirmResponse(
         user_id=str(user.user_id),
         email=user.email,
+        nickname=user.nickname,
         onboarding_completed=user.onboarding_completed_at is not None,
-        token={
-            "access_token": token,
-            "token_type": "bearer",
-        },
     )
+
 
 
 
