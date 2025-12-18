@@ -1,0 +1,76 @@
+name: Deploy to Servers
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy-app-server:
+    runs-on: ubuntu-latest
+    name: Deploy to App Server
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to App Server via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+
+            echo "📌 Fetch latest code"
+            cd ~/MovieSir-middle
+            git fetch --all
+            git reset --hard origin/main
+
+            echo "📌 Stop old containers"
+            docker compose down || true
+
+            echo "📌 Cleanup docker cache"
+            docker system prune -af || true
+
+            echo "📌 Build & start containers"
+            docker compose up -d --build
+
+            echo "✅ App Server deployment complete"
+
+  deploy-gpu-server:
+    runs-on: ubuntu-latest
+    name: Deploy to GPU Server (via App Server)
+    needs: deploy-app-server  # App Server 배포 후 실행
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to GPU Server via App Server (Jump Host)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "📌 SSH to GPU Server via App Server"
+            ssh -o StrictHostKeyChecking=no ${{ secrets.GPU_USER }}@${{ secrets.GPU_HOST }} << 'ENDSSH'
+              cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+
+              echo "📌 Fetch latest code"
+              cd ~/MovieSir-middle
+              git fetch --all
+              git reset --hard origin/main
+
+              echo "📌 Stop old containers"
+              docker compose -f docker-compose.gpu.yml down || true
+
+              echo "📌 Cleanup docker cache"
+              docker system prune -af || true
+
+              echo "📌 Build & start AI container"
+              docker compose -f docker-compose.gpu.yml up -d --build
+
+              echo "✅ GPU Server deployment complete"
+            ENDSSH

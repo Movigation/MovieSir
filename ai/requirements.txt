@@ -1,0 +1,9 @@
+fastapi==0.124.0
+uvicorn[standard]==0.29.0
+pydantic==2.12.5
+psycopg2-binary==2.9.11
+pgvector
+numpy
+scipy
+scikit-learn
+python-dotenv

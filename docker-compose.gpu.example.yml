@@ -1,0 +1,24 @@
+# MovieSir - GPU Server (Template)
+# 사용법: cp docker-compose.gpu.example.yml docker-compose.gpu.yml 후 값 수정
+
+services:
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: moviesir-ai
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_HOST=localhost
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=moviesir
+      - DATABASE_USER=USER
+      - DATABASE_PASSWORD=PASSWORD
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    restart: unless-stopped
