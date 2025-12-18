@@ -53,6 +53,7 @@ jobs:
           host: ${{ secrets.GPU_HOST }}
           username: ${{ secrets.GPU_USER }}
           key: ${{ secrets.SSH_KEY }}
+          debug: true
           script: |
             cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
 
