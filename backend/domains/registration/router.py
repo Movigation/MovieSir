@@ -1,6 +1,6 @@
 # backend/domains/registration/router.py
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from backend.domains.auth.utils import get_current_user
@@ -57,9 +57,10 @@ def verify_signup_code(
 )
 def confirm_signup(
     payload: SignupConfirm,
+    response: Response,  # ✅ Response 추가 (쿠키 설정용)
     db: Session = Depends(get_db),
 ) -> SignupConfirmResponse:
-    return service.confirm_signup(db, payload)
+    return service.confirm_signup(db, payload, response)
 
 
 

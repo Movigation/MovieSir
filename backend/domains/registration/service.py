@@ -129,9 +129,11 @@ def verify_code(payload: SignupConfirm) -> dict:
 # REG-01-02 이메일 인증 후 실제 유저 생성
 # ========================================
 def confirm_signup(
-    db: Session, payload: SignupConfirm
-) -> SignupConfirmResponse:  # 인증코드 확인하고 가입 승인, 토큰 발급
+    db: Session, payload: SignupConfirm, response
+) -> SignupConfirmResponse:  # 인증코드 확인하고 가입 승인, 토큰은 쿠키로 발급
 
+    import os  # 환경변수 사용을 위해 import
+    
     redis = get_redis_client()
     key = _redis_key(payload.email)
 
@@ -179,15 +181,37 @@ def confirm_signup(
 
     # JWT 발급
     token = create_access_token({"sub": str(user.user_id)})
+    
+    # 환경별 쿠키 보안 설정
+    COOKIE_SECURE = os.getenv("ENVIRONMENT", "development") == "production"
+    COOKIE_SAMESITE = "lax"
+    
+    # HttpOnly 쿠키에 토큰 설정
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=1800,  # 30분
+        path="/",
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=token,  # 실제로는 refresh token을 따로 생성해야 함
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=604800,  # 7일
+        path="/",
+    )
 
     return SignupConfirmResponse(
         user_id=str(user.user_id),
         email=user.email,
+        nickname=user.nickname,
         onboarding_completed=user.onboarding_completed_at is not None,
-        token={
-            "access_token": token,
-            "token_type": "bearer",
-        },
     )
 
 
