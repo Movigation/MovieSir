@@ -15,14 +15,17 @@ recommender = None
 async def load_model():
     global recommender
     try:
+        db_config = {
+            'host': os.getenv("DATABASE_HOST", "localhost"),
+            'port': int(os.getenv("DATABASE_PORT", 5432)),
+            'database': os.getenv("DATABASE_NAME", "moviesir"),
+            'user': os.getenv("DATABASE_USER", "movigation"),
+            'password': os.getenv("DATABASE_PASSWORD", "")
+        }
         recommender = HybridRecommender(
-            db_host=os.getenv("DATABASE_HOST", "localhost"),
-            db_port=int(os.getenv("DATABASE_PORT", 5432)),
-            db_name=os.getenv("DATABASE_NAME", "moviesir"),
-            db_user=os.getenv("DATABASE_USER", "movigation"),
-            db_password=os.getenv("DATABASE_PASSWORD", ""),
-            lightgcn_data_path="training/lightgcn_data",
-            lightgcn_model_path="training/lightgcn_model/best_model.pt"
+            db_config=db_config,
+            lightgcn_model_path="training/lightgcn_model/best_model.pt",
+            lightgcn_data_path="training/lightgcn_data"
         )
         print("✅ AI Model loaded successfully")
     except Exception as e:
