@@ -22,8 +22,8 @@ const DisneyLogo = () => <img src={DisneyLogoSvg} alt="Disney+" className="h-16 
 // const googleMovieLogo = () => <img src={googleMovieLogoSvg} alt="google movie" className="h-8 w-auto" />;
 const WavveLogo = () => <img src={WavveLogoSvg} alt="Wavve" className="h-8 w-auto" />;
 const TvingLogo = () => <img src={TvingLogoSvg} alt="TVING" className="h-8 w-auto" />;
-const WatchaLogo = () => <img src={WatchaLogoSvg} alt="Watcha" className="h-8 w-auto" />;
-const AppleLogo = () => <img src={AppleLogoSvg} alt="Apple TV+" className="h-8 w-auto" />;
+const WatchaLogo = () => <img src={WatchaLogoSvg} alt="Watcha" className="h-12 w-auto" />;
+const AppleLogo = () => <img src={AppleLogoSvg} alt="Apple TV+" className="h-12 w-auto" />;
 // const CoupangLogo = () => <img src={CoupangLogoSvg} alt="Coupang Play" className="h-16 w-auto" />;
 
 const OTT_PLATFORMS = [
@@ -81,7 +81,7 @@ export default function OTTSelectionPage() {
                 </div>
 
                 {/* OTT 그리드 - 미니멀 스타일 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
                     {OTT_PLATFORMS.map((platform) => {
                         const isSelected = provider_ids.includes(platform.provider_id);
                         const { Logo } = platform;

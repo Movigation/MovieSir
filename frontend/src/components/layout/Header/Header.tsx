@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { HelpCircle, LogIn, User, LogOut, Moon, Sun } from 'lucide-react';
+import { HelpCircle, LogIn, User, LogOut, Moon, Sun, Home } from 'lucide-react';
 // import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import LoginModal from "@/services/auth/components/LoginModal/LoginModal";
@@ -44,39 +44,30 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
   return (
     <header
       /* [디자인] 헤더 컨테이너 */
-      /* w-full: 전체 너비 */
-      /* px-5 py-3: 좌우 여백 20px, 위아래 여백 12px */
-      /* flex items-center justify-between: 좌우 양쪽 정렬 (로고 왼쪽, 메뉴 오른쪽) */
-      /* bg-white: 흰색 배경 (라이트 모드) */
-      /* dark:bg-gray-900: 다크모드에서 어두운 배경 */
-      /* transition-colors duration-300: 배경색 변화 애니메이션 (0.3초) */
-      className="w-full px-4 py-4 sm:px-5 sm:py-3 flex items-center justify-between bg-transparent dark:bg-transparent z-nav"
+      /* 모바일: 하단 고정 네비게이션 바 (모든 버튼 균등 배치) */
+      /* 데스크톱: 상단 헤더 */
+      className="w-full px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav"
     >
-      {/* 로고 */}
-      <div
-        /* [디자인] 로고 텍스트 */
-        /* text-xl: 모바일 (20px) */
-        /* sm:text-2xl: 태블릿 이상 (24px) */
-        /* text-blue-400: 파란색 텍스트 (브랜드 색상 변경 가능) */
-        /* font-bold: 굵은 글씨 */
-        /* cursor-pointer: 마우스 커서를 포인터로 변경 (클릭 가능 표시) */
-        className="text-xl sm:text-2xl text-blue-400 font-bold cursor-pointer "
-        onClick={() => {
-          // 챗봇 닫기 이벤트 발생
-          window.dispatchEvent(new CustomEvent('closeChatbot'));
-          // 메인 페이지로 이동
-          navigate('/');
-          resetChatbot();
-        }}
-      >
-        MOVISIR {/* 로고 텍스트 변경 가능 */}
+      {/* 데스크톱 전용 로고 */}
+      <div className="hidden sm:block">
+        <button
+          className="text-2xl text-blue-400 font-bold cursor-pointer hover:scale-110 transition-transform"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('closeChatbot'));
+            navigate('/');
+            resetChatbot();
+          }}
+        >
+          MOVISIR
+        </button>
       </div>
 
-      {/* 메뉴 */}
+      {/* 메뉴 - 모바일: 전체 너비 균등 배치, 데스크톱: 우측 정렬 */}
       <div
         /* [디자인] 메뉴 컨테이너 */
-        /* flex items-center: 가로 방향으로 요소 배치하고 세로 중앙 정렬 */
-        className="flex items-center gap-4 sm:gap-4"
+        /* 모바일: 전체 너비로 모든 아이콘 균등 배치 */
+        /* 데스크톱: 우측에 배치 */
+        className="flex items-center w-full justify-evenly sm:w-auto sm:justify-start gap-4 sm:gap-8"
       >
         {/* 도움말 */}
         <button
@@ -97,6 +88,19 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
               <LogIn size={20} className="sm:hidden" />
               <span className="hidden sm:inline">로그인</span>
             </button>
+
+            {/* 홈 아이콘 - 모바일에서만 표시 (3번째 위치) */}
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('closeChatbot'));
+                navigate('/');
+                resetChatbot();
+              }}
+              className="sm:hidden text-blue-400 hover:scale-110 transition-transform"
+            >
+              <Home size={20} />
+            </button>
+
             <button
               onClick={() => setSignupOpen(true)}
               className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
@@ -108,15 +112,31 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
         ) : (
           <>
             <button
-              onClick={() => navigate('/mypage')}
+              onClick={() => {
+                // navigate('/mypage'); // 개발 중
+                alert('마이페이지는 개발중인 기능입니다.');
+              }}
               className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
             >
               <User size={20} className="sm:hidden" />
               <span className="hidden sm:inline">마이페이지</span>
             </button>
+
+            {/* 홈 아이콘 - 모바일에서만 표시 (3번째 위치) */}
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('closeChatbot'));
+                navigate('/');
+                resetChatbot();
+              }}
+              className="sm:hidden text-blue-400 hover:scale-110 transition-transform"
+            >
+              <Home size={20} />
+            </button>
+
             <button
               onClick={handleLogout}
-              className="text-l sm:text-sm font-medium px-2 py-1 sm:px-3 sm:py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all hover:scale-105 flex items-center gap-1"
+              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
             >
               <LogOut size={20} className="sm:hidden" />
               <span className="hidden sm:inline">로그아웃</span>
@@ -151,7 +171,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">주요 기능</h3>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>AI 챗봇을 통한 맞춤 영화 추천</li>
+                <li>AI 를 통한 맞춤 영화 추천</li>
                 <li>시청 시간, 장르 등 다양한 필터 지원</li>
                 <li>영화 상세 정보 확인</li>
               </ul>
@@ -159,7 +179,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">사용 방법</h3>
               <ol className="list-decimal list-inside space-y-1 ml-2">
-                <li>로그인 후 챗봇 버튼을 클릭하세요</li>
+                <li>로그인 후 AI봇을 클릭하세요</li>
                 <li>원하는 조건을 선택하세요</li>
                 <li>AI가 추천하는 영화를 확인하세요</li>
               </ol>

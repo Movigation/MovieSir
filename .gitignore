@@ -45,7 +45,7 @@ coverage/
 *.npy
 *.h5
 !ai/models/.gitkeep
-
+ 
 # lightgcn 데이터 무시
 ai/training/lightgcn_data/*
 !ai/training/lightgcn_data/.gitkeep
@@ -61,6 +61,8 @@ ai/training/original_data/*
 ai/training/sbert_data/index/*
 # 그 중에서 .gitkeep만 다시 살림
 !ai/training/sbert_data/index/.gitkeep
+ai/training/lightgcn_model/*
+!ai/training/lightgcn_model/.gitkeep
 
 
 # Secrets
