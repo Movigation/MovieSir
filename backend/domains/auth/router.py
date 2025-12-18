@@ -43,8 +43,8 @@ def login(
         )
     
     # 4. JWT 토큰 생성 (둘 다 새로 발급)
-    access_token = create_access_token(data={"sub": str(user.user_id)})
-    refresh_token = create_access_token(data={"sub": str(user.user_id)}) # 실제로는 만료시간을 다르게 설정해야 함 (예: 7일)
+    access_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname})
+    refresh_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname}) # 실제로는 만료시간을 다르게 설정해야 함 (예: 7일)
     
     # [Level 1] DB에 Refresh Token 저장 (로그인 시 업데이트)
     user.refresh_token = refresh_token
