@@ -1,6 +1,7 @@
 // [용도] 어드민 사이드바 - 메뉴 네비게이션
 // [사용법] AdminLayout에서 사용
 
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
     LayoutDashboard,
@@ -8,7 +9,9 @@ import {
     TrendingUp,
     Brain,
     Network,
-    Tag
+    Tag,
+    Menu,
+    X
 } from "lucide-react";
 
 interface MenuItem {
@@ -58,6 +61,8 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function AdminSidebar() {
+    const [isExpanded, setIsExpanded] = useState(false);
+
     // 카테고리 정의
     const categories: Record<string, string[]> = {
         "영화 관리": ["tmdb-sync", "popularity"],
@@ -65,67 +70,117 @@ export default function AdminSidebar() {
     };
 
     return (
-        <aside className="w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-            {/* 헤더 */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    MovieSir
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Admin Dashboard
-                </p>
-            </div>
+        <>
+            {/* 모바일 배경 오버레이 */}
+            {isExpanded && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setIsExpanded(false)}
+                />
+            )}
 
-            {/* 메뉴 */}
-            <nav className="flex-1 p-4 overflow-y-auto">
-                {/* 대시보드 */}
-                <div className="mb-6">
-                    <NavLink
-                        to="/admin"
-                        end
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive
-                                ? "bg-blue-500 text-white"
-                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                            }`
-                        }
+            <aside
+                className={`
+                    fixed lg:relative
+                    top-0 left-0
+                    h-screen
+                    bg-gray-50 dark:bg-gray-800
+                    border-r border-gray-200 dark:border-gray-700
+                    flex flex-col
+                    z-50
+                    transition-all duration-300 ease-in-out
+                    ${isExpanded ? 'w-64' : 'w-16 lg:w-64'}
+                `}
+            >
+                {/* 헤더 */}
+                <div className={`p-6 border-b border-gray-200 dark:border-gray-700 flex items-center ${isExpanded ? 'justify-between' : 'justify-center lg:justify-between'}`}>
+                    <div className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'}`}>
+                        <h1 className={`text-2xl font-bold text-gray-900 dark:text-white ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                            MovieSir
+                        </h1>
+                        <p className={`text-sm text-gray-500 dark:text-gray-400 mt-1 ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                            Admin Dashboard
+                        </p>
+                    </div>
+
+                    {/* 모바일 토글 버튼 */}
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className=" lg:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     >
-                        <LayoutDashboard size={20} />
-                        <span className="text-sm font-medium">대시보드</span>
-                    </NavLink>
+                        {isExpanded ? <X size={20} /> : <Menu size={20} />}
+                    </button>
                 </div>
 
-                {/* 카테고리별 메뉴 */}
-                {Object.entries(categories).map(([categoryName, itemIds]) => (
-                    <div key={categoryName} className="mb-6">
-                        <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {categoryName}
-                        </h3>
-                        <div className="space-y-1">
-                            {menuItems
-                                .filter((item) => itemIds.includes(item.id))
-                                .map((item) => (
-                                    <NavLink
-                                        key={item.id}
-                                        to={item.path}
-                                        target="_blank"
-                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    >
-                                        {item.icon}
-                                        <span className="text-sm font-medium">{item.label}</span>
-                                    </NavLink>
-                                ))}
-                        </div>
+                {/* 메뉴 */}
+                <nav className={`flex-1 overflow-y-auto ${isExpanded ? 'p-4' : 'px-2 py-4 lg:p-4'}`}>
+                    {/* 대시보드 */}
+                    <div className="mb-4">
+                        <NavLink
+                            to="/admin"
+                            end
+                            className={({ isActive }) =>
+                                `flex items-center rounded-lg transition-colors
+                                ${isExpanded ? 'gap-3 px-3 py-2 w-full' : 'justify-center w-10 h-10 mx-auto lg:justify-start lg:gap-3 lg:px-3 lg:py-2 lg:w-full lg:mx-0'}
+                                ${isActive
+                                    ? "bg-blue-500 text-white"
+                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                }`
+                            }
+                            onClick={() => setIsExpanded(false)}
+                        >
+                            <LayoutDashboard size={20} className="flex-shrink-0" />
+                            <span className={`text-sm font-medium whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'} ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                                대시보드
+                            </span>
+                        </NavLink>
                     </div>
-                ))}
-            </nav>
 
-            {/* 푸터 */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    © 2025 MovieSir
-                </p>
-            </div>
-        </aside>
+                    {/* 카테고리별 메뉴 */}
+                    {Object.entries(categories).map(([categoryName, itemIds]) => (
+                        <div key={categoryName} className="mb-4">
+                            <h3 className={`px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'} ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                                {categoryName}
+                            </h3>
+                            <div className="space-y-2">
+                                {menuItems
+                                    .filter((item) => itemIds.includes(item.id))
+                                    .map((item) => (
+                                        <NavLink
+                                            key={item.id}
+                                            to={item.path}
+                                            target={typeof window !== 'undefined' && window.innerWidth >= 1024 ? '_blank' : undefined}
+                                            rel={typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'noopener noreferrer' : undefined}
+                                            className={`flex items-center rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700
+                                                ${isExpanded ? 'gap-3 px-3 py-2 w-full' : 'justify-center w-10 h-10 mx-auto lg:justify-start lg:gap-3 lg:px-3 lg:py-2 lg:w-full lg:mx-0'}
+                                            `}
+                                            onClick={(e) => {
+                                                setIsExpanded(false);
+                                                // 데스크탑(lg 이상)에서만 새 탭으로 열기
+                                                if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+                                                    e.preventDefault();
+                                                    window.open(item.path, '_blank', 'noopener,noreferrer');
+                                                }
+                                            }}
+                                        >
+                                            <span className="flex-shrink-0">{item.icon}</span>
+                                            <span className={`text-sm font-medium whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'} ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                                                {item.label}
+                                            </span>
+                                        </NavLink>
+                                    ))}
+                            </div>
+                        </div>
+                    ))}
+                </nav>
+
+                {/* 푸터 */}
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className={`text-xs text-gray-500 dark:text-gray-400 text-center transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'} ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                        © 2025 MovieSir
+                    </p>
+                </div>
+            </aside>
+        </>
     );
 }

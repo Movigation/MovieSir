@@ -13,45 +13,10 @@ export interface Message {
   position?: 'left' | 'center' | 'right';
 }
 
-export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: ChatbotPanelProps) {
+export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasRecommended, setHasRecommended] = useState(false);  // 추천 완료 플래그
   const { loadRecommended, resetFilters } = useMovieStore();
-
-  // [반응형] 메시지 버블 최대 너비 계산
-  // [수정 가이드] 버블 크기 조정 시 여기 수정
-  // - 데스크탑: 85% (기본값)
-  // - 타블렛: 80%
-  // - 모바일: 75%
-  const getBubbleMaxWidth = () => {
-    if (isMobile) {
-      return '75%';
-    }
-    if (isTablet) {
-      return '80%';
-    }
-    return '85%';
-  };
-
-  // [반응형] 봇 메시지 왼쪽 여백 계산 (단순 고정값)
-  // [용도] 봇 메시지 버블에 marginLeft를 직접 적용
-  // [수정 가이드]
-  // - 모바일: 0 (왼쪽 붙음)
-  // - 타블렛: 150px (챗봇 버튼 공간 확보)
-  // - 데스크탑: 130px (챗봇 버튼 + 간격)
-  const getBotMessageMarginLeft = () => {
-    if (isMobile) {
-      return '70px';  // 모바일: 여백 없음
-    }
-
-    if (isTablet) {
-      return '150px';  // 타블렛: 고정 150px
-    }
-
-    // 데스크탑: 고정 130px
-    // 챗봇 버튼(112px) + 여백(18px) = 약 130px
-    return '320px';
-  };
 
   // 챗봇이 열릴 때 초기 메시지 표시
   useEffect(() => {
@@ -143,7 +108,7 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
       {
         id: `loading-${Date.now()}`,
         type: 'bot',
-        content: '영화를 찾고 있습니다... 🎬'
+        content: '영화를 찾고 있습니다...'
       }
     ]);
 
@@ -160,7 +125,7 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
             <div className="w-full mx-auto space-y-6 overflow-visible">
               {/* 추천 완료 메시지 */}
               <div className="text-center mb-4">
-                <p className="text-lg font-semibold">🎉 추천이 완료되었습니다!</p>
+                <p className="text-lg font-semibold">추천이 완료되었습니다!</p>
                 <p className="text-sm mt-1">마음에 드는 영화를 선택해보세요</p>
               </div>
 
@@ -237,10 +202,10 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
         // pointer-events-none/auto: 닫혔을 때 클릭 방지
         className={`
           fixed
-          top-[70px]
+          top-0 sm:top-[70px]
           left-0
           right-0
-          h-[calc(100vh-70px)]
+          h-screen sm:h-[calc(100vh-70px)]
           bg-transparent
           z-panel
           flex flex-col
@@ -258,7 +223,9 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
 
         {/* Chat Messages */}
         {/* [반응형] 메시지 영역 - 기본 padding 사용 */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 space-y-4">
+        {/* [모바일] pb-24: 하단 네비게이션 바(헤더)가 버튼을 가리지 않도록 96px 패딩 추가 */}
+        {/* [데스크톱] sm:pb-4: 상단 헤더이므로 기본 패딩만 유지 */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 pb-24 sm:pb-4 space-y-4">
           {messages.map((msg) => (
             // [메시지 컨테이너] 메시지 정렬 위치
             // [수정 가이드]
@@ -273,17 +240,12 @@ export default function ChatbotPanel({ isOpen, onClose, isMobile, isTablet }: Ch
                 <div
                   className={`
                     rounded-[15px] p-3 border-2 shadow-sm
+                    max-w-[75%] sm:max-w-[80%] lg:max-w-[85%]
                     ${msg.type === 'bot'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-900 dark:border-gray-600'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-900 dark:border-gray-600 ml-[70px] sm:ml-[150px] lg:ml-[320px]'
                       : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700'
                     }
                   `}
-                  style={{
-                    // [반응형] 버블 최대 너비
-                    maxWidth: getBubbleMaxWidth(),
-                    // [반응형] 봇 메시지만 왼쪽 여백 적용
-                    marginLeft: msg.type === 'bot' ? getBotMessageMarginLeft() : undefined
-                  }}
                 >
                   <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">
                     {msg.content}

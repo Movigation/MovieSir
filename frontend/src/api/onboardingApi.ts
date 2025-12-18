@@ -14,7 +14,7 @@ export const fetchOnboardingMovies = async (limit: number = 10): Promise<Onboard
     try {
         // ⚠️ 영화 데이터는 메인 백엔드(8000)에서 가져옴
         const response = await authAxiosInstance.get(
-            `/movies/onboarding?limit=${limit}`
+            `/onboarding/survey/movies?limit=${limit}`
         );
 
         // 백엔드 MovieDetail 응답을 OnboardingMovie로 변환

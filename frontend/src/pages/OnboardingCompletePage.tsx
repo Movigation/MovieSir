@@ -2,7 +2,7 @@
 // [사용법] /onboarding/complete 라우트에서 사용
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { completeOnboarding, skipOnboarding } from "@/api/onboardingApi";
 import ChatbotButton from '@/services/chatbot/components/ChatbotButton';
@@ -30,9 +30,13 @@ const OTT_PLATFORMS_MAP: Record<number, { name: string; logo: string; bg: string
 
 export default function OnboardingCompletePage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { provider_ids, movie_ids, reset, movies } = useOnboardingStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+
+    // 온보딩 재조사 팝업에서 왔는지 확인
+    const isFromReminderModal = searchParams.get('fromReminder') === 'true';
 
     // 선택한 영화 데이터는 store(movies)에서 직접 사용하므로 별도 로딩 필요 없음
 
@@ -176,21 +180,24 @@ export default function OnboardingCompletePage() {
 
                 {/* 버튼 - 미니멀 스타일 */}
                 <div className="flex gap-4 justify-center">
-                    <button
-                        onClick={() => {
-                            // 기존 조사 값 초기화
-                            reset();
-                            console.log("✅ 온보딩 데이터 초기화 완료");
-                            // OTT 선택 페이지부터 다시 시작
-                            navigate("/onboarding/ott");
-                        }}
-                        className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
-                    >
-                        <RotateCcw size={20} className="sm:hidden" />
-                        <span className="hidden sm:inline">
-                            다시 선택하기
-                        </span>
-                    </button>
+                    {/* 재조사 팝업에서 온 경우 '다시 선택하기' 버튼 숨김 */}
+                    {!isFromReminderModal && (
+                        <button
+                            onClick={() => {
+                                // 기존 조사 값 초기화
+                                reset();
+                                console.log("✅ 온보딩 데이터 초기화 완료");
+                                // OTT 선택 페이지부터 다시 시작
+                                navigate("/onboarding/ott");
+                            }}
+                            className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
+                        >
+                            <RotateCcw size={20} className="sm:hidden" />
+                            <span className="hidden sm:inline">
+                                다시 선택하기
+                            </span>
+                        </button>
+                    )}
                     <button
                         onClick={() => navigate("/onboarding/movies")}
                         className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
@@ -211,7 +218,7 @@ export default function OnboardingCompletePage() {
                             <>
                                 <Check size={20} className="sm:hidden" />
                                 <span className="hidden sm:inline">
-                                    완료하기 🚀
+                                    완료하기
                                 </span>
                             </>
                         )}

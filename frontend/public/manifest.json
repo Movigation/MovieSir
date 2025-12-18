@@ -4,8 +4,8 @@
     "description": "AI 기반 영화 추천 챗봇 서비스 - 취향에 맞는 영화를 추천받으세요",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#3b82f6",
+    "background_color": "transparent",
+    "theme_color": "transparent",
     "orientation": "portrait-primary",
     "scope": "/",
     "lang": "ko",
@@ -46,7 +46,7 @@
             "name": "영화 추천받기",
             "short_name": "추천",
             "description": "AI 챗봇으로 영화 추천받기",
-            "url": "/chatbot",
+            "url": "/",
             "icons": [
                 {
                     "src": "/icon-192x192.png",
