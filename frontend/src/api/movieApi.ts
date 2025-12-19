@@ -143,10 +143,9 @@ export const postRecommendations = async (filters: {
 
         // 3. 백엔드 API 호출
         const response = await axiosInstance.post<BackendRecommendResponse>("/api/recommend", {
-            available_time: runtimeLimit,  // ✅ AI 모델에서 사용하는 시간 파라미터
-            runtime_limit: runtimeLimit,
-            genres: genreIds,
-            exclude_adult: filters.excludeAdult || false,
+            runtime_limit: runtimeLimit,  // ✅ 수정 1/5: runtime → runtime_limit
+            genres: genreIds,  // ✅ 수정 2/5: 문자열 배열 그대로
+            exclude_adult: filters.excludeAdult || false  // ✅ 수정 3/5: include_adult → exclude_adult (반대 아님!)
         });
 
         // 4. 백엔드 응답을 프론트엔드 Movie 타입으로 변환
