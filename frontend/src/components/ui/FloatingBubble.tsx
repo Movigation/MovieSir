@@ -29,6 +29,7 @@ export default function FloatingBubble({
     const InnerContent = (
         <div
             className="
+                relative
                 bg-white
                 shadow-lg
                 rounded-2xl
@@ -36,6 +37,37 @@ export default function FloatingBubble({
                 text-sm
                 text-blue-400
                 border
+                border-gray-200
+                min-w-[290px]
+                
+                /* 말풍선 꼬리 - 데스크탑에서만 왼쪽 하단에 표시 */
+                /* before: 테두리가 있는 삼각형 (회색) */
+                before:content-['']
+                before:absolute
+                before:hidden
+                sm:before:block
+                before:bottom-[-4px]
+                before:left-[-15px]
+                before:w-0
+                before:h-0
+                before:border-[15px]
+                before:border-transparent
+                before:border-r-gray-200
+                before:rotate-[45deg]
+                
+                /* after: 배경 삼각형 (흰색) - 테두리 안쪽 */
+                after:content-['']
+                after:absolute
+                after:hidden
+                sm:after:block
+                after:bottom-[-4px]
+                after:left-[-15px]
+                after:w-0
+                after:h-0
+                after:border-[15px]
+                after:border-transparent
+                after:border-r-white
+                after:rotate-[45deg]
             "
             onClick={onClick}
         >

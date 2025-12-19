@@ -76,50 +76,7 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
         };
     } catch (error) {
         console.error("영화 상세 정보 로드 실패:", error);
-
-        // 임시 데이터 반환 (개발용)
-        return {
-            movie_id: movieId,
-            title: "인터스텔라",
-            overview: "세계 각국의 정부와 경제가 완전히 붕괴된 미래가 다가온다. 지구 대기권에서 극심한 먼지 폭풍이 일어나고, 결국 지구에서의 삶은 불가능하게 된다. 여전히 남아있는 자들을 위한 최후의 희망은 우주 저편에 살 수 있는 새로운 행성을 찾는 것이다. 지구의 미래를 짊어진 그들의 위대한 도전이 시작된다.",
-            genres: ["SF", "드라마", "모험"],
-            release_date: "2014-11-06",
-            runtime: 169,
-            vote_average: 8.6,
-            vote_count: 28500,
-            popularity: 584.0,
-            poster_url: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-            backdrop_url: "https://image.tmdb.org/t/p/original/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg",
-            director: "크리스토퍼 놀란",
-            cast: [
-                { name: "매튜 맥커너히", character: "쿠퍼", profile_url: "https://image.tmdb.org/t/p/w185/cnqwv5Uz3d8c4TxVGxGkjOJuFPb.jpg" },
-                { name: "앤 해서웨이", character: "아멜리아 브랜드", profile_url: "https://image.tmdb.org/t/p/w185/tLelacaCxfRFRpGLYkdEY3d1mrq.jpg" },
-                { name: "제시카 차스테인", character: "머피 쿠퍼", profile_url: "https://image.tmdb.org/t/p/w185/vOFtVlCUyMMBXJ0RvJkS7lKoPVG.jpg" },
-                { name: "마이클 케인", character: "브랜드 교수", profile_url: "https://image.tmdb.org/t/p/w185/bVZRMlpjTAO2pJK6v90buFgVbSW.jpg" },
-                { name: "맷 데이먼", character: "맨 박사", profile_url: "https://image.tmdb.org/t/p/w185/ehwS5WvU5yL5vKcUEqbzGK8Fh8B.jpg" }
-            ],
-            tagline: "Mankind was born on Earth. It was never meant to die here.",
-            ott_providers: [
-                {
-                    ott_id: 1,
-                    ott_name: "Netflix",
-                    ott_logo: "https://image.tmdb.org/t/p/original/wwemzKWzjKYJFfCeiB57q3r4Bcm.png",
-                    watch_url: "https://www.netflix.com"
-                },
-                {
-                    ott_id: 2,
-                    ott_name: "Disney+",
-                    ott_logo: "https://image.tmdb.org/t/p/original/dgPueyEdOwpQ10fjuhL2WYFQwQs.png",
-                    watch_url: "https://www.disneyplus.com"
-                }
-            ],
-            tags: ["우주", "시간여행", "감동", "SF 걸작"],
-            user_status: {
-                liked: false,
-                watched: false,
-                bookmarked: false
-            }
-        };
+        throw error;
     }
 };
 
@@ -177,108 +134,8 @@ export const postRecommendations = async (filters: {
             popular: allMovies.slice(3, 6)       // 다음 3개
         };
     } catch (error: any) {
-        console.error("영화 추천 API 호출 중 오류 (백엔드 연결 실패, 임시 데이터 사용):", error);
-
-        // 🔧 임시 데이터: 백엔드 연결 실패 시 사용 (404 포함)
-        console.warn("⚠️ 백엔드 연결 실패 - 임시 추천 데이터 사용");
-        console.warn(`   에러 상태: ${error?.response?.status || '네트워크 오류'}`);
-
-
-        // 장르별 맞춤 영화 생성
-        const mockMovies: Movie[] = [
-            // Algorithmic (필터 기반 추천) - 3개
-            {
-                id: 1001,
-                title: "인터스텔라",
-                genres: ["SF", "드라마", "모험"],
-                rating: 8.6,
-                runtime: 169,  // 2시간 49분
-                poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-                description: "우주를 배경으로 펼쳐지는 감동적인 SF 대작. 시간과 공간을 초월한 사랑 이야기.",
-                popular: false,
-                watched: false
-            },
-            {
-                id: 1002,
-                title: "인셉션",
-                genres: ["SF", "액션", "스릴러"],
-                rating: 8.8,
-                runtime: 148,  // 2시간 28분
-                poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
-                description: "꿈 속의 꿈을 파고드는 독창적인 스토리. 놀란 감독의 걸작.",
-                popular: false,
-                watched: false
-            },
-            {
-                id: 1003,
-                title: "매트릭스",
-                genres: ["SF", "액션"],
-                rating: 8.7,
-                runtime: 136,  // 2시간 16분
-                poster: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-                description: "현실과 가상을 넘나드는 혁명적인 SF 액션.",
-                popular: false,
-                watched: false
-            },
-            // Popular (인기 영화) - 3개
-            {
-                id: 2001,
-                title: "어벤져스: 엔드게임",
-                genres: ["액션", "SF", "어드벤처"],
-                rating: 8.4,
-                runtime: 181,  // 3시간 1분
-                poster: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
-                description: "마블 시네마틱 유니버스의 대서사시. 역대급 블록버스터.",
-                popular: true,
-                watched: false
-            },
-            {
-                id: 2002,
-                title: "기생충",
-                genres: ["드라마", "스릴러"],
-                rating: 8.5,
-                runtime: 132,  // 2시간 12분
-                poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
-                description: "아카데미 4관왕에 빛나는 봉준호 감독의 작품.",
-                popular: true,
-                watched: false
-            },
-            {
-                id: 2003,
-                title: "조커",
-                genres: ["드라마", "범죄", "스릴러"],
-                rating: 8.4,
-                runtime: 122,  // 2시간 2분
-                poster: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
-                description: "조커의 탄생을 그린 강렬한 캐릭터 드라마.",
-                popular: true,
-                watched: false
-            }
-        ];
-
-        // 필터 조건에 맞는 영화들 선택 (간단한 장르 매칭)
-        const filteredAlgorithmic = mockMovies
-            .filter(m => !m.popular)
-            .filter(m => {
-                // 요청한 장르 중 하나라도 포함되면 선택
-                if (filters.genres.length === 0) return true;
-                return m.genres.some(g => filters.genres.includes(g));
-            })
-            .slice(0, 3);
-
-        const filteredPopular = mockMovies
-            .filter(m => m.popular)
-            .slice(0, 3);
-
-        // 필터 조건에 맞는 영화가 부족하면 모든 영화에서 채우기
-        const allAlgorithmic = filteredAlgorithmic.length >= 3
-            ? filteredAlgorithmic
-            : mockMovies.filter(m => !m.popular).slice(0, 3);
-
-        return {
-            algorithmic: allAlgorithmic,
-            popular: filteredPopular
-        };
+        console.error("영화 추천 API 호출 중 오류:", error);
+        throw error;
     }
 };
 

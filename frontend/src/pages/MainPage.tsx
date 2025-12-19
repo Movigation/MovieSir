@@ -27,6 +27,7 @@ import { useAuth } from '@/app/providers/AuthContext';
 import LoginModal from '@/services/auth/components/LoginModal/LoginModal';
 import OnboardingReminderModal from '@/components/modals/OnboardingReminderModal';
 import MovieDetailModal from '@/services/chatbot/MovieDetailModal/MovieDetailModal';
+import GradientText from '@/components/ui/GradientText';
 
 export default function MainPage() {
     const { isAuthenticated, user } = useAuth();
@@ -128,17 +129,46 @@ export default function MainPage() {
     };
 
     return (
-        <div className="max-w-screen-xl mx-auto px-4 py-6">
+        <div className="flex flex-col items-center max-w-screen-xl mx-auto px-8 py-4">
+            {/* 히어로 타이틀 */}
+            {/* [위치 조정 가이드]
+                - mt-6: 타이틀을 아래로 24px 이동 (이 값을 바꾸면 타이틀 위치 조정)
+                - mb-[-24px]: 아래 요소(챗봇)를 24px 위로 당김 (챗봇 위치 유지)
+                
+                [미세 조정 방법]
+                타이틀을 더 내리고 싶으면:
+                  - mt-8 mb-[-32px]  (32px 내림)
+                  - mt-10 mb-[-40px] (40px 내림)
+                
+                타이틀을 덜 내리고 싶으면:
+                  - mt-4 mb-[-16px]  (16px 내림)
+                  - mt-2 mb-[-8px]   (8px 내림)
+            */}
+            {/* <div className="text-bold text-center mt-6 mb-[-24px] font-jua text-3xl sm:text-4xl lg:text-[80px] leading-[150%] sm:leading-[60%] tracking-[0.01em] text-gray-900 dark:text-white">
+                <div className="mb-[-15px] sm:mb-6">
+                    <GradientText variant="dark">무비서</GradientText>가 맞춰주는
+                </div>
+                <div>
+                    <GradientText>당신만의 영화</GradientText>
+                </div>
+            </div> */}
+
             <div className='max-w-screen-2xl mx-auto relative'>
                 <FloatingBubble
-                    className="left-1/2 -translate-x-1/2 bottom-10 sm:bottom-20 font-bold text-blue-400 z-floating cursor-pointer"
+                    className="left-1/2 sm:left-[240px] -translate-x-1/2 bottom-[0px] sm:bottom-[-40px] font-bold text-blue-400 z-floating cursor-pointer"
                     visible={!isChatbotOpen}
                     float
                     onClick={handleOpenChatbot}
                 >
                     {isAuthenticated
-                        ? "당신에게 꼭 맞는 영화를 추천드리겠습니다."
-                        : "로그인 이후 서비스 이용이 가능합니다."
+                        ?
+                        <div className="text-center">
+                            당신에게 꼭 맞는 영화를 추천드리겠습니다.
+                        </div>
+                        :
+                        <div className="text-center">
+                            로그인 이후 서비스 이용이 가능합니다.
+                        </div>
                     }
                 </FloatingBubble>
                 <Chatbot
@@ -167,6 +197,6 @@ export default function MainPage() {
 
             {/* 영화 상세 모달 - ChatbotPanel 외부에서 렌더링하여 z-index 문제 해결 */}
             <MovieDetailModal />
-        </div>
+        </div >
     );
 }
