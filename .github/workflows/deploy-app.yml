@@ -1,0 +1,45 @@
+name: Deploy App Server
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'Dockerfile'
+      - 'docker-compose.example.yml'
+  workflow_dispatch:  # 수동 실행 버튼
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to App Server
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to App Server via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+
+            echo "📌 Fetch latest code"
+            cd ~/MovieSir-middle
+            git fetch --all
+            git reset --hard origin/main
+
+            echo "📌 Stop old containers"
+            docker compose down || true
+
+            echo "📌 Cleanup docker cache"
+            docker system prune -af || true
+
+            echo "📌 Build & start containers"
+            docker compose up -d --build
+
+            echo "✅ App Server deployment complete"
