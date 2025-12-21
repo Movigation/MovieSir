@@ -14,7 +14,10 @@ interface MovieState {
     userId: number | null;  // 현재 로그인한 사용자 ID
     recommendedMovies: Movie[];  // 현재 표시 중인 추천 영화 (최대 3개)
     allRecommendedMovies: Movie[];  // 백엔드에서 받은 전체 추천 영화 목록
-    popularMovies: Movie[];
+    shownRecommendedIds: number[];  // 이미 표시된 추천 영화 ID (재추천 방지)
+    popularMovies: Movie[];  // 현재 표시 중인 인기 영화 (최대 3개)
+    allPopularMovies: Movie[];  // 백엔드에서 받은 전체 인기 영화 목록
+    shownPopularIds: number[];  // 이미 표시된 인기 영화 ID (재추천 방지)
     detailMovieId: number | null;  // 상세 보기 영화 ID (Modal이 직접 API 호출)
     isLoading: boolean;
     error: string | null;
@@ -42,7 +45,10 @@ export const useMovieStore = create<MovieState>((set, get) => ({
     userId: null,
     recommendedMovies: [],
     allRecommendedMovies: [],  // 전체 추천 영화 목록
+    shownRecommendedIds: [],  // 이미 표시된 추천 영화 ID
     popularMovies: [],
+    allPopularMovies: [],  // 전체 인기 영화 목록
+    shownPopularIds: [],  // 이미 표시된 인기 영화 ID
     detailMovieId: null,  // 영화 ID만 저장
     isLoading: false,
     error: null,
@@ -97,10 +103,22 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             console.log('API 응답:', result);
 
             // 전체 추천 영화 목록 저장 (재추천 시 사용)
+            const initialRecommended = result.algorithmic.slice(0, 3);
+            const initialPopular = result.popular.slice(0, 3);
+
+            console.log('📦 API 응답 데이터:');
+            console.log('  - algorithmic 전체:', result.algorithmic.length, '개');
+            console.log('  - popular 전체:', result.popular.length, '개');
+            console.log('  - 맞춤추천 초기 표시:', initialRecommended.map(m => m.title));
+            console.log('  - 인기영화 초기 표시:', initialPopular.map(m => m.title));
+
             set({
                 allRecommendedMovies: result.algorithmic,  // 전체 목록 저장
-                recommendedMovies: result.algorithmic.slice(0, 3),  // 처음 3개만 표시
-                popularMovies: result.popular,
+                recommendedMovies: initialRecommended,  // 처음 3개만 표시
+                shownRecommendedIds: initialRecommended.map(m => m.id),  // 표시된 ID 기록
+                allPopularMovies: result.popular,  // 전체 인기 영화 목록 저장
+                popularMovies: initialPopular,  // 처음 3개만 표시
+                shownPopularIds: initialPopular.map(m => m.id),  // 표시된 ID 기록
                 isLoading: false,
                 error: null
             });
@@ -113,35 +131,86 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
     // [함수] 추천 영화 제거 및 자동 채우기
     removeRecommendedMovie: (movieId) => set((state) => {
-        console.log('🔄 재추천: 제거할 영화 ID:', movieId);
+        console.log('🔄 재추천 시작 ========================');
+        console.log('  제거할 영화 ID:', movieId);
+        console.log('  현재 표시 중:', state.recommendedMovies.map(m => `${m.id}:${m.title}`));
+        console.log('  전체 풀:', state.allRecommendedMovies.length, '개');
+        console.log('  이미 표시된 IDs:', state.shownRecommendedIds);
 
         // 1. 현재 표시 중인 영화에서 제거
         const newRecommended = state.recommendedMovies.filter(m => m.id !== movieId);
 
-        // 2. 이미 표시된 영화 ID 목록
-        const displayedIds = state.recommendedMovies.map(m => m.id);
+        // 2. 이미 표시된 적 있는 영화 ID 목록 (기존 + 현재 제거하는 영화)
+        const shownIds = [...state.shownRecommendedIds];
+        if (!shownIds.includes(movieId)) {
+            shownIds.push(movieId);
+        }
 
         // 3. 전체 목록에서 아직 표시되지 않은 영화 찾기
-        const nextMovie = state.allRecommendedMovies.find(
-            m => !displayedIds.includes(m.id) && m.id !== movieId
-        );
+        const availableMovies = state.allRecommendedMovies.filter(m => !shownIds.includes(m.id));
+        console.log('  남은 영화:', availableMovies.length, '개');
+        console.log('  남은 영화 목록:', availableMovies.map(m => m.title));
 
-        // 4. 다음 영화가 있으면 추가
+        const nextMovie = availableMovies[0];
+
+        // 4. 다음 영화가 있으면 추가하고 shownIds 업데이트
         if (nextMovie) {
             console.log('✅ 다음 영화로 채움:', nextMovie.title);
             newRecommended.push(nextMovie);
+            shownIds.push(nextMovie.id);
         } else {
             console.log('⚠️ 더 이상 추천할 영화가 없습니다');
         }
 
-        return { recommendedMovies: newRecommended };
+        console.log('  새로운 표시 목록:', newRecommended.map(m => m.title));
+        console.log('🔄 재추천 완료 ========================');
+
+        return {
+            recommendedMovies: newRecommended,
+            shownRecommendedIds: shownIds
+        };
     }),
 
-    // [함수] 인기 영화 제거
+    // [함수] 인기 영화 제거 및 자동 채우기
     removePopularMovie: (movieId) => set((state) => {
-        console.log('🔄 인기 영화 제거: ID:', movieId);
+        console.log('🎬 인기영화 재추천 시작 ========================');
+        console.log('  제거할 영화 ID:', movieId);
+        console.log('  현재 표시 중:', state.popularMovies.map(m => `${m.id}:${m.title}`));
+        console.log('  전체 풀:', state.allPopularMovies.length, '개');
+        console.log('  이미 표시된 IDs:', state.shownPopularIds);
+
+        // 1. 현재 표시 중인 영화에서 제거
         const newPopular = state.popularMovies.filter(m => m.id !== movieId);
-        return { popularMovies: newPopular };
+
+        // 2. 이미 표시된 적 있는 영화 ID 목록 (기존 + 현재 제거하는 영화)
+        const shownIds = [...state.shownPopularIds];
+        if (!shownIds.includes(movieId)) {
+            shownIds.push(movieId);
+        }
+
+        // 3. 전체 목록에서 아직 표시되지 않은 영화 찾기
+        const availableMovies = state.allPopularMovies.filter(m => !shownIds.includes(m.id));
+        console.log('  남은 인기영화:', availableMovies.length, '개');
+        console.log('  남은 영화 목록:', availableMovies.map(m => m.title));
+
+        const nextMovie = availableMovies[0];
+
+        // 4. 다음 영화가 있으면 추가하고 shownIds 업데이트
+        if (nextMovie) {
+            console.log('✅ 다음 인기영화로 채움:', nextMovie.title);
+            newPopular.push(nextMovie);
+            shownIds.push(nextMovie.id);
+        } else {
+            console.log('⚠️ 더 이상 추천할 인기 영화가 없습니다');
+        }
+
+        console.log('  새로운 표시 목록:', newPopular.map(m => m.title));
+        console.log('🎬 인기영화 재추천 완료 ========================');
+
+        return {
+            popularMovies: newPopular,
+            shownPopularIds: shownIds
+        };
     }),
 
     setDetailMovieId: (movieId) => {
@@ -154,6 +223,13 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             time: "00:00",
             genres: [],
             excludeAdult: false
-        }
+        },
+        // 재추천 기록도 초기화 (새로운 추천 시작)
+        shownRecommendedIds: [],
+        shownPopularIds: [],
+        recommendedMovies: [],
+        popularMovies: [],
+        allRecommendedMovies: [],
+        allPopularMovies: []
     })
 }));

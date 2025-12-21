@@ -149,19 +149,15 @@ export default function AdminSidebar() {
                                         <NavLink
                                             key={item.id}
                                             to={item.path}
-                                            target={typeof window !== 'undefined' && window.innerWidth >= 1024 ? '_blank' : undefined}
-                                            rel={typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'noopener noreferrer' : undefined}
-                                            className={`flex items-center rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700
+                                            className={({ isActive }) =>
+                                                `flex items-center rounded-lg transition-colors
                                                 ${isExpanded ? 'gap-3 px-3 py-2 w-full' : 'justify-center w-10 h-10 mx-auto lg:justify-start lg:gap-3 lg:px-3 lg:py-2 lg:w-full lg:mx-0'}
-                                            `}
-                                            onClick={(e) => {
-                                                setIsExpanded(false);
-                                                // 데스크탑(lg 이상)에서만 새 탭으로 열기
-                                                if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-                                                    e.preventDefault();
-                                                    window.open(item.path, '_blank', 'noopener,noreferrer');
-                                                }
-                                            }}
+                                                ${isActive
+                                                    ? "bg-blue-500 text-white"
+                                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                                }`
+                                            }
+                                            onClick={() => setIsExpanded(false)}
                                         >
                                             <span className="flex-shrink-0">{item.icon}</span>
                                             <span className={`text-sm font-medium whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'} ${isExpanded ? 'block' : 'hidden lg:block'}`}>

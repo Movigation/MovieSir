@@ -124,14 +124,14 @@ export const postRecommendations = async (filters: {
         // 5. algorithmic과 popular로 분리
         // 백엔드가 AI 추천 순서대로 반환하므로:
         // - 전체를 algorithmic으로 사용
-        // - popular는 별도 로직 필요 (일단 빈 배열)
+        // - popular는 별도 API 필요 (일단 빈 배열)
         const allMovies = backendMovies.map(convertToMovie);
 
         console.log('전체 추천 영화 개수:', allMovies.length);
 
         return {
-            algorithmic: allMovies.slice(0, 3),  // 상위 3개
-            popular: allMovies.slice(3, 6)       // 다음 3개
+            algorithmic: allMovies,  // ✅ 전체 사용
+            popular: []              // 별도 API 없으면 빈 배열
         };
     } catch (error: any) {
         console.error("영화 추천 API 호출 중 오류:", error);
