@@ -25,7 +25,7 @@ import Chatbot from '@/services/chatbot/components/Chatbot';
 import FloatingBubble from "@/components/ui/FloatingBubble";
 import { useAuth } from '@/app/providers/AuthContext';
 import LoginModal from '@/services/auth/components/LoginModal/LoginModal';
-import OnboardingReminderModal from '@/components/modals/OnboardingReminderModal';
+import OnboardingReminderModal from '@/services/onboarding/components/OnboardingReminderModal';
 import MovieDetailModal from '@/services/chatbot/MovieDetailModal/MovieDetailModal';
 import GradientText from '@/components/ui/GradientText';
 

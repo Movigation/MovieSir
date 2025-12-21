@@ -51,7 +51,7 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
             z-floating
             transition-all duration-500 ease-out transform sm:translate-y-[150px] lg:translate-y-[150px] translate-y-[150px]
             ${isOpen
-              ? `translate-x-[-38vw] translate-y-[-35px] scale-50
+              ? `translate-x-[-38vw] translate-y-[-40px] scale-50
                  sm:-translate-x-[300px] sm:translate-y-[-30px] sm:scale-100
                  lg:-translate-x-[400px]`
               : "translate-y-[200px] sm:translate-y-60"

@@ -5,34 +5,15 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { authAxiosInstance } from '@/api/axiosInstance';
 
-// OTT 로고 imports
-import NetflixLogoSvg from "@/assets/logos/NETFLEX_Logo.svg";
-import DisneyLogoSvg from "@/assets/logos/Disney+_logo.svg";
-// import PrimeLogoSvg from "@/assets/logos/Amazon_Prime_Logo.svg";
-import WavveLogoSvg from "@/assets/logos/WAVVE_Logo.svg";
-import TvingLogoSvg from "@/assets/logos/TVING_Logo.svg";
-import WatchaLogoSvg from "@/assets/logos/WATCHA_Logo_Main.svg";
-import AppleLogoSvg from "@/assets/logos/Apple_TV_logo.svg";
-
-// OTT 로고 컴포넌트 - 실제 SVG 파일 사용
-const NetflixLogo = () => <img src={NetflixLogoSvg} alt="Netflix" className="h-8 w-auto" />;
-const DisneyLogo = () => <img src={DisneyLogoSvg} alt="Disney+" className="h-5 w-auto" />;
-// const googleMovieLogo = () => <img src={googleMovieLogoSvg} alt="google movie" className="h-8 w-auto" />;
-const WavveLogo = () => <img src={WavveLogoSvg} alt="Wavve" className="h-3 w-auto" />;
-const TvingLogo = () => <img src={TvingLogoSvg} alt="TVING" className="h-3 w-auto" />;
-const WatchaLogo = () => <img src={WatchaLogoSvg} alt="Watcha" className="h-3 w-auto" />;
-const AppleLogo = () => <img src={AppleLogoSvg} alt="Apple TV+" className="h-5 w-auto" />;
-// const CoupangLogo = () => <img src={CoupangLogoSvg} alt="Coupang Play" className="h-16 w-auto" />;
-
-// OTT 플랫폼 정의 (백엔드 DB와 일치)
+// OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
-    { provider_id: 8, name: "Netflix", logo: NetflixLogo },
-    { provider_id: 97, name: "Watcha", logo: WatchaLogo },
-    { provider_id: 337, name: "Disney+", logo: DisneyLogo },
-    { provider_id: 356, name: "Wavve", logo: WavveLogo },
-    { provider_id: 1883, name: "TVING", logo: TvingLogo },
-    { provider_id: 350, name: "Apple TV+", logo: AppleLogo },
-    // { provider_id: 119, name: "Prime Video", logo: PrimeLogoSvg }
+    { provider_id: 8, name: "Netflix", logo: "/logos/NETFLEX_Logo.svg" },
+    { provider_id: 97, name: "Watcha", logo: "/logos/WATCHA_Logo_Main.svg" },
+    { provider_id: 337, name: "Disney+", logo: "/logos/Disney+_logo.svg" },
+    { provider_id: 356, name: "Wavve", logo: "/logos/WAVVE_Logo.svg" },
+    { provider_id: 1883, name: "TVING", logo: "/logos/TVING_Logo.svg" },
+    { provider_id: 350, name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg" },
+    { provider_id: 119, name: "Prime Video", logo: "/logos/Amazon_Prime_Logo.svg" }
 ];
 
 type OTTSelectionProps = {
