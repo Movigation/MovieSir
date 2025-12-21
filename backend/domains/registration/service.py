@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Response, status
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
@@ -129,7 +130,7 @@ def verify_code(payload: SignupConfirm) -> dict:
 # REG-01-02 이메일 인증 후 실제 유저 생성
 # ========================================
 def confirm_signup(
-    db: Session, payload: SignupConfirm
+    db: Session, payload: SignupConfirm, response: Response
 ) -> SignupConfirmResponse:  # 인증코드 확인하고 가입 승인, 토큰 발급
 
     redis = get_redis_client()

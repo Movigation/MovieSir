@@ -129,10 +129,11 @@ export const postRecommendations = async (filters: {
 
         console.log('전체 추천 영화 개수:', allMovies.length);
 
-        // 전체 영화를 algorithmic으로 사용 (popular API 별도 없음)
+        // 전체 영화를 절반씩 나누어 algorithmic과 popular로 분리
+        const halfLength = Math.ceil(allMovies.length / 2);
         return {
-            algorithmic: allMovies,  // ✅ 전체 사용
-            popular: []              // 별도 API 없으면 빈 배열
+            algorithmic: allMovies.slice(0, halfLength),  // 전반부: 맞춤 추천
+            popular: allMovies.slice(halfLength)          // 후반부: 인기 영화
         };
     } catch (error: any) {
         console.error("영화 추천 API 호출 중 오류:", error);

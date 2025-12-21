@@ -17,7 +17,13 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     # model_instance는 router에서 주입받거나 전역 변수로 로드된 것을 사용
     try:
         # 필터링 후에도 충분한 영화가 남도록 더 많이 요청
-        recommended_movie_ids = model_instance.predict(user_id, top_k=50)
+        # AI 모델에 시간/장르 전달하여 적절한 영화 추천받기
+        recommended_movie_ids = model_instance.predict(
+            user_id,
+            top_k=50,
+            available_time=req.runtime_limit or 180,
+            preferred_genres=req.genres or None
+        )
     except Exception as e:
         print(f"AI Model Error: {e}")
         recommended_movie_ids = []
