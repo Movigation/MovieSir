@@ -1,20 +1,23 @@
-# Database Setup
+# Database 초기화
 
-## 로컬 개발 환경
+## 로컬 개발용 DB 데이터
 
-`movigation.sql` 파일은 용량이 커서 Git에 포함되지 않습니다.
+`database/init/` 폴더에 SQL 덤프 파일을 넣으면 로컬 Docker 시작 시 자동으로 로드됩니다.
 
-### 다운로드
-Google Drive에서 `movigation.sql` 다운로드 후 이 폴더에 저장
+### 덤프 파일 얻는 방법
 
-### PostgreSQL에 임포트
+GPU 서버에서 실행:
 ```bash
-psql -U moviesir -d moviesir < movigation.sql
+pg_dump -h localhost -U movigation -d moviesir > movigation.sql
 ```
 
-## 프로덕션 환경 (GPU Server)
+### 파일 위치
+```
+database/
+├── init/
+│   ├── .gitkeep
+│   └── movigation.sql  ← 여기에 덤프 파일 (git 제외됨)
+└── README.md
+```
 
-이미 PostgreSQL에 데이터가 로드되어 있음:
-- Host: 10.0.35.62
-- Database: moviesir
-- User: movigation
+    

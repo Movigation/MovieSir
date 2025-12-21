@@ -87,9 +87,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
         // 🔧 userId가 없으면 임시 ID 사용 (백엔드 없이 테스트 가능)
         const effectiveUserId = userId || 0;
-        if (!userId) {
-            console.warn("⚠️ 로그인하지 않음 - 임시 ID(0) 사용, 임시 데이터 반환 예정");
-        }
+        // userId가 없어도 정상 동작 (임시 ID 0 사용)
 
         set({ isLoading: true, error: null });
         try {
@@ -115,7 +113,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             console.log('  - 인기영화 초기 표시:', initialPopular.map(m => m.title));
 
             set({
-                allRecommendedMovies: result.algorithmic,  // 전체 추천 목록 저장
+                allRecommendedMovies: result.algorithmic,  // 전체 목록 저장
                 recommendedMovies: initialRecommended,  // 처음 3개만 표시
                 shownRecommendedIds: initialRecommended.map(m => m.id),  // 표시된 ID 기록
                 allPopularMovies: result.popular,  // 전체 인기 영화 목록 저장
