@@ -1,12 +1,7 @@
 name: Deploy GPU Server
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - 'ai/**'
-      - 'docker-compose.gpu.example.yml'
-  workflow_dispatch:  # 수동 실행 버튼
+  workflow_dispatch:  # 수동 실행만 (Actions 탭에서 Run workflow 클릭)
 
 jobs:
   deploy:

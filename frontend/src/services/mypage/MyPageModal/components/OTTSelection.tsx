@@ -5,24 +5,15 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { authAxiosInstance } from '@/api/axiosInstance';
 
-// OTT 로고 imports
-import NetflixLogoSvg from "@/assets/logos/NETFLEX_Logo.svg";
-import DisneyLogoSvg from "@/assets/logos/Disney+_logo.svg";
-import PrimeLogoSvg from "@/assets/logos/Amazon_Prime_Logo.svg";
-import WavveLogoSvg from "@/assets/logos/WAVVE_Logo.svg";
-import TvingLogoSvg from "@/assets/logos/TVING_Logo.svg";
-import WatchaLogoSvg from "@/assets/logos/WATCHA_Logo_Main.svg";
-import AppleLogoSvg from "@/assets/logos/Apple_TV_logo.svg";
-
-// OTT 플랫폼 정의 (백엔드 DB와 일치)
+// OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
-    { provider_id: 8, name: "Netflix", logo: NetflixLogoSvg },
-    { provider_id: 97, name: "Watcha", logo: WatchaLogoSvg },
-    { provider_id: 337, name: "Disney+", logo: DisneyLogoSvg },
-    { provider_id: 356, name: "Wavve", logo: WavveLogoSvg },
-    { provider_id: 1883, name: "TVING", logo: TvingLogoSvg },
-    { provider_id: 350, name: "Apple TV+", logo: AppleLogoSvg },
-    { provider_id: 119, name: "Prime Video", logo: PrimeLogoSvg }
+    { provider_id: 8, name: "Netflix", logo: "/logos/NETFLEX_Logo.svg" },
+    { provider_id: 97, name: "Watcha", logo: "/logos/WATCHA_Logo_Main.svg" },
+    { provider_id: 337, name: "Disney+", logo: "/logos/Disney+_logo.svg" },
+    { provider_id: 356, name: "Wavve", logo: "/logos/WAVVE_Logo.svg" },
+    { provider_id: 1883, name: "TVING", logo: "/logos/TVING_Logo.svg" },
+    { provider_id: 350, name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg" },
+    { provider_id: 119, name: "Prime Video", logo: "/logos/Amazon_Prime_Logo.svg" }
 ];
 
 type OTTSelectionProps = {
@@ -138,11 +129,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                                     onChange={() => handleToggleOTT(platform.provider_id)}
                                     className="w-5 h-5 rounded border-gray-400 text-blue-500 focus:ring-blue-500"
                                 />
-                                <img
-                                    src={platform.logo}
-                                    alt={platform.name}
-                                    className="h-6 w-auto object-contain"
-                                />
+                                <platform.logo />
                                 <span className="text-white font-medium">{platform.name}</span>
                             </label>
                         ))}
@@ -158,11 +145,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                                     key={platform.provider_id}
                                     className="px-3 py-1.5 bg-blue-500 text-white rounded-full text-sm flex items-center gap-2"
                                 >
-                                    <img
-                                        src={platform.logo}
-                                        alt={platform.name}
-                                        className="h-4 w-auto object-contain"
-                                    />
+                                    <platform.logo />
                                     {platform.name}
                                 </span>
                             ))}

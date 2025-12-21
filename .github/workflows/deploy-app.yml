@@ -1,14 +1,7 @@
 name: Deploy App Server
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - 'frontend/**'
-      - 'backend/**'
-      - 'Dockerfile'
-      - 'docker-compose.example.yml'
-  workflow_dispatch:  # 수동 실행 버튼
+  workflow_dispatch:  # 수동 실행만 (Actions 탭에서 Run workflow 클릭)
 
 jobs:
   deploy:
