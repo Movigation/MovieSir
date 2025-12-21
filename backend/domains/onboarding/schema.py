@@ -1,11 +1,13 @@
 from typing import List, Union
 from pydantic import BaseModel, Field
 
+
 # =========================
 # OB-01-01 OTT 선택
 # =========================
-class OnboardingOTTRequest(BaseModel):  # OTT 선택하기
+class OnboardingOTTRequest(BaseModel):
     provider_ids: List[int]
+
 
 # =========================
 # OB-02-01 초기 취향 조사
@@ -16,15 +18,18 @@ class SurveyMovieItem(BaseModel):
     title: str
     poster_path: Union[str, None] = None
 
+
 class SurveyMoviesResponse(BaseModel):
     movies: List[SurveyMovieItem]
 
-class OnboardingSurveyRequest(BaseModel):  # 취향 선택하기
+
+class OnboardingSurveyRequest(BaseModel):
     movie_ids: List[int] = Field(min_length=1)
+
 
 # =========================
 # OB-03-01 / 02-02 온보딩 완료 / 스킵
 # =========================
-class OnboardingCompleteResponse(BaseModel):  # 선택완료 or 스킵
+class OnboardingCompleteResponse(BaseModel):
     user_id: str
     onboarding_completed: bool

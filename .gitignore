@@ -1,78 +1,106 @@
+# ============================================================
+# MovieSir .gitignore
+# ============================================================
+
+# ------------------------------------------------------------
 # Dependencies
+# ------------------------------------------------------------
 node_modules/
 .pnp/
 .pnp.js
 
+# ------------------------------------------------------------
 # Build
+# ------------------------------------------------------------
 dist/
 build/
 *.egg-info/
 
+# ------------------------------------------------------------
 # Python
+# ------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 .venv/
 venv/
 env/
-.env
 
+# ------------------------------------------------------------
 # IDE
+# ------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# ------------------------------------------------------------
 # OS
+# ------------------------------------------------------------
 .DS_Store
 Thumbs.db
 
+# ------------------------------------------------------------
 # Logs
+# ------------------------------------------------------------
 *.log
 logs/
 
+# ------------------------------------------------------------
 # Testing
+# ------------------------------------------------------------
 coverage/
 .pytest_cache/
 
+# ------------------------------------------------------------
 # Docker
+# ------------------------------------------------------------
 .docker/
 
-# AI Models
+# ------------------------------------------------------------
+# AI Models & Data
+# ------------------------------------------------------------
 *.pt
 *.pth
 *.pkl
 *.npy
 *.h5
 !ai/models/.gitkeep
- 
-# lightgcn 데이터 무시
+
+# lightgcn 데이터
 ai/training/lightgcn_data/*
 !ai/training/lightgcn_data/.gitkeep
-# sbert 데이터 무시
-ai/training/sbert_data/*
-!ai/training/sbert_data/.gitkeep
-# original 데이터 무시
-ai/training/original_data/*
-!ai/training/original_data/.gitkeep
-# index 폴더 자체를 무시하지 않도록 설정 
-!ai/training/sbert_data/index/
-# index 폴더 안의 파일들은 다 무시하되
-ai/training/sbert_data/index/*
-# 그 중에서 .gitkeep만 다시 살림
-!ai/training/sbert_data/index/.gitkeep
+
+# lightgcn 모델
 ai/training/lightgcn_model/*
 !ai/training/lightgcn_model/.gitkeep
 
+# sbert 데이터
+ai/training/sbert_data/*
+!ai/training/sbert_data/.gitkeep
+!ai/training/sbert_data/index/
+ai/training/sbert_data/index/*
+!ai/training/sbert_data/index/.gitkeep
 
-# Secrets
+# original 데이터
+ai/training/original_data/*
+!ai/training/original_data/.gitkeep
+
+# ------------------------------------------------------------
+# Secrets & Environment (중요!)
+# ------------------------------------------------------------
 .env
 .env.local
+.env.production
 .env.*.local
+!.env.example
+
 *.pem
 *.key
 
+# ------------------------------------------------------------
 # Temp
+# ------------------------------------------------------------
 tmp/
 temp/
 *.tmp
@@ -80,5 +108,15 @@ temp/
 # Duplicate/Nested
 MovieSir/
 
-#sql
-movigation.sql
+# ------------------------------------------------------------
+# Database
+# ------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+
+# SQL 파일
+*.sql
+# 대용량 DB 덤프 파일은 제외 (GitHub 100MB 제한)
+database/init/movigation.sql

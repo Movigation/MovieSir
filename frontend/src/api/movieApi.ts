@@ -129,6 +129,7 @@ export const postRecommendations = async (filters: {
 
         console.log('전체 추천 영화 개수:', allMovies.length);
 
+        // 전체 영화를 algorithmic으로 사용 (popular API 별도 없음)
         return {
             algorithmic: allMovies,  // ✅ 전체 사용
             popular: []              // 별도 API 없으면 빈 배열

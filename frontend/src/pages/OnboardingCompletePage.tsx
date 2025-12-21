@@ -58,6 +58,20 @@ export default function OnboardingCompletePage() {
             console.log("=== API 응답 ===");
             console.log("응답:", response);
 
+            // ✅ localStorage의 user 데이터 업데이트 (온보딩 완료 상태 반영)
+            const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+            if (userStr) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    userData.onboarding_completed = true;
+                    const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+                    storage.setItem("user", JSON.stringify(userData));
+                    console.log("✅ 온보딩 완료 상태 저장됨:", userData);
+                } catch (e) {
+                    console.error("user 데이터 업데이트 실패:", e);
+                }
+            }
+
             // 온보딩 스토어 초기화
             reset();
 

@@ -9,16 +9,15 @@ declare module 'axios' {
 }
 
 // 메인 API 베이스 URL (영화, 추천 등)
-const API_BASE_URL =
-    process.env.NODE_ENV === "development"
-        ? "http://localhost:8000"  // Backend
-        : "https://api.movisr.com";
+// 프로덕션: 빈 문자열 = 같은 도메인 (nginx 프록시)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV
+    ? "http://localhost:8000"
+    : "");
 
 // 회원가입 전용 API 베이스 URL (PostgreSQL 연동)
-const AUTH_BASE_URL =
-    process.env.NODE_ENV === "development"
-        ? "http://localhost:8000"  // Backend
-        : "https://auth.movisr.com";
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL || (import.meta.env.DEV
+    ? "http://localhost:8000"
+    : "");
 
 // 메인 axios 인스턴스 (영화, 추천 등)
 const axiosInstance = axios.create({

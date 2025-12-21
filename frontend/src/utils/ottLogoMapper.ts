@@ -3,7 +3,7 @@
 // [사용법] import { getOttLogoPath } from '@/utils/ottLogoMapper';
 // ============================================================
 
-// OTT 이름과 로컬 SVG 파일 매핑
+// OTT 이름과 로컬 SVG 파일 매핑 (public/logos/ 폴더 사용 - 프로덕션 호환)
 const OTT_LOGO_MAP: Record<string, string> = {
     'Netflix': '/logos/NETFLEX_Logo.svg',
     'NETFLIX': '/logos/NETFLEX_Logo.svg',

@@ -42,6 +42,21 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
+def verify_refresh_token(token: str) -> Optional[str]:
+    """
+    Refresh Token을 검증하고 user_id를 반환한다.
+    유효하지 않으면 None을 반환한다.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        return user_id
+    except ExpiredSignatureError:
+        return None
+    except jwt.JWTError:
+        return None
+
+
 # ======================================================
 # 현재 로그인된 유저 조회 (쿠키 기반)
 # ======================================================

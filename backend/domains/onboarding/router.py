@@ -60,6 +60,20 @@ def get_survey_movies(
     return service.get_onboarding_survey_movies(db)
 
 
+# Frontend 호환용 별칭 (GET /movies/onboarding)
+@router.get(
+    "/movies/onboarding",
+    response_model=SurveyMoviesResponse,
+    summary="온보딩 설문용 영화 조회 (별칭)",
+)
+def get_onboarding_movies_alias(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+) -> SurveyMoviesResponse:
+    """Frontend 호환용 - /onboarding/survey/movies와 동일"""
+    return service.get_onboarding_survey_movies(db)
+
+
 # =========================
 # OB-03-01 온보딩 완료 처리
 # =========================

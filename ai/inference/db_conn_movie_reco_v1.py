@@ -450,9 +450,13 @@ class HybridRecommender:
         for mid in user_movie_ids:
             if mid in self.sbert_movie_to_idx:
                 user_sbert_vecs.append(self.sbert_embeddings[self.sbert_movie_to_idx[mid]])
-        
+
         if not user_sbert_vecs:
-            return 'single', {'recommendations': {'track_a': [], 'track_b': []}}
+            # 사용자 영화가 인덱스에 없으면 인덱스 내 영화 사용
+            random_ids = list(self.sbert_movie_to_idx.keys())[:100]
+            for mid in random_ids[:5]:
+                if mid in self.sbert_movie_to_idx:
+                    user_sbert_vecs.append(self.sbert_embeddings[self.sbert_movie_to_idx[mid]])
         
         user_sbert_profile = np.mean(user_sbert_vecs, axis=0)
         user_sbert_profile = user_sbert_profile / (np.linalg.norm(user_sbert_profile) + 1e-10)
@@ -461,9 +465,13 @@ class HybridRecommender:
         for mid in user_movie_ids:
             if mid in self.lightgcn_movie_to_idx:
                 user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
-        
+
         if not user_gcn_vecs:
-            return 'single', {'recommendations': {'track_a': [], 'track_b': []}}
+            # 사용자 영화가 인덱스에 없으면 인덱스 내 영화 사용
+            random_ids = list(self.lightgcn_movie_to_idx.keys())[:100]
+            for mid in random_ids[:5]:
+                if mid in self.lightgcn_movie_to_idx:
+                    user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
         
         user_gcn_profile = np.mean(user_gcn_vecs, axis=0)
         
@@ -506,16 +514,19 @@ class HybridRecommender:
                             final_scores_a[i] = -np.inf
                 
                 for i, mid in enumerate(filtered_ids_a):
-                    if mid in self.recommendation_history[-9:]:
+                    if mid in self.recommendation_history[-50:]:
                         final_scores_a[i] = -np.inf
                 
                 valid_indices_a = [i for i, score in enumerate(final_scores_a) if score != -np.inf]
-                if len(valid_indices_a) >= 10:
-                    top_10_indices_a = sorted(valid_indices_a, key=lambda i: final_scores_a[i], reverse=True)[:10]
-                    selected_indices_a = np.random.choice(top_10_indices_a, size=min(3, len(top_10_indices_a)), replace=False)
-                elif len(valid_indices_a) >= 3:
-                    top_indices_a = sorted(valid_indices_a, key=lambda i: final_scores_a[i], reverse=True)[:3]
-                    selected_indices_a = top_indices_a
+                if len(valid_indices_a) >= 50:
+                    top_50_indices_a = sorted(valid_indices_a, key=lambda i: final_scores_a[i], reverse=True)[:50]
+                    selected_indices_a = np.random.choice(top_50_indices_a, size=min(25, len(top_50_indices_a)), replace=False)
+                elif len(valid_indices_a) >= 30:
+                    top_30_indices_a = sorted(valid_indices_a, key=lambda i: final_scores_a[i], reverse=True)[:30]
+                    selected_indices_a = np.random.choice(top_30_indices_a, size=min(20, len(top_30_indices_a)), replace=False)
+                elif len(valid_indices_a) >= 20:
+                    top_20_indices_a = sorted(valid_indices_a, key=lambda i: final_scores_a[i], reverse=True)[:20]
+                    selected_indices_a = np.random.choice(top_20_indices_a, size=min(15, len(top_20_indices_a)), replace=False)
                 else:
                     selected_indices_a = valid_indices_a
                 
@@ -547,9 +558,9 @@ class HybridRecommender:
                         final_scores_b[i] = -np.inf
                 
                 for i, mid in enumerate(filtered_ids_b):
-                    if mid in self.recommendation_history[-9:]:
+                    if mid in self.recommendation_history[-50:]:
                         final_scores_b[i] = -np.inf
-                
+
                 track_a_genres = set()
                 if preferred_genres:
                     track_a_genres.update(preferred_genres)
@@ -565,12 +576,15 @@ class HybridRecommender:
                         final_scores_b[i] *= 1.3
                 
                 valid_indices = [i for i, score in enumerate(final_scores_b) if score != -np.inf]
-                if len(valid_indices) >= 10:
-                    top_10_indices = sorted(valid_indices, key=lambda i: final_scores_b[i], reverse=True)[:10]
-                    selected_indices = np.random.choice(top_10_indices, size=min(3, len(top_10_indices)), replace=False)
-                elif len(valid_indices) >= 3:
-                    top_indices = sorted(valid_indices, key=lambda i: final_scores_b[i], reverse=True)[:3]
-                    selected_indices = top_indices
+                if len(valid_indices) >= 50:
+                    top_50_indices = sorted(valid_indices, key=lambda i: final_scores_b[i], reverse=True)[:50]
+                    selected_indices = np.random.choice(top_50_indices, size=min(25, len(top_50_indices)), replace=False)
+                elif len(valid_indices) >= 30:
+                    top_30_indices = sorted(valid_indices, key=lambda i: final_scores_b[i], reverse=True)[:30]
+                    selected_indices = np.random.choice(top_30_indices, size=min(20, len(top_30_indices)), replace=False)
+                elif len(valid_indices) >= 20:
+                    top_20_indices = sorted(valid_indices, key=lambda i: final_scores_b[i], reverse=True)[:20]
+                    selected_indices = np.random.choice(top_20_indices, size=min(15, len(top_20_indices)), replace=False)
                 else:
                     selected_indices = valid_indices
                 
@@ -667,9 +681,9 @@ class HybridRecommender:
                         final_scores_b[i] = -np.inf
                 
                 for i, mid in enumerate(filtered_ids_b):
-                    if mid in self.recommendation_history[-9:]:
+                    if mid in self.recommendation_history[-50:]:
                         final_scores_b[i] = -np.inf
-                
+
                 combination_b = self._find_movie_combinations(
                     filtered_ids_b, final_scores_b, available_time, top_k=1
                 )

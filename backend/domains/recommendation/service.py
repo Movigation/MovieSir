@@ -16,9 +16,8 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     # 1. AI 모델 예측 (user_id를 int로 변환하거나 매핑 필요할 수 있음)
     # model_instance는 router에서 주입받거나 전역 변수로 로드된 것을 사용
     try:
-        # 모델 입력 형식이 다를 수 있으니 확인 필요 (UUID -> int 매핑 등)
-        recommended_movie_ids = model_instance.predict(user_id, top_k=20)
-        print(f"[DEBUG] AI 모델 추천 ID: {recommended_movie_ids}")
+        # 필터링 후에도 충분한 영화가 남도록 더 많이 요청
+        recommended_movie_ids = model_instance.predict(user_id, top_k=50)
     except Exception as e:
         print(f"AI Model Error: {e}")
         recommended_movie_ids = []
@@ -27,13 +26,11 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
         return []
 
     # 2. DB 조회 (CRUD 역할)
-    # movies 테이블은 domains/movie/models.py에 있음
-    movies = db.query(Movie).filter(Movie.movie_id.in_(recommended_movie_ids)).all()
-    print(f"[DEBUG] DB에서 찾은 영화: {len(movies)}개")
-    print(f"[DEBUG] 찾은 영화 IDs: {[m.movie_id for m in movies]}")
-    
-    # 순서 보정 (AI가 추천한 순서대로 정렬)
-    movies_map = {m.movie_id: m for m in movies}
+    # AI 모델은 tmdb_id를 반환하므로 tmdb_id로 조회
+    movies = db.query(Movie).filter(Movie.tmdb_id.in_(recommended_movie_ids)).all()
+
+    # 순서 보정 (AI가 추천한 순서대로 정렬) - tmdb_id 기준
+    movies_map = {m.tmdb_id: m for m in movies}
     results = []
     filtered_out = {"adult": 0, "runtime": 0, "genre": 0}
     
