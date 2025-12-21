@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useOnboardingStore } from "@/store/onboardingStore";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import type { OnboardingMovie } from "@/api/onboardingApi.type";
 import { skipOnboarding } from "@/api/onboardingApi";

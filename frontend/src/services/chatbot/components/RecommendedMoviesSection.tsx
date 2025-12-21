@@ -3,6 +3,7 @@
 
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from './MovieCard';
+import MovieCarousel from '@/components/ui/MovieCarousel';
 
 export default function RecommendedMoviesSection() {
     const { recommendedMovies } = useMovieStore();
@@ -34,9 +35,7 @@ export default function RecommendedMoviesSection() {
                     </span>
                 )}
             </div>
-            <div className="flex gap-2 md:gap-3">
-                <RecommendedList />
-            </div>
+            <RecommendedList />
         </>
     );
 }
@@ -97,14 +96,17 @@ function RecommendedList() {
         isEmpty: true
     });
 
+    // 빈 카드는 3개 미만일 때만 채우기 (캐러셀이 4개부터 작동하므로)
     const displayMovies = [...recommendedMovies];
-    while (displayMovies.length < 3) {
-        displayMovies.push(createEmptyCard(displayMovies.length));
+    if (displayMovies.length < 3) {
+        while (displayMovies.length < 3) {
+            displayMovies.push(createEmptyCard(displayMovies.length));
+        }
     }
 
     return (
-        <>
-            {displayMovies.slice(0, 3).map((movie) => (
+        <MovieCarousel>
+            {displayMovies.map((movie) => (
                 <MovieCard
                     key={movie.id}
                     movie={{
@@ -117,6 +119,6 @@ function RecommendedList() {
                     showReRecommend={!movie.isEmpty}
                 />
             ))}
-        </>
+        </MovieCarousel>
     );
 }

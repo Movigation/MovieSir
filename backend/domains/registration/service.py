@@ -178,17 +178,40 @@ def confirm_signup(
     redis.delete(key)
 
     # JWT 발급
-    token = create_access_token({"sub": str(user.user_id)})
+    token = create_access_token({"sub": str(user.user_id), "nickname": user.nickname})
+    
+    # 환경별 쿠키 보안 설정
+    COOKIE_SECURE = os.getenv("ENVIRONMENT", "development") == "production"
+    COOKIE_SAMESITE = "lax"
+    
+    # HttpOnly 쿠키에 토큰 설정
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=1800,  # 30분
+        path="/",
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=token,  # 실제로는 refresh token을 따로 생성해야 함
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=604800,  # 7일
+        path="/",
+    )
 
     return SignupConfirmResponse(
         user_id=str(user.user_id),
         email=user.email,
+        nickname=user.nickname,
         onboarding_completed=user.onboarding_completed_at is not None,
-        token={
-            "access_token": token,
-            "token_type": "bearer",
-        },
     )
+
 
 
 

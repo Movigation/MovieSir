@@ -14,7 +14,8 @@ from . import service, schema
 # 간단하게 전역으로 로드하거나 싱글톤 클래스를 만들어 씁니다.
 class MockAIModel:
     def predict(self, uid, top_k):
-        return [1, 2, 3] # 테스트용 더미 데이터
+        # 1부터 top_k까지의 영화 ID 반환 (더 많은 영화 추천)
+        return list(range(1, top_k + 1))
 ai_model = MockAIModel() # 실제 모델 로드 코드로 교체 필요
 
 router = APIRouter(tags=["recommendation"])

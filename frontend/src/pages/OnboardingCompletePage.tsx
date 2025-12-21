@@ -3,29 +3,20 @@
 
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useOnboardingStore } from "@/store/onboardingStore";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { completeOnboarding, skipOnboarding } from "@/api/onboardingApi";
 import ChatbotButton from '@/services/chatbot/components/ChatbotButton';
 import { RotateCcw, Undo2, Check } from 'lucide-react';
 
-// OTT 로고 SVG imports
-import NetflixLogoSvg from "@/assets/logos/NETFLEX_Logo.svg";
-import DisneyLogoSvg from "@/assets/logos/Disney+_logo.svg";
-import PrimeLogoSvg from "@/assets/logos/Amazon_Prime_Logo.svg";
-import WavveLogoSvg from "@/assets/logos/WAVVE_Logo.svg";
-import TvingLogoSvg from "@/assets/logos/TVING_Logo.svg";
-import WatchaLogoSvg from "@/assets/logos/WATCHA_Logo_Main.svg";
-import AppleLogoSvg from "@/assets/logos/Apple_TV_logo.svg";
-
-// OTT 플랫폼 정보 매핑
+// OTT 로고 - public 폴더 URL 사용
 const OTT_PLATFORMS_MAP: Record<number, { name: string; logo: string; bg: string }> = {
-    8: { name: "Netflix", logo: NetflixLogoSvg, bg: "bg-black" },
-    97: { name: "Watcha", logo: WatchaLogoSvg, bg: "bg-[#1A1A1A]" },
-    337: { name: "Disney+", logo: DisneyLogoSvg, bg: "bg-[#040714]" },
-    356: { name: "Wavve", logo: WavveLogoSvg, bg: "bg-[#0A0E27]" },
-    1883: { name: "TVING", logo: TvingLogoSvg, bg: "bg-black" },
-    350: { name: "Apple TV+", logo: AppleLogoSvg, bg: "bg-black" },
-    119: { name: "Prime Video", logo: PrimeLogoSvg, bg: "bg-[#00050D]" }
+    8: { name: "Netflix", logo: "/logos/NETFLEX_Logo.svg", bg: "bg-black" },
+    97: { name: "Watcha", logo: "/logos/WATCHA_Logo_Main.svg", bg: "bg-[#1A1A1A]" },
+    337: { name: "Disney+", logo: "/logos/Disney+_logo.svg", bg: "bg-[#040714]" },
+    356: { name: "Wavve", logo: "/logos/WAVVE_Logo.svg", bg: "bg-[#0A0E27]" },
+    1883: { name: "TVING", logo: "/logos/TVING_Logo.svg", bg: "bg-black" },
+    350: { name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg", bg: "bg-black" },
+    119: { name: "Prime Video", logo: "/logos/Amazon_Prime_Logo.svg", bg: "bg-[#00050D]" }
 };
 
 export default function OnboardingCompletePage() {

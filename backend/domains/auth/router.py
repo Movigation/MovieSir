@@ -1,31 +1,33 @@
 # backend/domains/auth/router.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
+import os
 
 from backend.core.db import get_db
 from backend.domains.user.models import User
 from backend.domains.auth.schemas import LoginRequest, LoginResponse, UserResponse
-from backend.domains.auth.utils import create_access_token
-<<<<<<< HEAD
-from backend.domains.auth import utils as from_utils # alias for clarity
-=======
->>>>>>> origin/be-dev
+from backend.domains.auth.utils import create_access_token, get_current_user
 from backend.utils.password import verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# 환경별 쿠키 보안 설정
+COOKIE_SECURE = os.getenv("ENVIRONMENT", "development") == "production"
+COOKIE_SAMESITE = "lax"  # CSRF 방어
 
 
 @router.post("/login", response_model=LoginResponse)
 def login(
     request: LoginRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
     로그인 API
     
     - 이메일과 비밀번호로 로그인
-    - 성공 시 JWT 토큰 발급
+    - 성공 시 JWT 토큰을 HttpOnly 쿠키로 발급
     - 실패 시 401 에러 (이메일 또는 비밀번호 불일치)
     """
     
@@ -46,24 +48,37 @@ def login(
             detail="탈퇴한 회원입니다",
         )
     
-<<<<<<< HEAD
     # 4. JWT 토큰 생성 (둘 다 새로 발급)
-    access_token = create_access_token(data={"sub": str(user.user_id)})
-    refresh_token = create_access_token(data={"sub": str(user.user_id)}) # 실제로는 만료시간을 다르게 설정해야 함 (예: 7일)
+    access_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname})
+    refresh_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname}) # 실제로는 만료시간을 다르게 설정해야 함 (예: 7일)
     
     # [Level 1] DB에 Refresh Token 저장 (로그인 시 업데이트)
     user.refresh_token = refresh_token
     db.add(user)
     db.commit()
-=======
-    # 4. JWT 토큰 생성
-    access_token = create_access_token(data={"sub": str(user.user_id)})
     
-    # refresh_token은 일단 access_token과 동일하게 설정 (나중에 개선 가능)
-    refresh_token = access_token
->>>>>>> origin/be-dev
+    # 5. HttpOnly 쿠키에 토큰 설정 (XSS 공격 방어)
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,          # JavaScript 접근 차단
+        secure=COOKIE_SECURE,   # HTTPS에서만 전송 (프로덕션)
+        samesite=COOKIE_SAMESITE,  # CSRF 방어
+        max_age=1800,           # 30분 (초 단위)
+        path="/",               # 모든 경로에서 사용
+    )
     
-    # 5. 사용자 정보 응답
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=604800,         # 7일 (초 단위)
+        path="/",
+    )
+    
+    # 6. 사용자 정보만 응답 (토큰은 쿠키로 전송됨)
     user_response = UserResponse(
         user_id=str(user.user_id),
         email=user.email,
@@ -71,29 +86,27 @@ def login(
         onboarding_completed=bool(user.onboarding_completed_at),
     )
     
-    return LoginResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user=user_response,
-    )
-<<<<<<< HEAD
+    return LoginResponse(user=user_response)
 
 @router.post("/logout", summary="로그아웃")
 def logout(
+    response: Response,
     db: Session = Depends(get_db),
     # 현재 로그인한 유저를 가져옴 (토큰 검증 포함)
-    current_user: User = Depends(from_utils.get_current_user) 
+    current_user: User = Depends(get_current_user) 
 ):
     """
     로그아웃 API (Level 1)
+    - HttpOnly 쿠키에서 토큰 삭제
     - DB에 저장된 Refresh Token을 삭제하여 재발급을 불가능하게 함.
-    - 클라이언트는 Access Token을 폐기해야 함.
     """
-    # DB에서 리프레시 토큰 삭제 (NULL 처리)
+    # 1. 쿠키 삭제
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
+    
+    # 2. DB에서 리프레시 토큰 삭제 (NULL 처리)
     current_user.refresh_token = None
     db.add(current_user)
     db.commit()
     
     return {"message": "로그아웃 되었습니다."}
-=======
->>>>>>> origin/be-dev
