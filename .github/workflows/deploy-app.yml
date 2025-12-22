@@ -26,13 +26,18 @@ jobs:
             git fetch --all
             git reset --hard origin/main
 
+            echo "📌 Create .env.production"
+            cat > .env.production << 'ENVEOF'
+            ${{ secrets.ENV_PRODUCTION_APP }}
+            ENVEOF
+
             echo "📌 Stop old containers"
-            docker compose down || true
+            docker compose --env-file .env.production down || true
 
             echo "📌 Cleanup docker cache"
             docker system prune -af || true
 
             echo "📌 Build & start containers"
-            docker compose up -d --build
+            docker compose --env-file .env.production up -d --build
 
             echo "✅ App Server deployment complete"
