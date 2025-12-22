@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["main"]
 
-
+jobs:
   # =============================================
   # Docker 빌드 검증 (Frontend)
   # =============================================
@@ -31,7 +31,6 @@ on:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-jobs:
   # =============================================
   # Docker 빌드 검증 (Backend)
   # =============================================
@@ -79,5 +78,3 @@ jobs:
           tags: moviesir/ai:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-
