@@ -43,25 +43,14 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     for mid in recommended_movie_ids:
         if mid in movies_map:
             m = movies_map[mid]
-            # 장르/시간/성인 필터링
+            # 성인 필터링만 (장르/시간은 AI에서 이미 처리됨)
             if req.exclude_adult and m.adult:
                 filtered_out["adult"] += 1
                 continue
-            if req.runtime_limit and m.runtime and m.runtime > req.runtime_limit:
-                filtered_out["runtime"] += 1
-                print(f"[DEBUG] 필터링됨 (시간): {m.title} - {m.runtime}분 > {req.runtime_limit}분")
-                continue
-            # 장르 필터링: 요청된 장르 중 하나라도 포함되면 통과
-            if req.genres and m.genres:
-                if not any(g in m.genres for g in req.genres):
-                    filtered_out["genre"] += 1
-                    print(f"[DEBUG] 필터링됨 (장르): {m.title} - 영화장르:{m.genres} vs 요청:{req.genres}")
-                    continue
             results.append(m)
-    
-    print(f"[DEBUG] 필터링 결과: 성인={filtered_out['adult']}, 시간={filtered_out['runtime']}, 장르={filtered_out['genre']}")
+
+    print(f"[DEBUG] 필터링 결과: 성인={filtered_out['adult']}")
     print(f"[DEBUG] 최종 추천 영화: {len(results)}개")
-    print(f"[DEBUG] 최종 영화 제목: {[m.title for m in results]}")
             
     return results
 

@@ -74,18 +74,60 @@ class AIModelAdapter:
             track_a = result.get('track_a', {})
             track_b = result.get('track_b', {})
 
-            # track_a에서 영화 추출
+            # track_a에서 영화 추출 (단일 모드 + 조합 모드 모두 처리)
             if isinstance(track_a, dict):
+                # 단일 영화 모드: track_a.movies
                 movies_a = track_a.get('movies', [])
-                if isinstance(movies_a, list):
+
+                # 조합 모드: 모든 조합에서 영화 추출
+                if not movies_a and 'combination' in track_a:
+                    combo = track_a.get('combination', {})
+                    if isinstance(combo, dict):
+                        # 모든 조합(combinations)에서 영화 추출
+                        all_combinations = combo.get('combinations', [])
+                        if all_combinations:
+                            for comb in all_combinations:
+                                if isinstance(comb, dict):
+                                    for movie in comb.get('movies', []):
+                                        if isinstance(movie, dict) and 'tmdb_id' in movie:
+                                            if movie['tmdb_id'] not in movie_ids:
+                                                movie_ids.append(movie['tmdb_id'])
+                        else:
+                            # 단일 조합만 있는 경우 (이전 버전 호환)
+                            movies_a = combo.get('movies', [])
+                            for movie in movies_a:
+                                if isinstance(movie, dict) and 'tmdb_id' in movie:
+                                    movie_ids.append(movie['tmdb_id'])
+                elif isinstance(movies_a, list):
                     for movie in movies_a:
                         if isinstance(movie, dict) and 'tmdb_id' in movie:
                             movie_ids.append(movie['tmdb_id'])
 
-            # track_b에서 영화 추출
+            # track_b에서 영화 추출 (단일 모드 + 조합 모드 모두 처리)
             if isinstance(track_b, dict):
+                # 단일 영화 모드: track_b.movies
                 movies_b = track_b.get('movies', [])
-                if isinstance(movies_b, list):
+
+                # 조합 모드: 모든 조합에서 영화 추출
+                if not movies_b and 'combination' in track_b:
+                    combo = track_b.get('combination', {})
+                    if isinstance(combo, dict):
+                        # 모든 조합(combinations)에서 영화 추출
+                        all_combinations = combo.get('combinations', [])
+                        if all_combinations:
+                            for comb in all_combinations:
+                                if isinstance(comb, dict):
+                                    for movie in comb.get('movies', []):
+                                        if isinstance(movie, dict) and 'tmdb_id' in movie:
+                                            if movie['tmdb_id'] not in movie_ids:
+                                                movie_ids.append(movie['tmdb_id'])
+                        else:
+                            # 단일 조합만 있는 경우 (이전 버전 호환)
+                            movies_b = combo.get('movies', [])
+                            for movie in movies_b:
+                                if isinstance(movie, dict) and 'tmdb_id' in movie:
+                                    movie_ids.append(movie['tmdb_id'])
+                elif isinstance(movies_b, list):
                     for movie in movies_b:
                         if isinstance(movie, dict) and 'tmdb_id' in movie:
                             movie_ids.append(movie['tmdb_id'])
