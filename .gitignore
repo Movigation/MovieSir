@@ -64,6 +64,9 @@ ai/training/sbert_data/index/*
 ai/training/lightgcn_model/*
 !ai/training/lightgcn_model/.gitkeep
 
+# DB
+*.sql
+*.rdb
 
 # Secrets
 .env
