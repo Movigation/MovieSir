@@ -18,7 +18,6 @@ jobs:
           host: ${{ secrets.GPU_HOST }}
           username: ${{ secrets.GPU_USER }}
           key: ${{ secrets.SSH_KEY }}
-          debug: true
           script: |
             if [ ! -d ~/MovieSir-middle/.git ]; then
               echo "📌 Git repo not found, cloning..."
@@ -39,13 +38,18 @@ jobs:
             git fetch --all
             git reset --hard origin/main
 
+            echo "📌 Create .env.production"
+            cat > .env.production << 'ENVEOF'
+            ${{ secrets.ENV_PRODUCTION_GPU }}
+            ENVEOF
+
             echo "📌 Stop old containers"
-            docker compose -f docker-compose.gpu.yml down || true
+            docker compose -f docker-compose.gpu.yml --env-file .env.production down || true
 
             echo "📌 Cleanup docker cache"
             docker system prune -af || true
 
             echo "📌 Build & start AI container"
-            docker compose -f docker-compose.gpu.yml up -d --build
+            docker compose -f docker-compose.gpu.yml --env-file .env.production up -d --build
 
             echo "✅ GPU Server deployment complete"
