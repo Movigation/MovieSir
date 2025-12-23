@@ -74,9 +74,9 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
                 </button>
 
                 {/* 아이콘 */}
-                <div className="flex justify-center mb-6">
+                {/* <div className="flex justify-center mb-6">
                     <div className="text-7xl">🎯</div>
-                </div>
+                </div> */}
 
                 {/* 제목 */}
                 <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">

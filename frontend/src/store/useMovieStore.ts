@@ -102,22 +102,22 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
             console.log('API 응답:', result);
 
-            // 전체 추천 영화 목록 저장 (재추천 시 사용)
-            const initialRecommended = result.algorithmic.slice(0, 3);
-            const initialPopular = result.popular.slice(0, 3);
+            // 초기 6개만 표시, 나머지는 재추천 풀에 보관
+            const initialRecommended = result.algorithmic.slice(0, 6);
+            const initialPopular = result.popular.slice(0, 6);
 
             console.log('📦 API 응답 데이터:');
             console.log('  - algorithmic 전체:', result.algorithmic.length, '개');
             console.log('  - popular 전체:', result.popular.length, '개');
-            console.log('  - 맞춤추천 초기 표시:', initialRecommended.map(m => m.title));
-            console.log('  - 인기영화 초기 표시:', initialPopular.map(m => m.title));
+            console.log('  - 맞춤추천 초기 표시:', initialRecommended.length, '개');
+            console.log('  - 인기영화 초기 표시:', initialPopular.length, '개');
 
             set({
-                allRecommendedMovies: result.algorithmic,  // 전체 목록 저장
-                recommendedMovies: initialRecommended,  // 처음 3개만 표시
+                allRecommendedMovies: result.algorithmic,  // 전체 목록 저장 (재추천 풀)
+                recommendedMovies: initialRecommended,  // 6개만 표시
                 shownRecommendedIds: initialRecommended.map(m => m.id),  // 표시된 ID 기록
-                allPopularMovies: result.popular,  // 전체 인기 영화 목록 저장
-                popularMovies: initialPopular,  // 처음 3개만 표시
+                allPopularMovies: result.popular,  // 전체 인기 영화 목록 저장 (재추천 풀)
+                popularMovies: initialPopular,  // 6개만 표시
                 shownPopularIds: initialPopular.map(m => m.id),  // 표시된 ID 기록
                 isLoading: false,
                 error: null

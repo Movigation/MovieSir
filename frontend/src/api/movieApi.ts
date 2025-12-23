@@ -106,34 +106,37 @@ export const postRecommendations = async (filters: {
         });
 
         // 4. 백엔드 응답을 프론트엔드 Movie 타입으로 변환
-        const backendMovies = response.data.results;  // ✅ 수정 4/5: recommendations → results
+        const backendMovies = response.data.results;  // Backend가 results 배열로 반환
 
         // Movie 타입으로 변환하는 헬퍼 함수
         const convertToMovie = (backendMovie: any): Movie => ({
-            id: backendMovie.movie_id,  // ✅ 수정 4/5: movie_id 매핑
+            id: backendMovie.movie_id,
             title: backendMovie.title,
             genres: backendMovie.genres,
             rating: backendMovie.vote_average,
-            poster: `https://image.tmdb.org/t/p/w500${backendMovie.poster_path}`,  // ✅ 수정 5/5: URL 조합
+            poster: `https://image.tmdb.org/t/p/w500${backendMovie.poster_path}`,
             description: backendMovie.overview,
             runtime: backendMovie.runtime,
             popular: false,
             watched: false
         })
 
-        // 5. algorithmic과 popular로 분리
-        // 백엔드가 AI 추천 순서대로 반환하므로:
-        // - 전체를 algorithmic으로 사용
-        // - popular는 별도 API 필요 (일단 빈 배열)
+        // 5. 전체 영화를 변환
         const allMovies = backendMovies.map(convertToMovie);
 
         console.log('전체 추천 영화 개수:', allMovies.length);
 
-        // 전체 영화를 절반씩 나누어 algorithmic과 popular로 분리
+        // 6. 절반씩 나누어 algorithmic과 popular로 분리
         const halfLength = Math.ceil(allMovies.length / 2);
+        const algorithmic = allMovies.slice(0, halfLength);  // 전반부: 맞춤 추천
+        const popular = allMovies.slice(halfLength);         // 후반부: 인기 영화
+
+        console.log('맞춤 추천 영화 개수:', algorithmic.length);
+        console.log('인기 영화 개수:', popular.length);
+
         return {
-            algorithmic: allMovies.slice(0, halfLength),  // 전반부: 맞춤 추천
-            popular: allMovies.slice(halfLength)          // 후반부: 인기 영화
+            algorithmic,
+            popular
         };
     } catch (error: any) {
         console.error("영화 추천 API 호출 중 오류:", error);

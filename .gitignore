@@ -120,3 +120,4 @@ backend/data/
 *.sql
 # 대용량 DB 덤프 파일은 제외 (GitHub 100MB 제한)
 database/init/movigation.sql
+secrets/

@@ -75,6 +75,10 @@ export default function OnboardingCompletePage() {
             // 온보딩 스토어 초기화
             reset();
 
+            // localStorage에서 온보딩 데이터 완전 삭제
+            localStorage.removeItem('onboarding-storage');
+            console.log('✅ localStorage 온보딩 데이터 삭제 완료');
+
             // 메인 페이지로 이동
             navigate("/");
 

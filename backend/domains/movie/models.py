@@ -15,23 +15,23 @@ class Movie(Base):
     movie_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     tmdb_id = Column(Integer, nullable=False, unique=True, index=True)
     title = Column(String, nullable=False)
-    
+
     # [Set A 추가] 영화 상세 정보 (추천 결과 화면용)
     overview = Column(Text, nullable=True)
     poster_path = Column(String, nullable=True)
     vote_average = Column(Float, nullable=True)
-    
+    vote_count = Column(Integer, nullable=True)  # SQL 스키마 추가
+
     # [Set A 변경] 추천 필터링을 위해 ARRAY 타입 사용 (기존 String -> ARRAY)
     # 예: ['Action', 'Comedy']
     genres = Column(ARRAY(String), nullable=True)
-    
+
     runtime = Column(Integer, nullable=True)
     adult = Column(Boolean, nullable=False, server_default="false")
     popularity = Column(Float, nullable=True)
     tag_genome = Column(JSONB, nullable=True)
 
     # [ERD 추가]
-    # Date, DateTime 임포트 필요할 수 있음 (상단 확인)
     from sqlalchemy import Date, DateTime
     from sqlalchemy.sql import func
     release_date = Column(Date, nullable=True)
@@ -70,8 +70,8 @@ class MovieVector(Base):
     __tablename__ = "movie_vectors"
 
     movie_id = Column(Integer, ForeignKey("movies.movie_id", ondelete="CASCADE"), primary_key=True)
-    embedding = Column(Vector(768))  # 모델 차원수에 맞춰 설정 (예: 768)
-    
+    embedding = Column(Vector(1024))  # SQL 스키마와 일치 (1024차원)
+
     # [ERD 추가]
     from sqlalchemy import DateTime
     updated_at = Column(DateTime, nullable=True)
@@ -87,12 +87,13 @@ class OttProvider(Base):
 
     provider_id = Column(Integer, primary_key=True, autoincrement=True)
     provider_name = Column(String, nullable=False)
-    
+
     # [Set B] 로고 경로 (프론트엔드 표시용)
     logo_path = Column(String, nullable=True)
-    
+
     # [ERD 추가]
     display_priority = Column(Integer, default=100)
+    is_active = Column(Boolean, default=True)  # SQL 스키마 추가
 
     # [Set B] 유저가 구독 중인 OTT
     user_mappings = relationship(
