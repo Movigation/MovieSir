@@ -24,7 +24,8 @@ class AIModelAdapter:
         available_time: int = 180,
         preferred_genres: Optional[List[str]] = None,
         preferred_otts: Optional[List[str]] = None,
-        user_movie_ids: Optional[List[int]] = None
+        user_movie_ids: Optional[List[int]] = None,
+        allow_adult: bool = False
     ) -> List[int]:
         """
         GPU Server AI Service 호출
@@ -36,6 +37,7 @@ class AIModelAdapter:
             preferred_genres: 선호 장르 리스트
             preferred_otts: 구독 중인 OTT 리스트
             user_movie_ids: 사용자가 본 영화 ID 리스트
+            allow_adult: 성인물 허용 여부
 
         Returns:
             추천된 movie_id 리스트
@@ -55,7 +57,8 @@ class AIModelAdapter:
                 "available_time": available_time,
                 "top_k": top_k,
                 "preferred_genres": preferred_genres,
-                "preferred_otts": preferred_otts
+                "preferred_otts": preferred_otts,
+                "allow_adult": allow_adult
             }
 
             print(f"[AI Model] Calling AI Service: {self.ai_service_url}/recommend")

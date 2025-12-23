@@ -136,7 +136,7 @@ class HybridRecommender:
         print("Loading metadata from database...")
         
         query = """
-            SELECT 
+            SELECT
                 movie_id,
                 tmdb_id,
                 title,
@@ -146,12 +146,13 @@ class HybridRecommender:
                 poster_path,
                 release_date,
                 vote_average,
-                popularity
+                popularity,
+                adult
             FROM movies
         """
-        
+
         rows = self.db.execute_query(query)
-        
+
         # metadata_map 구성 (tmdb_id를 키로)
         self.metadata_map = {}
         for row in rows:
@@ -166,7 +167,8 @@ class HybridRecommender:
                 'poster_path': row['poster_path'],
                 'release_date': str(row['release_date']) if row['release_date'] else '',
                 'vote_average': row['vote_average'] or 0,
-                'popularity': row['popularity'] or 0
+                'popularity': row['popularity'] or 0,
+                'adult': row['adult'] or False
             }
         
         # 장르 리스트 추출
@@ -297,22 +299,27 @@ class HybridRecommender:
         preferred_genres: Optional[List[str]] = None,
         max_runtime: Optional[int] = None,
         min_year: Optional[int] = None,
-        preferred_otts: Optional[List[str]] = None
+        preferred_otts: Optional[List[str]] = None,
+        allow_adult: bool = False
     ) -> Tuple[List[int], List[int]]:
         """
-        필터링 적용 (장르, 런타임, 연도, OTT)
-        
+        필터링 적용 (장르, 런타임, 연도, OTT, 성인물)
+
         Returns:
             (filtered_ids, filtered_indices)
         """
         filtered_indices = []
         filtered_ids = []
-        
+
         for i, movie_id in enumerate(movie_ids):
             meta = self.metadata_map.get(movie_id, {})
             if not meta:
                 continue
-            
+
+            # 0. 성인물 필터링
+            if not allow_adult and meta.get('adult', False):
+                continue
+
             # 1. 런타임 필터링
             if max_runtime is not None:
                 runtime = meta.get('runtime', 0)
@@ -468,12 +475,14 @@ class HybridRecommender:
         top_k: int = 20,
         exclude_seen: bool = True,
         preferred_genres: Optional[List[str]] = None,
-        preferred_otts: Optional[List[str]] = None
+        preferred_otts: Optional[List[str]] = None,
+        allow_adult: bool = False
     ) -> Tuple[str, dict]:
         """하이브리드 추천"""
         print(f"\nStarting hybrid recommendation...")
         print(f"Available time: {available_time} min")
         print(f"Requested genres: {preferred_genres}")
+        print(f"Allow adult: {allow_adult}")
 
         start_time = time.time()
 
@@ -515,16 +524,16 @@ class HybridRecommender:
         recommendation_type = 'combination' if available_time >= 240 else 'single'
         max_runtime = None if recommendation_type == 'combination' else available_time
         
-        # 4. Track A 필터링 (장르 + OTT + 시간)
+        # 4. Track A 필터링 (장르 + OTT + 시간 + 성인)
         filtered_ids_a, filtered_indices_a = self._apply_filters(
             self.common_movie_ids, preferred_genres, max_runtime,
-            min_year=2000, preferred_otts=preferred_otts
+            min_year=2000, preferred_otts=preferred_otts, allow_adult=allow_adult
         )
 
-        # 5. Track B 필터링 (시간만 → 다양성, 장르/OTT 무시)
+        # 5. Track B 필터링 (시간만 → 다양성, 장르/OTT 무시, 성인 필터는 적용)
         filtered_ids_b, filtered_indices_b = self._apply_filters(
             self.common_movie_ids, None, max_runtime,
-            min_year=2000, preferred_otts=None
+            min_year=2000, preferred_otts=None, allow_adult=allow_adult
         )
         
         if recommendation_type == 'single':

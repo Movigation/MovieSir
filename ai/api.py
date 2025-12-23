@@ -62,6 +62,7 @@ class RecommendRequest(BaseModel):
     top_k: int = 20
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
+    allow_adult: bool = False
 
 class RecommendResponse(BaseModel):
     track_a: dict
@@ -79,7 +80,8 @@ def recommend(request: RecommendRequest):
             available_time=request.available_time,
             top_k=request.top_k,
             preferred_genres=request.preferred_genres,
-            preferred_otts=request.preferred_otts
+            preferred_otts=request.preferred_otts,
+            allow_adult=request.allow_adult
         )
 
         recommendations = result.get("recommendations", {})
