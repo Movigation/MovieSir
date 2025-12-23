@@ -1,10 +1,26 @@
 # AI Service API - GPU Server
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 import os
+import numpy as np
 
 from inference.db_conn_movie_reco_v1 import HybridRecommender
+
+
+def convert_numpy_types(obj: Any) -> Any:
+    """numpy 타입을 Python 네이티브 타입으로 변환"""
+    if isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    return obj
 
 app = FastAPI(title="MovieSir AI Service")
 
@@ -46,6 +62,7 @@ class RecommendRequest(BaseModel):
     top_k: int = 20
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
+    allow_adult: bool = False
 
 class RecommendResponse(BaseModel):
     track_a: dict
@@ -63,14 +80,20 @@ def recommend(request: RecommendRequest):
             available_time=request.available_time,
             top_k=request.top_k,
             preferred_genres=request.preferred_genres,
-            preferred_otts=request.preferred_otts
+            preferred_otts=request.preferred_otts,
+            allow_adult=request.allow_adult
         )
 
         recommendations = result.get("recommendations", {})
+        # numpy 타입을 Python 네이티브 타입으로 변환
+        track_a = convert_numpy_types(recommendations.get("track_a", {}))
+        track_b = convert_numpy_types(recommendations.get("track_b", {}))
+        elapsed_time = float(result.get("elapsed_time", 0))
+
         return RecommendResponse(
-            track_a=recommendations.get("track_a", {}),
-            track_b=recommendations.get("track_b", {}),
-            elapsed_time=result.get("elapsed_time", 0)
+            track_a=track_a,
+            track_b=track_b,
+            elapsed_time=elapsed_time
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
