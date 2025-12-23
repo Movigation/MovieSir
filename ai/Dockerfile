@@ -3,9 +3,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# GPU 모드 설정 (기본값: true)
-ARG USE_GPU=true
-
 # 시스템 의존성
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -17,14 +14,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# GPU/CPU 모드에 따라 패키지 설치
-RUN if [ "$USE_GPU" = "true" ]; then \
-        pip uninstall -y faiss-cpu && \
-        pip install --no-cache-dir faiss-gpu && \
-        pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu118; \
-    else \
-        pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu; \
-    fi
+# torch GPU 버전 설치 (faiss-cpu는 유지)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu118
 
 # AI 코드 복사
 COPY . .

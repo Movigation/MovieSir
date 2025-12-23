@@ -5,6 +5,7 @@ from uuid import uuid4
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 
 from backend.core.db import Base
 
@@ -103,3 +104,19 @@ class UserOnboardingAnswer(Base):
 
     user = relationship("User", back_populates="onboarding_answers")
     movie = relationship("Movie", back_populates="onboarding_answers")
+
+
+class UserVector(Base):
+    """
+    user_vectors 테이블
+    - 사용자 임베딩 벡터 저장 (pgvector)
+    """
+    __tablename__ = "user_vectors"
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    embedding = Column(Vector(1024))  # SQL 스키마와 일치 (1024차원)
+    updated_at = Column(DateTime, nullable=True)
