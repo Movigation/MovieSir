@@ -20,6 +20,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           command_timeout: 30m
           script: |
+            set -e  # 에러 발생 시 즉시 중단
+
             if [ ! -d ~/MovieSir-middle/.git ]; then
               echo "📌 Git repo not found, cloning..."
               # 모델 파일 백업
