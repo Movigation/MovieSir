@@ -19,10 +19,28 @@ export default function MovieDetailModal() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // 모달 닫기 (useEffect보다 먼저 정의)
+    const handleClose = () => {
+        setDetailMovieId(null);
+        setMovieDetail(null);
+    };
+
+    // ESC 키로 모달 닫기
+    useEffect(() => {
+        if (!detailMovieId) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                handleClose();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [detailMovieId]);
+
     // 영화 상세 정보 로드
     useEffect(() => {
-        console.log('🎞️ MovieDetailModal detailMovieId changed:', detailMovieId);
-
         if (!detailMovieId) {
             setMovieDetail(null);
             return;
@@ -47,12 +65,6 @@ export default function MovieDetailModal() {
 
         loadDetail();
     }, [detailMovieId]);
-
-    // 모달 닫기
-    const handleClose = () => {
-        setDetailMovieId(null);
-        setMovieDetail(null);
-    };
 
     // 공통 토글 함수
     const handleToggleStatus = async (
@@ -192,7 +204,32 @@ export default function MovieDetailModal() {
                                 </span>
                             </div>
                         </div>
-
+                        {/* OTT 플랫폼 */}
+                        {movieDetail.ott_providers && movieDetail.ott_providers.length > 0 && (
+                            <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">시청 가능 플랫폼</h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {movieDetail.ott_providers.map((ott: OTTPlatform) => (
+                                        <a
+                                            key={ott.ott_id}
+                                            href={ott.watch_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-2 px-4 py-2 w-[220px] bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                        >
+                                            <div className="w-12 h-6 flex items-center justify-center">
+                                                <img
+                                                    src={getOttLogoWithFallback(ott.ott_name, ott.ott_logo)}
+                                                    alt={ott.ott_name}
+                                                    className="max-h-full max-w-full object-contain"
+                                                />
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{ott.ott_name}</span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* 줄거리 */}
                         <div>
                             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">줄거리</h3>
@@ -256,32 +293,6 @@ export default function MovieDetailModal() {
                                 </div>
                             </div>
                         )}
-
-                        {/* OTT 플랫폼 */}
-                        {movieDetail.ott_providers && movieDetail.ott_providers.length > 0 && (
-                            <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">시청 가능 플랫폼</h3>
-                                <div className="flex flex-wrap gap-3">
-                                    {movieDetail.ott_providers.map((ott: OTTPlatform) => (
-                                        <a
-                                            key={ott.ott_id}
-                                            href={ott.watch_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                        >
-                                            <img
-                                                src={getOttLogoWithFallback(ott.ott_name, ott.ott_logo)}
-                                                alt={ott.ott_name}
-                                                className="h-5 w-auto"
-                                            />
-                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{ott.ott_name}</span>
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* 사용자 액션 버튼 - 백엔드 구현 전까지 임시 비활성화 */}
                         {false && (
                             <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

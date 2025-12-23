@@ -9,7 +9,7 @@ interface GenreFilterStepProps {
     onRecommend: () => void;
 }
 
-const GENRES = ["드라마", "코미디", "스릴러", "로맨스", "액션", "다큐멘터리", "공포", "범죄", "모험", "가족", "SF", "미스터리", "TV 영화", "애니메이션", "판타지", "음악", "역사", "전쟁", "서부"];
+const GENRES = ["드라마", "코미디", "스릴러", "로맨스", "액션", "다큐멘터리", "공포", "범죄", "모험", "가족", "SF", "미스터리", "TV 영화", "애니메이션", "판타지", "음악"];
 
 export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStepProps) {
     const { filters, toggleGenre, toggleExcludeAdult } = useMovieStore();
@@ -20,16 +20,16 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
     console.log('hasGenresSelected:', hasGenresSelected);
 
     const handleRecommend = () => {
-        console.log('🎬 영화 추천받기 버튼 클릭!');
+        console.log('영화 추천받기 버튼 클릭!');
         console.log('선택된 장르:', filters.genres);
         onRecommend();
     };
 
     return (
-        <div className="space-y-4 sm:space-y-6 animate-slide-in-right">
+        <div className="space-y-3 sm:space-y-6 animate-slide-in-right px-1">
             {/* Title */}
             <div className="text-center px-2">
-                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full mb-3 sm:mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-3 sm:mb-4">
                     <Sparkles className="text-white" size={24} />
                 </div>
                 <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
@@ -41,9 +41,9 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
             </div>
 
             {/* Selected Count */}
-            <div className="text-center bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 mx-2 sm:mx-0">
+            <div className="text-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 mx-2 sm:mx-0">
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">선택된 장르</p>
-                <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">
+                <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
                     {filters.genres.length}개
                 </div>
                 {filters.genres.length > 0 && (
@@ -58,7 +58,7 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
             </div>
 
             {/* Genre Grid */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 px-2 sm:px-0">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 px-1 sm:px-0">
                 {GENRES.map(genre => {
                     const isSelected = filters.genres.includes(genre);
                     return (
@@ -68,7 +68,7 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
                             className={`
                                 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 transform
                                 ${isSelected
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
+                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-105'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105'
                                 }
                             `}
@@ -115,7 +115,7 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
                         flex-[2] py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg flex items-center justify-center gap-1.5 sm:gap-2
                         transition-all duration-300 transform
                         ${hasGenresSelected
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         }
                     `}

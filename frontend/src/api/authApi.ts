@@ -25,6 +25,7 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
         const response = await axiosInstance.post("/auth/login", {
             email: data.email,
             password: data.password,
+            remember_me: rememberMe,
         }, {
             skipErrorRedirect: true,
             skipAuth: true,  // 👈 로그인 실패 시 자동 로그아웃 방지

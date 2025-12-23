@@ -64,7 +64,7 @@ export interface BackendMovieRecommendation {
 }
 
 export interface BackendRecommendResponse {
-    results: BackendMovieRecommendation[];  // ✅ recommendations → results
+    results: BackendMovieRecommendation[];  // Backend가 실제로 반환하는 구조
 }
 
 // [용도] 장르 매핑: 한글 이름 <-> ID

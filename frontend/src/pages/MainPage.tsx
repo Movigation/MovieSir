@@ -27,7 +27,7 @@ import { useAuth } from '@/app/providers/AuthContext';
 import LoginModal from '@/services/auth/components/LoginModal/LoginModal';
 import OnboardingReminderModal from '@/services/onboarding/components/OnboardingReminderModal';
 import MovieDetailModal from '@/services/chatbot/MovieDetailModal/MovieDetailModal';
-import GradientText from '@/components/ui/GradientText';
+// import GradientText from '@/components/ui/GradientText';
 
 export default function MainPage() {
     const { isAuthenticated, user } = useAuth();
@@ -156,7 +156,8 @@ export default function MainPage() {
 
             <div className='max-w-screen-2xl mx-auto relative'>
                 <FloatingBubble
-                    className="left-1/2 sm:left-[240px] -translate-x-1/2 bottom-[0px] sm:bottom-[-40px] font-bold text-blue-400 z-floating cursor-pointer"
+                    position="left"
+                    className="hidden sm:block !min-w-[250px] left-1/2 sm:left-[240px] -translate-x-1/2 bottom-[0px] sm:bottom-[-40px] font-bold text-blue-400 z-floating cursor-pointer"
                     visible={!isChatbotOpen}
                     float
                     onClick={handleOpenChatbot}
@@ -165,6 +166,42 @@ export default function MainPage() {
                         ?
                         <div className="text-center">
                             당신에게 꼭 맞는 영화를 추천드리겠습니다.
+                        </div>
+                        :
+                        <div className="text-center">
+                            로그인 이후 서비스 이용이 가능합니다.
+                        </div>
+                    }
+                </FloatingBubble>
+                <FloatingBubble
+                    position="right"
+                    className="
+                            !min-w-[220px] right-1/2 sm:right-[-30px]
+                            translate-y-[60px] translate-x-1/2
+                            sm:-translate-y-[-30px] sm:-translate-x-1/2 
+                            bottom-[0px] sm:bottom-[-40px] 
+                            font-bold text-blue-400 z-floating cursor-pointer
+                            sm:scale-75
+                            "
+                    visible={!isChatbotOpen}
+                    float
+                    onClick={handleOpenChatbot}
+                >
+                    {isAuthenticated
+                        ?
+                        <div className="text-center">
+                            {/* 모바일: 두 문구 합침 */}
+                            <div className="sm:hidden">
+                                당신에게 꼭 맞는<br />
+                                영화를 추천드리겠습니다,<br />
+                                저를 클릭해서<br />
+                                영화 추천을 시작해주세요.
+                            </div>
+                            {/* 데스크탑: 기존 문구 */}
+                            <div className="hidden sm:block">
+                                저를 클릭해서 <br />
+                                영화 추천을 시작해주세요.
+                            </div>
                         </div>
                         :
                         <div className="text-center">

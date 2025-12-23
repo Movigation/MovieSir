@@ -18,7 +18,10 @@ jobs:
           host: ${{ secrets.APP_HOST }}
           username: ${{ secrets.APP_USER }}
           key: ${{ secrets.SSH_KEY }}
+          command_timeout: 30m
           script: |
+            set -e  # 에러 발생 시 즉시 중단
+
             cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
 
             echo "📌 Fetch latest code"
@@ -26,13 +29,18 @@ jobs:
             git fetch --all
             git reset --hard origin/main
 
-            echo "📌 Stop old containers"
-            docker compose down || true
+            echo "📌 Create .env.production"
+            cat > .env.production << 'ENVEOF'
+            ${{ secrets.ENV_PRODUCTION_APP }}
+            ENVEOF
 
-            echo "📌 Cleanup docker cache"
-            docker system prune -af || true
+            echo "📌 Stop old containers"
+            docker compose --env-file .env.production down || true
 
             echo "📌 Build & start containers"
-            docker compose up -d --build
+            docker compose --env-file .env.production up -d --build
+
+            echo "📌 Cleanup old images (keep build cache)"
+            docker image prune -f || true
 
             echo "✅ App Server deployment complete"

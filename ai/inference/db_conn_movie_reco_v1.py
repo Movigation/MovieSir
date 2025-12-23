@@ -136,7 +136,7 @@ class HybridRecommender:
         print("Loading metadata from database...")
         
         query = """
-            SELECT 
+            SELECT
                 movie_id,
                 tmdb_id,
                 title,
@@ -146,12 +146,13 @@ class HybridRecommender:
                 poster_path,
                 release_date,
                 vote_average,
-                popularity
+                popularity,
+                adult
             FROM movies
         """
-        
+
         rows = self.db.execute_query(query)
-        
+
         # metadata_map 구성 (tmdb_id를 키로)
         self.metadata_map = {}
         for row in rows:
@@ -166,7 +167,8 @@ class HybridRecommender:
                 'poster_path': row['poster_path'],
                 'release_date': str(row['release_date']) if row['release_date'] else '',
                 'vote_average': row['vote_average'] or 0,
-                'popularity': row['popularity'] or 0
+                'popularity': row['popularity'] or 0,
+                'adult': row['adult'] or False
             }
         
         # 장르 리스트 추출
@@ -297,22 +299,27 @@ class HybridRecommender:
         preferred_genres: Optional[List[str]] = None,
         max_runtime: Optional[int] = None,
         min_year: Optional[int] = None,
-        preferred_otts: Optional[List[str]] = None
+        preferred_otts: Optional[List[str]] = None,
+        allow_adult: bool = False
     ) -> Tuple[List[int], List[int]]:
         """
-        필터링 적용 (장르, 런타임, 연도, OTT)
-        
+        필터링 적용 (장르, 런타임, 연도, OTT, 성인물)
+
         Returns:
             (filtered_ids, filtered_indices)
         """
         filtered_indices = []
         filtered_ids = []
-        
+
         for i, movie_id in enumerate(movie_ids):
             meta = self.metadata_map.get(movie_id, {})
             if not meta:
                 continue
-            
+
+            # 0. 성인물 필터링
+            if not allow_adult and meta.get('adult', False):
+                continue
+
             # 1. 런타임 필터링
             if max_runtime is not None:
                 runtime = meta.get('runtime', 0)
@@ -365,11 +372,11 @@ class HybridRecommender:
         available_time: int,
         top_k: int = 1
     ) -> List[dict]:
-        """시간에 맞는 영화 조합 찾기"""
+        """시간에 맞는 영화 조합 찾기 (장르 필터링 + 랜덤성)"""
         print(f"\nFinding movie combinations...")
         print(f"  Available time: {available_time} min")
         print(f"  Candidate movies: {len(movie_ids)}")
-        
+
         movie_data = []
         for i, mid in enumerate(movie_ids):
             runtime = self._get_movie_runtime(mid)
@@ -379,35 +386,56 @@ class HybridRecommender:
                     'runtime': runtime,
                     'score': scores[i]
                 })
-        
+
         if not movie_data:
             print("  No valid movies for combination")
             return []
-        
+
         print(f"  Valid movies after runtime filter: {len(movie_data)}")
-        
+
+        # 점수순 정렬
         movie_data.sort(key=lambda x: x['score'], reverse=True)
-        
+
+        # 긴 시간일수록 더 많은 후보 필요
+        base_pool = 80 if available_time < 360 else 120
+        base_select = 50 if available_time < 360 else 70
+
+        top_pool_size = min(len(movie_data), base_pool)
+        random_select_size = min(top_pool_size, base_select)
+
+        if top_pool_size > random_select_size:
+            top_pool = movie_data[:top_pool_size]
+            selected_indices = np.random.choice(top_pool_size, size=random_select_size, replace=False)
+            movie_data = [top_pool[i] for i in selected_indices]
+            print(f"  Randomly selected {len(movie_data)} from top {top_pool_size}")
+
         max_combinations_limit = 1_000_000
-        max_candidates = min(len(movie_data), 60)
-        
+        max_candidates = min(len(movie_data), 60 if available_time < 360 else 70)
+
+        # 긴 시간일수록 더 많은 영화 조합 허용
+        estimated_combo_size = min(8, max(3, available_time // 90))
+
         for n in range(20, min(len(movie_data), 100)):
-            max_combo_size = min(5, n // 3)
-            total_combos = sum(comb(n, k) for k in range(2, max_combo_size + 1))
+            total_combos = sum(comb(n, k) for k in range(2, estimated_combo_size + 1))
             if total_combos > max_combinations_limit:
                 max_candidates = n - 1
                 break
-        
+
         movie_data = movie_data[:max_candidates]
         print(f"  Using top {len(movie_data)} candidates")
-        
+
         valid_combinations = []
-        time_tolerance = 30
-        
-        for combo_size in range(2, min(6, len(movie_data) + 1)):
+        # 시간에 비례한 허용 범위 (5% ~ 최소 30분)
+        time_tolerance = max(30, int(available_time * 0.05))
+        max_combinations = top_k * 10  # 더 많은 조합을 찾아서 랜덤 선택
+
+        # 긴 시간일수록 더 많은 영화 조합 허용 (최대 8편)
+        max_combo_size = min(8, max(3, available_time // 90))
+
+        for combo_size in range(2, min(max_combo_size + 1, len(movie_data) + 1)):
             for combo in combinations(movie_data, combo_size):
                 total_runtime = sum(m['runtime'] for m in combo)
-                
+
                 if available_time - time_tolerance <= total_runtime <= available_time + time_tolerance:
                     avg_score = np.mean([m['score'] for m in combo])
                     valid_combinations.append({
@@ -415,19 +443,29 @@ class HybridRecommender:
                         'total_runtime': total_runtime,
                         'avg_score': avg_score
                     })
-                    
-                    if len(valid_combinations) >= 1:
+
+                    if len(valid_combinations) >= max_combinations:
                         break
-            
-            if len(valid_combinations) >= 1:
+
+            if len(valid_combinations) >= max_combinations:
                 break
-        
+
         print(f"  Found {len(valid_combinations)} valid combination(s)")
-        
+
         if not valid_combinations:
             return []
-        
+
+        # 점수 기준 정렬 후 상위 조합 중에서 랜덤 선택
         valid_combinations.sort(key=lambda x: x['avg_score'], reverse=True)
+
+        # 상위 조합들 중에서 랜덤하게 top_k개 선택
+        top_combo_pool = min(len(valid_combinations), top_k * 3)
+        if top_combo_pool > top_k:
+            selected_indices = np.random.choice(top_combo_pool, size=top_k, replace=False)
+            result = [valid_combinations[i] for i in sorted(selected_indices)]
+            print(f"  Randomly selected {len(result)} combinations from top {top_combo_pool}")
+            return result
+
         return valid_combinations[:top_k]
 
     def recommend(
@@ -437,14 +475,17 @@ class HybridRecommender:
         top_k: int = 20,
         exclude_seen: bool = True,
         preferred_genres: Optional[List[str]] = None,
-        preferred_otts: Optional[List[str]] = None
+        preferred_otts: Optional[List[str]] = None,
+        allow_adult: bool = False
     ) -> Tuple[str, dict]:
         """하이브리드 추천"""
         print(f"\nStarting hybrid recommendation...")
         print(f"Available time: {available_time} min")
-        
+        print(f"Requested genres: {preferred_genres}")
+        print(f"Allow adult: {allow_adult}")
+
         start_time = time.time()
-        
+
         # 1. 사용자 프로필 생성
         user_sbert_vecs = []
         for mid in user_movie_ids:
@@ -483,16 +524,16 @@ class HybridRecommender:
         recommendation_type = 'combination' if available_time >= 240 else 'single'
         max_runtime = None if recommendation_type == 'combination' else available_time
         
-        # 4. Track A 필터링 (장르 + 연도 + OTT 적용)
+        # 4. Track A 필터링 (장르 + OTT + 시간 + 성인)
         filtered_ids_a, filtered_indices_a = self._apply_filters(
             self.common_movie_ids, preferred_genres, max_runtime,
-            min_year=2000, preferred_otts=preferred_otts
+            min_year=2000, preferred_otts=preferred_otts, allow_adult=allow_adult
         )
-        
-        # 5. Track B 필터링 (장르 무시, 연도 + OTT 적용)
+
+        # 5. Track B 필터링 (시간만 → 다양성, 장르/OTT 무시, 성인 필터는 적용)
         filtered_ids_b, filtered_indices_b = self._apply_filters(
             self.common_movie_ids, None, max_runtime,
-            min_year=2000, preferred_otts=preferred_otts
+            min_year=2000, preferred_otts=None, allow_adult=allow_adult
         )
         
         if recommendation_type == 'single':
@@ -613,103 +654,128 @@ class HybridRecommender:
         
         else:
             # === 조합 추천 ===
-            
-            # Track A
+
+            # Track A (장르 + OTT + 시간 필터링됨)
             if filtered_ids_a:
                 filtered_sbert_a = sbert_scores[filtered_indices_a]
                 filtered_lightgcn_a = lightgcn_scores[filtered_indices_a]
-                
+
                 norm_sbert_a = self.scaler.fit_transform(filtered_sbert_a.reshape(-1, 1)).squeeze()
                 norm_lightgcn_a = self.scaler.fit_transform(filtered_lightgcn_a.reshape(-1, 1)).squeeze()
-                
+
                 final_scores_a = self.sbert_weight * norm_sbert_a + self.lightgcn_weight * norm_lightgcn_a
-                
+
                 if exclude_seen:
                     for i, mid in enumerate(filtered_ids_a):
                         if mid in user_movie_ids:
                             final_scores_a[i] = -np.inf
-                
+
                 combination_a = self._find_movie_combinations(
-                    filtered_ids_a, final_scores_a, available_time, top_k=1
+                    filtered_ids_a, final_scores_a, available_time, top_k=10
                 )
-                
+
                 if combination_a:
-                    combo = combination_a[0]
-                    combo_movies = []
-                    for mid in combo['movies']:
-                        meta = self.metadata_map.get(mid, {})
-                        combo_movies.append({
-                            'tmdb_id': mid,
-                            'title': meta.get('title', 'Unknown'),
-                            'runtime': meta.get('runtime', 0),
-                            'genres': meta.get('genres', []),
-                            'overview': meta.get('overview', ''),
-                            'release_date': meta.get('release_date', '')
+                    # 여러 조합을 리스트로 반환
+                    track_a_combos = []
+                    for combo in combination_a:
+                        combo_movies = []
+                        for mid in combo['movies']:
+                            meta = self.metadata_map.get(mid, {})
+                            combo_movies.append({
+                                'tmdb_id': mid,
+                                'title': meta.get('title', 'Unknown'),
+                                'runtime': meta.get('runtime', 0),
+                                'genres': meta.get('genres', []),
+                                'overview': meta.get('overview', ''),
+                                'release_date': meta.get('release_date', '')
+                            })
+                        track_a_combos.append({
+                            'combination_score': combo['avg_score'],
+                            'total_runtime': combo['total_runtime'],
+                            'movies': combo_movies
                         })
-                    
-                    track_a_combo = {
-                        'combination_score': combo['avg_score'],
-                        'total_runtime': combo['total_runtime'],
-                        'movies': combo_movies
-                    }
+                    # 첫 번째 조합 + 전체 조합 리스트 (순환 참조 방지)
+                    if track_a_combos:
+                        first = track_a_combos[0]
+                        track_a_combo = {
+                            'combination_score': first['combination_score'],
+                            'total_runtime': first['total_runtime'],
+                            'movies': first['movies'],
+                            'combinations': track_a_combos
+                        }
+                    else:
+                        track_a_combo = None
                 else:
                     track_a_combo = None
             else:
                 track_a_combo = None
             
-            # Track B
+            # Track B (시간만 필터링, 장르 무시 → 다양성)
             if filtered_ids_b:
                 filtered_sbert_b = sbert_scores[filtered_indices_b]
                 filtered_lightgcn_b = lightgcn_scores[filtered_indices_b]
-                
+
                 norm_sbert_b = self.scaler.fit_transform(filtered_sbert_b.reshape(-1, 1)).squeeze()
                 norm_lightgcn_b = self.scaler.fit_transform(filtered_lightgcn_b.reshape(-1, 1)).squeeze()
-                
+
                 final_scores_b = 0.4 * norm_sbert_b + 0.6 * norm_lightgcn_b
-                
+
                 if exclude_seen:
                     for i, mid in enumerate(filtered_ids_b):
                         if mid in user_movie_ids:
                             final_scores_b[i] = -np.inf
-                
+
                 exclude_ids = []
                 if track_a_combo:
                     exclude_ids = [m['tmdb_id'] for m in track_a_combo['movies']]
-                
+
                 for i, mid in enumerate(filtered_ids_b):
                     if mid in exclude_ids:
                         final_scores_b[i] = -np.inf
-                
+
                 for i, mid in enumerate(filtered_ids_b):
                     if mid in self.recommendation_history[-50:]:
                         final_scores_b[i] = -np.inf
 
                 combination_b = self._find_movie_combinations(
-                    filtered_ids_b, final_scores_b, available_time, top_k=1
+                    filtered_ids_b, final_scores_b, available_time, top_k=10
                 )
-                
+
                 if combination_b:
-                    combo = combination_b[0]
-                    combo_movies = []
-                    for mid in combo['movies']:
-                        meta = self.metadata_map.get(mid, {})
-                        combo_movies.append({
-                            'tmdb_id': mid,
-                            'title': meta.get('title', 'Unknown'),
-                            'runtime': meta.get('runtime', 0),
-                            'genres': meta.get('genres', []),
-                            'overview': meta.get('overview', ''),
-                            'release_date': meta.get('release_date', '')
+                    # 여러 조합을 리스트로 반환
+                    track_b_combos = []
+                    for combo in combination_b:
+                        combo_movies = []
+                        for mid in combo['movies']:
+                            meta = self.metadata_map.get(mid, {})
+                            combo_movies.append({
+                                'tmdb_id': mid,
+                                'title': meta.get('title', 'Unknown'),
+                                'runtime': meta.get('runtime', 0),
+                                'genres': meta.get('genres', []),
+                                'overview': meta.get('overview', ''),
+                                'release_date': meta.get('release_date', '')
+                            })
+                        track_b_combos.append({
+                            'combination_score': combo['avg_score'],
+                            'total_runtime': combo['total_runtime'],
+                            'movies': combo_movies
                         })
-                    
-                    track_b_combo = {
-                        'combination_score': combo['avg_score'],
-                        'total_runtime': combo['total_runtime'],
-                        'movies': combo_movies
-                    }
-                    
-                    for movie in combo_movies:
-                        self.recommendation_history.append(movie['tmdb_id'])
+                    # 첫 번째 조합 + 전체 조합 리스트 (순환 참조 방지)
+                    if track_b_combos:
+                        first = track_b_combos[0]
+                        track_b_combo = {
+                            'combination_score': first['combination_score'],
+                            'total_runtime': first['total_runtime'],
+                            'movies': first['movies'],
+                            'combinations': track_b_combos
+                        }
+                        # 모든 조합의 영화를 히스토리에 추가
+                        for combo_item in track_b_combos:
+                            for movie in combo_item['movies']:
+                                self.recommendation_history.append(movie['tmdb_id'])
+                    else:
+                        track_b_combo = None
                 else:
                     track_b_combo = None
             else:
