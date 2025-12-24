@@ -17,3 +17,4 @@ redis==5.0.4
 python-dotenv==1.2.1
 email-validator==2.2.0
 python-multipart==0.0.20
+httpx

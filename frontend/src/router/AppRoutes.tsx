@@ -15,6 +15,7 @@ import Error500Page from '@/pages/Error500Page';
 import OTTSelectionPage from '@/pages/OTTSelectionPage';
 import MovieSelectionPage from '@/pages/MovieSelectionPage';
 import OnboardingCompletePage from '@/pages/OnboardingCompletePage';
+import AdminLayout from '@/pages/admin/AdminLayout';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import TmdbSyncPage from '@/pages/admin/TmdbSyncPage';
 import PopularityUpdatePage from '@/pages/admin/PopularityUpdatePage';
@@ -57,15 +58,15 @@ export default function AppRoutes() {
                 <Route path="/onboarding/movies" element={<MovieSelectionPage />} />
                 <Route path="/onboarding/complete" element={<OnboardingCompletePage />} />
 
-                {/* Admin Dashboard - 메인만 사이드바 포함 */}
-                <Route path="/admin" element={<AdminDashboard />} />
-
-                {/* Admin 기능 페이지 - 독립 페이지로 표시 */}
-                <Route path="/admin/tmdb-sync" element={<TmdbSyncPage />} />
-                <Route path="/admin/popularity" element={<PopularityUpdatePage />} />
-                <Route path="/admin/learning-monitor" element={<LearningMonitorPage />} />
-                <Route path="/admin/vector-retrain" element={<VectorRetrainPage />} />
-                <Route path="/admin/tag-retrain" element={<TagModelRetrainPage />} />
+                {/* Admin - 중첩 라우팅으로 대시보드 영역에서 컴포넌트 교체 */}
+                <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="tmdb-sync" element={<TmdbSyncPage />} />
+                    <Route path="popularity" element={<PopularityUpdatePage />} />
+                    <Route path="learning-monitor" element={<LearningMonitorPage />} />
+                    <Route path="vector-retrain" element={<VectorRetrainPage />} />
+                    <Route path="tag-retrain" element={<TagModelRetrainPage />} />
+                </Route>
 
                 {/* Error pages */}
                 <Route path="/error/400" element={<Error400Page />} />

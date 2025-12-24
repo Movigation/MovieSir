@@ -2,8 +2,8 @@
 // [사용법] /onboarding/movies 라우트에서 사용
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useOnboardingStore } from "@/store/onboardingStore";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import type { OnboardingMovie } from "@/api/onboardingApi.type";
 import { skipOnboarding } from "@/api/onboardingApi";
@@ -11,6 +11,7 @@ import axiosInstance from "@/api/axiosInstance";
 
 export default function MovieSelectionPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const {
         addLikedMovie,
         removeLikedMovie,
@@ -18,6 +19,9 @@ export default function MovieSelectionPage() {
         setMovies: setGlobalMovies,
         clearMovieSelection  // 영화 선택 초기화 함수
     } = useOnboardingStore();
+
+    // 온보딩 재조사 팝업에서 왔는지 확인
+    const isFromReminderModal = searchParams.get('fromReminder') === 'true';
 
     const [movies, setMovies] = useState<OnboardingMovie[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -97,8 +101,11 @@ export default function MovieSelectionPage() {
 
             console.log("✅ 취향 영화 저장 성공:", movie_ids);
 
-            // 성공 시 다음 페이지로 이동
-            navigate("/onboarding/complete");
+            // 성공 시 다음 페이지로 이동 (fromReminder 파라미터 전달)
+            const nextUrl = isFromReminderModal
+                ? "/onboarding/complete?fromReminder=true"
+                : "/onboarding/complete";
+            navigate(nextUrl);
         } catch (err: any) {
             console.error("❌ 취향 영화 저장 실패:", err);
 
@@ -131,13 +138,19 @@ export default function MovieSelectionPage() {
             await skipOnboarding();
             console.log("✅ 온보딩 스킵 완료");
 
-            // 3. 온보딩 완료 페이지로 이동
-            navigate("/onboarding/complete");
+            // 온보딩 완료 페이지로 이동 (fromReminder 파라미터 전달)
+            const nextUrl = isFromReminderModal
+                ? "/onboarding/complete?fromReminder=true"
+                : "/onboarding/complete";
+            navigate(nextUrl);
         } catch (err: any) {
             console.error("❌ 온보딩 스킵 실패:", err);
 
-            // 스킵이므로 실패해도 완료 페이지로 이동
-            navigate("/onboarding/complete");
+            // 스킵이므로 실패해도 완료 페이지로 이동 (fromReminder 파라미터 전달)
+            const nextUrl = isFromReminderModal
+                ? "/onboarding/complete?fromReminder=true"
+                : "/onboarding/complete";
+            navigate(nextUrl);
         } finally {
             setIsSubmitting(false);
         }

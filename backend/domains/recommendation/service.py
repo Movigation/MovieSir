@@ -2,22 +2,55 @@
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from typing import List, Optional
 
 # [중요] 타 도메인 모델 Import
 from backend.domains.movie.models import Movie, MovieOttMap, OttProvider
 from backend.domains.recommendation.models import MovieLog, MovieClick
 from . import schema
 
+
+def _get_user_ott_names(db: Session, user_id: str) -> Optional[List[str]]:
+    """사용자가 선택한 OTT provider_name 목록 조회"""
+    result = db.execute(
+        text("""
+            SELECT p.provider_name
+            FROM user_ott_map u
+            JOIN ott_providers p ON u.provider_id = p.provider_id
+            WHERE u.user_id = :uid
+        """),
+        {"uid": user_id}
+    ).fetchall()
+
+    if not result:
+        return None
+
+    return [row[0] for row in result]
+
+
 def get_hybrid_recommendations(db: Session, user_id: str, req: schema.RecommendationRequest, model_instance):
     """
     1. AI 모델(LightGCN) -> ID 리스트 추출
     2. DB -> 영화 상세 정보 조회
     """
+    # 사용자 OTT 선호 조회
+    user_otts = _get_user_ott_names(db, user_id)
+    print(f"[DEBUG] User OTT preferences: {user_otts}")
+
     # 1. AI 모델 예측 (user_id를 int로 변환하거나 매핑 필요할 수 있음)
     # model_instance는 router에서 주입받거나 전역 변수로 로드된 것을 사용
     try:
-        # 모델 입력 형식이 다를 수 있으니 확인 필요 (UUID -> int 매핑 등)
-        recommended_movie_ids = model_instance.predict(user_id, top_k=20) 
+        # 필터링 후에도 충분한 영화가 남도록 더 많이 요청
+        # AI 모델에 시간/장르/OTT/성인필터 전달하여 적절한 영화 추천받기
+        # exclude_adult=True면 allow_adult=False (성인물 제외)
+        recommended_movie_ids = model_instance.predict(
+            user_id,
+            top_k=50,
+            available_time=req.runtime_limit or 180,
+            preferred_genres=req.genres or None,
+            preferred_otts=user_otts,
+            allow_adult=not req.exclude_adult
+        )
     except Exception as e:
         print(f"AI Model Error: {e}")
         recommended_movie_ids = []
@@ -26,25 +59,25 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
         return []
 
     # 2. DB 조회 (CRUD 역할)
-    # movies 테이블은 domains/movie/models.py에 있음
-    movies = db.query(Movie).filter(Movie.movie_id.in_(recommended_movie_ids)).all()
-    
-    # 순서 보정 (AI가 추천한 순서대로 정렬)
-    movies_map = {m.movie_id: m for m in movies}
+    # AI 모델은 tmdb_id를 반환하므로 tmdb_id로 조회
+    movies = db.query(Movie).filter(Movie.tmdb_id.in_(recommended_movie_ids)).all()
+
+    # 순서 보정 (AI가 추천한 순서대로 정렬) - tmdb_id 기준
+    movies_map = {m.tmdb_id: m for m in movies}
     results = []
+    filtered_out = {"adult": 0, "runtime": 0, "genre": 0}
+    
     for mid in recommended_movie_ids:
         if mid in movies_map:
             m = movies_map[mid]
-            # 장르/시간/성인 필터링
+            # 성인 필터링만 (장르/시간은 AI에서 이미 처리됨)
             if req.exclude_adult and m.adult:
+                filtered_out["adult"] += 1
                 continue
-            if req.runtime_limit and m.runtime and m.runtime > req.runtime_limit:
-                continue
-            # 장르 필터링: 요청된 장르 중 하나라도 포함되면 통과
-            if req.genres and m.genres:
-                if not any(g in m.genres for g in req.genres):
-                    continue
             results.append(m)
+
+    print(f"[DEBUG] 필터링 결과: 성인={filtered_out['adult']}")
+    print(f"[DEBUG] 최종 추천 영화: {len(results)}개")
             
     return results
 

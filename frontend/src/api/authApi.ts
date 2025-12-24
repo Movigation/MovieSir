@@ -30,12 +30,8 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
             skipAuth: true,  // 👈 로그인 실패 시 자동 로그아웃 방지
         } as any);
 
-        const { access_token, refresh_token, user } = response.data;
-
-        // 토큰 저장 (rememberMe에 따라 localStorage 또는 sessionStorage)
-        const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem("accessToken", access_token);
-        storage.setItem("refreshToken", refresh_token);
+        // 🍪 토큰은 쿠키로 전달됨 (HttpOnly)
+        const { user } = response.data;
 
         // user 데이터를 올바른 형식으로 변환하여 저장
         const userData = {
@@ -44,9 +40,10 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
             nickname: user.nickname,
             onboarding_completed: user.onboarding_completed,
         };
-        storage.setItem("user", JSON.stringify(userData));
 
-        // 로그인 방식 저장 (나중에 확인용)
+        // rememberMe에 따라 localStorage 또는 sessionStorage에 사용자 정보 저장
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("user", JSON.stringify(userData));
         storage.setItem("rememberMe", rememberMe ? "true" : "false");
 
         secureLog('로그인 성공', { userId: user.user_id });  // 민감 정보 제외 로깅
@@ -131,19 +128,16 @@ export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
 // ------------------------------
 export const logout = async (): Promise<void> => {
     try {
+        // 🍪 백엔드 API 호출 - 서버에서 쿠키 자동 삭제
         await axiosInstance.post("/auth/logout");
     } catch (error) {
         console.error("로그아웃 중 오류가 발생했습니다:", error);
     }
 
-    // localStorage와 sessionStorage 모두에서 제거
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    // localStorage와 sessionStorage에서 사용자 정보만 제거 (토큰은 쿠키로 관리됨)
     localStorage.removeItem("user");
     localStorage.removeItem("rememberMe");
 
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("refreshToken");
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("rememberMe");
 };
@@ -239,25 +233,22 @@ export const verifyCode = async (email: string, code: string): Promise<{ valid: 
             code
         });
 
-        // 토큰과 유저 정보 저장
-        const { token, user_id, email: userEmail, nickname, onboarding_completed } = response.data;
+        // 🍪 토큰은 쿠키로 전달됨
+        const { user_id, email: userEmail, nickname, onboarding_completed } = response.data;
 
-        if (token) {
-            localStorage.setItem('accessToken', token.access_token);
-            const userData = {
-                id: user_id,
-                email: userEmail,
-                nickname: nickname,  // ✅ nickname 추가
-                onboarding_completed,
-            };
-            localStorage.setItem('user', JSON.stringify(userData));
-        }
+        // 사용자 정보만 localStorage에 저장
+        const userData = {
+            id: user_id,
+            email: userEmail,
+            nickname: nickname,
+            onboarding_completed,
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
 
         return {
             valid: true,
             message: "회원가입이 완료되었습니다!",
             user: response.data,
-            token: token,
         };
     } catch (error: any) {
         const msg = error?.response?.data?.detail || error?.response?.data?.message || "인증 코드 확인 중 오류가 발생했습니다";

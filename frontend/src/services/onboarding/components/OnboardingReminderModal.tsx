@@ -2,6 +2,7 @@
 // [사용법] showModal이 true일 때 자동으로 표시
 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/app/providers/AuthContext";
 
 interface Props {
     visible: boolean;
@@ -11,6 +12,7 @@ interface Props {
 
 export default function OnboardingReminderModal({ visible, onClose, onPermanentDismiss }: Props) {
     const navigate = useNavigate();
+    const { user } = useAuth(); // 사용자 정보 가져오기
 
     if (!visible) return null;
 
@@ -21,7 +23,8 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
         // 장르 선호도 조사만 다시 진행
         // 항상 장르 스와이프 페이지로 이동
         console.log("재조사 시작 - 장르 선호도 페이지로 이동");
-        navigate("/onboarding/movies");
+        // fromReminder 파라미터 추가로 재조사 팝업에서 왔음을 표시
+        navigate("/onboarding/movies?fromReminder=true");
     };
 
     const handleSkip = () => {
@@ -78,7 +81,7 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
                 {/* 제목 */}
                 <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
                     정확한 추천을 위해서는<br />
-                    당신의 취향 정보가 필요해요
+                    {user?.nickname || '당신'}님의 취향 정보가 필요해요
                 </h2>
 
                 {/* 설명 - 스킵 항목에 따라 동적으로 표시 */}

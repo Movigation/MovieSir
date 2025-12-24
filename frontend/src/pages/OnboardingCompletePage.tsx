@@ -2,37 +2,32 @@
 // [사용법] /onboarding/complete 라우트에서 사용
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useOnboardingStore } from "@/store/onboardingStore";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { completeOnboarding, skipOnboarding } from "@/api/onboardingApi";
 import ChatbotButton from '@/services/chatbot/components/ChatbotButton';
 import { RotateCcw, Undo2, Check } from 'lucide-react';
 
-// OTT 로고 SVG imports
-import NetflixLogoSvg from "@/assets/logos/NETFLEX_Logo.svg";
-import DisneyLogoSvg from "@/assets/logos/Disney+_logo.svg";
-import PrimeLogoSvg from "@/assets/logos/Amazon_Prime_Logo.svg";
-import WavveLogoSvg from "@/assets/logos/WAVVE_Logo.svg";
-import TvingLogoSvg from "@/assets/logos/TVING_Logo.svg";
-import WatchaLogoSvg from "@/assets/logos/WATCHA_Logo_Main.svg";
-import AppleLogoSvg from "@/assets/logos/Apple_TV_logo.svg";
-
-// OTT 플랫폼 정보 매핑
+// OTT 로고 - public 폴더 URL 사용
 const OTT_PLATFORMS_MAP: Record<number, { name: string; logo: string; bg: string }> = {
-    8: { name: "Netflix", logo: NetflixLogoSvg, bg: "bg-black" },
-    97: { name: "Watcha", logo: WatchaLogoSvg, bg: "bg-[#1A1A1A]" },
-    337: { name: "Disney+", logo: DisneyLogoSvg, bg: "bg-[#040714]" },
-    356: { name: "Wavve", logo: WavveLogoSvg, bg: "bg-[#0A0E27]" },
-    1883: { name: "TVING", logo: TvingLogoSvg, bg: "bg-black" },
-    350: { name: "Apple TV+", logo: AppleLogoSvg, bg: "bg-black" },
-    119: { name: "Prime Video", logo: PrimeLogoSvg, bg: "bg-[#00050D]" }
+    8: { name: "Netflix", logo: "/logos/NETFLEX_Logo.svg", bg: "bg-black" },
+    97: { name: "Watcha", logo: "/logos/WATCHA_Logo_Main.svg", bg: "bg-[#1A1A1A]" },
+    337: { name: "Disney+", logo: "/logos/Disney+_logo.svg", bg: "bg-[#040714]" },
+    356: { name: "Wavve", logo: "/logos/WAVVE_Logo.svg", bg: "bg-[#0A0E27]" },
+    1883: { name: "TVING", logo: "/logos/TVING_Logo.svg", bg: "bg-black" },
+    350: { name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg", bg: "bg-black" },
+    119: { name: "Prime Video", logo: "/logos/Amazon_Prime_Logo.svg", bg: "bg-[#00050D]" }
 };
 
 export default function OnboardingCompletePage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { provider_ids, movie_ids, reset, movies } = useOnboardingStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+
+    // 온보딩 재조사 팝업에서 왔는지 확인
+    const isFromReminderModal = searchParams.get('fromReminder') === 'true';
 
     // 선택한 영화 데이터는 store(movies)에서 직접 사용하므로 별도 로딩 필요 없음
 
@@ -62,6 +57,20 @@ export default function OnboardingCompletePage() {
 
             console.log("=== API 응답 ===");
             console.log("응답:", response);
+
+            // ✅ localStorage의 user 데이터 업데이트 (온보딩 완료 상태 반영)
+            const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+            if (userStr) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    userData.onboarding_completed = true;
+                    const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+                    storage.setItem("user", JSON.stringify(userData));
+                    console.log("✅ 온보딩 완료 상태 저장됨:", userData);
+                } catch (e) {
+                    console.error("user 데이터 업데이트 실패:", e);
+                }
+            }
 
             // 온보딩 스토어 초기화
             reset();
@@ -176,21 +185,24 @@ export default function OnboardingCompletePage() {
 
                 {/* 버튼 - 미니멀 스타일 */}
                 <div className="flex gap-4 justify-center">
-                    <button
-                        onClick={() => {
-                            // 기존 조사 값 초기화
-                            reset();
-                            console.log("✅ 온보딩 데이터 초기화 완료");
-                            // OTT 선택 페이지부터 다시 시작
-                            navigate("/onboarding/ott");
-                        }}
-                        className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
-                    >
-                        <RotateCcw size={20} className="sm:hidden" />
-                        <span className="hidden sm:inline">
-                            다시 선택하기
-                        </span>
-                    </button>
+                    {/* 재조사 팝업에서 온 경우 '다시 선택하기' 버튼 숨김 */}
+                    {!isFromReminderModal && (
+                        <button
+                            onClick={() => {
+                                // 기존 조사 값 초기화
+                                reset();
+                                console.log("✅ 온보딩 데이터 초기화 완료");
+                                // OTT 선택 페이지부터 다시 시작
+                                navigate("/onboarding/ott");
+                            }}
+                            className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
+                        >
+                            <RotateCcw size={20} className="sm:hidden" />
+                            <span className="hidden sm:inline">
+                                다시 선택하기
+                            </span>
+                        </button>
+                    )}
                     <button
                         onClick={() => navigate("/onboarding/movies")}
                         className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
@@ -211,7 +223,7 @@ export default function OnboardingCompletePage() {
                             <>
                                 <Check size={20} className="sm:hidden" />
                                 <span className="hidden sm:inline">
-                                    완료하기 🚀
+                                    완료하기
                                 </span>
                             </>
                         )}

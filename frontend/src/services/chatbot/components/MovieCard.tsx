@@ -155,7 +155,9 @@ export default function MovieCard({ movie, onClick, onReRecommend, onAddToWatche
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="flex items-center gap-1">
                                     <span className="text-yellow-400 text-lg">⭐</span>
-                                    <span className="text-white font-semibold">{movie.rating}</span>
+                                    <span className="text-white font-semibold">
+                                        {typeof movie.rating === 'number' ? movie.rating.toFixed(1) : movie.rating}
+                                    </span>
                                 </div>
                                 <span className="text-gray-400 text-xs">/ 10</span>
                             </div>
