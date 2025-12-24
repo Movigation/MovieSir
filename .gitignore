@@ -104,6 +104,7 @@ ai/training/original_data/*
 tmp/
 temp/
 *.tmp
+ai/CHAT_SUMMARY.md
 
 # Duplicate/Nested
 MovieSir/
