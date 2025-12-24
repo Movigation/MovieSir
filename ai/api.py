@@ -5,7 +5,11 @@ from typing import List, Optional, Any
 import os
 import numpy as np
 
-from inference.db_conn_movie_reco_v1 import HybridRecommender
+# [기존] LightGCN 기반 하이브리드 추천 (임시 사용)
+# from inference.db_conn_movie_reco_v1 import HybridRecommender
+
+# [신규] ALS 기반 하이브리드 추천 V2 (CPU 모델)
+from inference.sbert_als_v1 import HybridRecommenderV2
 
 
 def convert_numpy_types(obj: Any) -> Any:
@@ -38,10 +42,20 @@ async def load_model():
             'user': os.getenv("DATABASE_USER", "movigation"),
             'password': os.getenv("DATABASE_PASSWORD", "")
         }
-        recommender = HybridRecommender(
+        # [기존] LightGCN 모델 (임시 사용)
+        # recommender = HybridRecommender(
+        #     db_config=db_config,
+        #     lightgcn_model_path="training/lightgcn_model/best_model.pt",
+        #     lightgcn_data_path="training/lightgcn_data"
+        # )
+        
+        # [신규] ALS 모델 (CPU Version)
+        recommender = HybridRecommenderV2(
             db_config=db_config,
-            lightgcn_model_path="training/lightgcn_model/best_model.pt",
-            lightgcn_data_path="training/lightgcn_data"
+            als_model_path="training/als_model/als_model_cpu_final.pkl",
+            als_data_path="training/als_model/als_id_mappings_cpu.pkl",
+            sbert_weight=0.7,
+            als_weight=0.3
         )
         print("✅ AI Model loaded successfully")
     except Exception as e:
