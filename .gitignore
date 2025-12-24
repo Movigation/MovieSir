@@ -87,6 +87,7 @@ ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
 # DB
+*.sql
 *.rdb
 
 # ------------------------------------------------------------
