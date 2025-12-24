@@ -86,6 +86,10 @@ ai/training/sbert_data/index/*
 ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
+# DB
+*.sql
+*.rdb
+
 # ------------------------------------------------------------
 # Secrets & Environment (중요!)
 # ------------------------------------------------------------
@@ -104,6 +108,7 @@ ai/training/original_data/*
 tmp/
 temp/
 *.tmp
+ai/CHAT_SUMMARY.md
 
 # Duplicate/Nested
 MovieSir/
