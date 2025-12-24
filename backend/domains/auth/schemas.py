@@ -13,10 +13,7 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """로그인 응답"""
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
+    """로그인 응답 - 토큰은 HttpOnly 쿠키로 전달"""
     user: "UserResponse"
 
 
@@ -29,3 +26,17 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True  # SQLAlchemy 모델과 호환
+
+
+# =========================
+# 토큰 갱신
+# =========================
+class RefreshTokenRequest(BaseModel):
+    """토큰 갱신 요청"""
+    refreshToken: str
+
+
+class RefreshTokenResponse(BaseModel):
+    """토큰 갱신 응답"""
+    access_token: str
+    token_type: str = "bearer"

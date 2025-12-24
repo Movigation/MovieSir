@@ -8,14 +8,11 @@ from backend.core.db import get_db
 from backend.domains.auth.utils import get_current_user
 from backend.domains.user.models import User
 from . import service, schema
+from .ai_model import get_ai_model
 
-# [AI 모델 로딩 예시]
-# 실제로는 main.py나 lifespan에서 로드해서 app.state에 넣는 게 좋지만,
-# 간단하게 전역으로 로드하거나 싱글톤 클래스를 만들어 씁니다.
-class MockAIModel:
-    def predict(self, uid, top_k):
-        return [1, 2, 3] # 테스트용 더미 데이터
-ai_model = MockAIModel() # 실제 모델 로드 코드로 교체 필요
+# AI 모델 로딩 (싱글톤)
+# 서버 시작 시 한 번만 로드됨
+ai_model = get_ai_model()
 
 router = APIRouter(tags=["recommendation"])
 

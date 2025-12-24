@@ -7,7 +7,8 @@ import path from 'path'
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      '#': path.resolve(__dirname, '.')
     }
   },
   plugins: [
@@ -21,7 +22,7 @@ export default defineConfig({
         short_name: 'Movisr',
         description: 'AI-powered movie recommendation chatbot application',
         theme_color: '#3b82f6',
-        background_color: '#ffffff',
+        background_color: 'transparent',
         display: 'standalone',
         orientation: 'portrait-primary',
         start_url: '/',
@@ -30,13 +31,13 @@ export default defineConfig({
             src: '/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
             src: '/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           }
         ]
       },

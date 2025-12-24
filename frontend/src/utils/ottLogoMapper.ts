@@ -3,51 +3,51 @@
 // [사용법] import { getOttLogoPath } from '@/utils/ottLogoMapper';
 // ============================================================
 
-// OTT 이름과 로컬 SVG 파일 매핑
+// OTT 이름과 로컬 SVG 파일 매핑 (public/logos/ 폴더 사용 - 프로덕션 호환)
 const OTT_LOGO_MAP: Record<string, string> = {
-    'Netflix': '/src/assets/logos/NETFLEX_Logo.svg',
-    'NETFLIX': '/src/assets/logos/NETFLEX_Logo.svg',
-    '넷플릭스': '/src/assets/logos/NETFLEX_Logo.svg',
+    'Netflix': '/logos/NETFLEX_Logo.svg',
+    'NETFLIX': '/logos/NETFLEX_Logo.svg',
+    '넷플릭스': '/logos/NETFLEX_Logo.svg',
 
-    'Disney+': '/src/assets/logos/Disney+_logo.svg',
-    'Disney Plus': '/src/assets/logos/Disney+_logo.svg',
-    'DISNEY+': '/src/assets/logos/Disney+_logo.svg',
-    '디즈니플러스': '/src/assets/logos/Disney+_logo.svg',
-    '디즈니+': '/src/assets/logos/Disney+_logo.svg',
+    'Disney+': '/logos/Disney+_logo.svg',
+    'Disney Plus': '/logos/Disney+_logo.svg',
+    'DISNEY+': '/logos/Disney+_logo.svg',
+    '디즈니플러스': '/logos/Disney+_logo.svg',
+    '디즈니+': '/logos/Disney+_logo.svg',
 
-    'Amazon Prime': '/src/assets/logos/Amazon_Prime_Logo.svg',
-    'Amazon Prime Video': '/src/assets/logos/Amazon_Prime_Logo.svg',
-    'Prime Video': '/src/assets/logos/Amazon_Prime_Logo.svg',
-    'AMAZON_PRIME': '/src/assets/logos/Amazon_Prime_Logo.svg',
-    '아마존 프라임': '/src/assets/logos/Amazon_Prime_Logo.svg',
+    'Amazon Prime': '/logos/Amazon_Prime_Logo.svg',
+    'Amazon Prime Video': '/logos/Amazon_Prime_Logo.svg',
+    'Prime Video': '/logos/Amazon_Prime_Logo.svg',
+    'AMAZON_PRIME': '/logos/Amazon_Prime_Logo.svg',
+    '아마존 프라임': '/logos/Amazon_Prime_Logo.svg',
 
-    'Apple TV': '/src/assets/logos/Apple_TV_logo.svg',
-    'Apple TV+': '/src/assets/logos/Apple_TV_logo.svg',
-    'APPLE_TV': '/src/assets/logos/Apple_TV_logo.svg',
-    '애플 TV': '/src/assets/logos/Apple_TV_logo.svg',
+    'Apple TV': '/logos/Apple_TV_logo.svg',
+    'Apple TV+': '/logos/Apple_TV_logo.svg',
+    'APPLE_TV': '/logos/Apple_TV_logo.svg',
+    '애플 TV': '/logos/Apple_TV_logo.svg',
 
-    'Coupang Play': '/src/assets/logos/COUPANG_PLAY_Logo.svg',
-    'COUPANG_PLAY': '/src/assets/logos/COUPANG_PLAY_Logo.svg',
-    '쿠팡플레이': '/src/assets/logos/COUPANG_PLAY_Logo.svg',
+    'Coupang Play': '/logos/COUPANG_PLAY_Logo.svg',
+    'COUPANG_PLAY': '/logos/COUPANG_PLAY_Logo.svg',
+    '쿠팡플레이': '/logos/COUPANG_PLAY_Logo.svg',
 
-    'TVING': '/src/assets/logos/TVING_Logo.svg',
-    'Tving': '/src/assets/logos/TVING_Logo.svg',
-    '티빙': '/src/assets/logos/TVING_Logo.svg',
+    'TVING': '/logos/TVING_Logo.svg',
+    'Tving': '/logos/TVING_Logo.svg',
+    '티빙': '/logos/TVING_Logo.svg',
 
-    'WATCHA': '/src/assets/logos/WATCHA_Logo_Main.svg',
-    'Watcha': '/src/assets/logos/WATCHA_Logo_Main.svg',
-    '왓챠': '/src/assets/logos/WATCHA_Logo_Main.svg',
+    'WATCHA': '/logos/WATCHA_Logo_Main.svg',
+    'Watcha': '/logos/WATCHA_Logo_Main.svg',
+    '왓챠': '/logos/WATCHA_Logo_Main.svg',
 
-    'WAVVE': '/src/assets/logos/WAVVE_Logo.svg',
-    'Wavve': '/src/assets/logos/WAVVE_Logo.svg',
-    '웨이브': '/src/assets/logos/WAVVE_Logo.svg',
+    'WAVVE': '/logos/WAVVE_Logo.svg',
+    'Wavve': '/logos/WAVVE_Logo.svg',
+    '웨이브': '/logos/WAVVE_Logo.svg',
 
     // ✅ 구글 플레이 무비 추가
-    'Google Play Movies': '/src/assets/logos/google_movie.svg',
-    'Google Play': '/src/assets/logos/google_movie.svg',
-    'Google Movies': '/src/assets/logos/google_movie.svg',
-    'GOOGLE_PLAY': '/src/assets/logos/google_movie.svg',
-    '구글 플레이': '/src/assets/logos/google_movie.svg',
+    'Google Play Movies': '/logos/google_movie.svg',
+    'Google Play': '/logos/google_movie.svg',
+    'Google Movies': '/logos/google_movie.svg',
+    'GOOGLE_PLAY': '/logos/google_movie.svg',
+    '구글 플레이': '/logos/google_movie.svg',
 };
 
 /**
