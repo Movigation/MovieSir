@@ -11,4 +11,4 @@ python-dotenv
 # AI/ML
 sentence-transformers  # torch는 이 패키지가 자동 설치
 faiss-cpu
-implicit  # ALS 모델 지원 (Alternating Least Squares)
+# implicit  # ALS 모델 지원 (Alternating Least Squares)
