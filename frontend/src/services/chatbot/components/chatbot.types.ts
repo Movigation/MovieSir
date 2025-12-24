@@ -7,14 +7,10 @@ export type ChatbotProps = {
 };
 
 // [용도] 챗봇 패널 Props
-// [수정 가이드] 
-// - isMobile: 모바일 여부 (<768px)
-// - isTablet: 타블렛 여부 (768px~1024px)
+// [반응형] Tailwind CSS의 sm, lg breakpoint 사용
 export type ChatbotPanelProps = {
     isOpen: boolean;
     onClose: () => void;
-    isMobile: boolean;            // 모바일 여부 (<768px)
-    isTablet: boolean;            // 타블렛 여부 (768px~1024px)
 };
 
 export type ChatbotButtonProps = {

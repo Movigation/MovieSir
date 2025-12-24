@@ -1,0 +1,58 @@
+name: Deploy GPU Server
+
+on:
+  workflow_dispatch:  # 수동 실행만 (Actions 탭에서 Run workflow 클릭)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to GPU Server
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to GPU Server via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.GPU_HOST }}
+          username: ${{ secrets.GPU_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            set -e  # 에러 발생 시 즉시 중단
+
+            if [ ! -d ~/MovieSir-middle/.git ]; then
+              echo "📌 Git repo not found, cloning..."
+              # 모델 파일 백업
+              if [ -d ~/MovieSir-middle/ai/training ]; then
+                mv ~/MovieSir-middle/ai/training ~/backup-training
+              fi
+              rm -rf ~/MovieSir-middle
+              git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+              # 모델 파일 복원
+              if [ -d ~/backup-training ]; then
+                cp -r ~/backup-training/* ~/MovieSir-middle/ai/training/
+              fi
+            fi
+
+            echo "📌 Fetch latest code"
+            cd ~/MovieSir-middle
+            git fetch --all
+            git reset --hard origin/main
+
+            echo "📌 Create .env.production"
+            cat > .env.production << 'ENVEOF'
+            ${{ secrets.ENV_PRODUCTION_GPU }}
+            ENVEOF
+
+            echo "📌 Stop old containers"
+            docker compose -f docker-compose.gpu.yml --env-file .env.production down || true
+
+            echo "📌 Build & start AI container"
+            docker compose -f docker-compose.gpu.yml --env-file .env.production up -d --build
+
+            echo "📌 Cleanup old images (keep build cache)"
+            docker image prune -f || true
+
+            echo "✅ GPU Server deployment complete"
