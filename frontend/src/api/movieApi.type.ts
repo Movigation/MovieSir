@@ -101,6 +101,54 @@ export interface UserStatus {
     comment?: string;
 }
 
+// ============================================================
+// [V2 API 타입 정의] - 시간 맞춤 조합 추천
+// ============================================================
+
+// [용도] AI 추천 영화 (v2 응답용)
+export interface RecommendedMovieV2 {
+    tmdb_id: number;
+    title: string;
+    runtime: number;
+    genres: string[];
+    vote_average: number;
+    vote_count: number;
+    overview: string;
+    release_date: string;
+    poster_path: string | null;
+    score?: number;
+}
+
+// [용도] 트랙별 추천 결과
+export interface TrackResultV2 {
+    label: string;
+    movies: RecommendedMovieV2[];
+    total_runtime: number;
+}
+
+// [용도] V2 추천 응답
+export interface RecommendResponseV2 {
+    track_a: TrackResultV2;
+    track_b: TrackResultV2;
+    elapsed_time?: number;
+}
+
+// [용도] 개별 영화 재추천 요청
+export interface ReRecommendRequest {
+    target_runtime: number;
+    excluded_ids: number[];
+    track: "a" | "b";
+    genres?: string[];
+    exclude_adult?: boolean;
+}
+
+// [용도] 개별 영화 재추천 응답
+export interface ReRecommendResponse {
+    movie: RecommendedMovieV2 | null;
+    success: boolean;
+    message: string;
+}
+
 // [용도] 영화 상세 정보 (백엔드 API 응답)
 export interface MovieDetail {
     movie_id: number;
