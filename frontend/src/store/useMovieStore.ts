@@ -174,12 +174,24 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             return;
         }
 
-        const targetRuntime = movieToRemove.runtime || 120;
-        console.log('  제거할 영화:', movieToRemove.title, `(${targetRuntime}분)`);
+        console.log('  제거할 영화:', movieToRemove.title, `(${movieToRemove.runtime}분)`);
 
         // 현재 영화에서 제거
         const newTrackAMovies = state.trackAMovies.filter(m => m.id !== movieId);
         const newExcludedIds = [...state.excludedIds, movieId];
+
+        // 사용자 입력 시간 계산 (HH:MM -> 분)
+        const [hours, minutes] = state.filters.time.split(':').map(Number);
+        const userInputTime = hours * 60 + minutes;
+
+        // 남은 영화들의 총 러닝타임 계산
+        const remainingRuntime = newTrackAMovies.reduce((sum, m) => sum + (m.runtime || 0), 0);
+
+        // target_runtime = 사용자 입력 시간 - 남은 영화들의 러닝타임
+        const targetRuntime = userInputTime - remainingRuntime;
+        console.log('  사용자 입력 시간:', userInputTime, '분');
+        console.log('  남은 영화 러닝타임:', remainingRuntime, '분');
+        console.log('  재추천 target_runtime:', targetRuntime, '분');
 
         set({
             trackAMovies: newTrackAMovies,
@@ -199,12 +211,12 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
             if (response.success && response.movie) {
                 const newMovie = convertV2MovieToMovie(response.movie);
-                console.log('✅ Track A 재추천 성공:', newMovie.title);
+                console.log('✅ Track A 재추천 성공:', newMovie.title, `(${newMovie.runtime}분)`);
 
                 set((s) => ({
                     trackAMovies: [...s.trackAMovies, newMovie],
                     recommendedMovies: [...s.trackAMovies, newMovie],
-                    trackATotalRuntime: s.trackATotalRuntime - targetRuntime + (newMovie.runtime || 0),
+                    trackATotalRuntime: remainingRuntime + (newMovie.runtime || 0),
                     excludedIds: [...s.excludedIds, newMovie.id]
                 }));
             } else {
@@ -230,12 +242,24 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             return;
         }
 
-        const targetRuntime = movieToRemove.runtime || 120;
-        console.log('  제거할 영화:', movieToRemove.title, `(${targetRuntime}분)`);
+        console.log('  제거할 영화:', movieToRemove.title, `(${movieToRemove.runtime}분)`);
 
         // 현재 영화에서 제거
         const newTrackBMovies = state.trackBMovies.filter(m => m.id !== movieId);
         const newExcludedIds = [...state.excludedIds, movieId];
+
+        // 사용자 입력 시간 계산 (HH:MM -> 분)
+        const [hours, minutes] = state.filters.time.split(':').map(Number);
+        const userInputTime = hours * 60 + minutes;
+
+        // 남은 영화들의 총 러닝타임 계산
+        const remainingRuntime = newTrackBMovies.reduce((sum, m) => sum + (m.runtime || 0), 0);
+
+        // target_runtime = 사용자 입력 시간 - 남은 영화들의 러닝타임
+        const targetRuntime = userInputTime - remainingRuntime;
+        console.log('  사용자 입력 시간:', userInputTime, '분');
+        console.log('  남은 영화 러닝타임:', remainingRuntime, '분');
+        console.log('  재추천 target_runtime:', targetRuntime, '분');
 
         set({
             trackBMovies: newTrackBMovies,
@@ -255,12 +279,12 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
             if (response.success && response.movie) {
                 const newMovie = convertV2MovieToMovie(response.movie);
-                console.log('✅ Track B 재추천 성공:', newMovie.title);
+                console.log('✅ Track B 재추천 성공:', newMovie.title, `(${newMovie.runtime}분)`);
 
                 set((s) => ({
                     trackBMovies: [...s.trackBMovies, newMovie],
                     popularMovies: [...s.trackBMovies, newMovie],
-                    trackBTotalRuntime: s.trackBTotalRuntime - targetRuntime + (newMovie.runtime || 0),
+                    trackBTotalRuntime: remainingRuntime + (newMovie.runtime || 0),
                     excludedIds: [...s.excludedIds, newMovie.id]
                 }));
             } else {
