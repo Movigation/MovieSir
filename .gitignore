@@ -86,6 +86,9 @@ ai/training/sbert_data/index/*
 ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
+# DB
+*.rdb
+
 # ------------------------------------------------------------
 # Secrets & Environment (중요!)
 # ------------------------------------------------------------
