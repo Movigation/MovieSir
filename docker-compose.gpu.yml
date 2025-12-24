@@ -1,0 +1,42 @@
+# MovieSir - GPU Server
+# Usage: docker compose -f docker-compose.gpu.yml --env-file .env.production up -d --build
+
+services:
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: moviesir-ai
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - ./ai/training:/app/training:ro
+    network_mode: host  # localhost로 PostgreSQL 접근
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Log Monitoring (Web UI)
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle-gpu
+    ports:
+      - "9999:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped

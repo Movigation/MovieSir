@@ -33,11 +33,11 @@ def send_signup_code_email(to_email: str, code: str) -> None:
         return
 
     msg = EmailMessage()
-    msg["Subject"] = "Movigation 회원가입 인증 코드"
+    msg["Subject"] = "MovieSir 회원가입 인증 코드"
     msg["From"] = from_email
     msg["To"] = to_email
     msg.set_content(
-        f"Movigation 회원가입을 위한 인증 코드입니다.\n\n"
+        f"MovieSir 회원가입을 위한 인증 코드입니다.\n\n"
         f"인증 코드: {code}\n"
         f"10분 안에 입력해 주세요."
     )

@@ -51,30 +51,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const savedUser = await authApi.getCurrentUser();
             if (savedUser) {
                 setUser(savedUser);
-                // MovieStore에 userId 설정 (문자열 ID를 숫자로 변환)
-                const userId = savedUser.id || (savedUser as any).user_id;
-                if (userId) {
-                    setMovieStoreUserId(typeof userId === 'number' ? userId : parseInt(userId as string, 10));
-                }
             }
             setIsLoading(false);
         };
 
         loadUser();
-    }, [setMovieStoreUserId]);
+    }, []);
+
+    // user 상태가 변경될 때마다 MovieStore에 userId 동기화
+    useEffect(() => {
+        if (user) {
+            // MovieStore에 userId 설정 (문자열 ID를 숫자로 변환)
+            const userId = user.id || (user as any).user_id;
+            if (userId) {
+                const numericUserId = typeof userId === 'number' ? userId : parseInt(userId as string, 10);
+                console.log('✅ MovieStore userId 설정:', numericUserId);
+                setMovieStoreUserId(numericUserId);
+            } else {
+                console.warn('⚠️ user 객체에 id가 없음:', user);
+            }
+        } else {
+            // 로그아웃 시 userId를 null로 설정
+            console.log('🔒 로그아웃: MovieStore userId를 null로 설정');
+            setMovieStoreUserId(null);
+        }
+    }, [user, setMovieStoreUserId]);
 
     // 로그인 (rememberMe 추가)
     const login = async (email: string, password: string, rememberMe: boolean = true) => {
         try {
             const response = await authApi.login({ email, password }, rememberMe);
-            setUser(response.user);
-            authApi.saveUser(response.user, rememberMe);
-
-            // MovieStore에 userId 설정 (문자열 ID를 숫자로 변환)
-            const userId = response.user.id || (response.user as any).user_id;
-            if (userId) {
-                setMovieStoreUserId(typeof userId === 'number' ? userId : parseInt(userId as string, 10));
-            }
+            setUser(response.user as any);  // useEffect가 자동으로 MovieStore userId 설정
+            authApi.saveUser(response.user as any, rememberMe);
         } catch (error) {
             if (error instanceof Error) {
                 throw error;
@@ -87,8 +95,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const signup = async (email: string, password: string, nickname: string) => {
         try {
             const response = await authApi.signup({ email, password, nickname });
-            setUser(response.user);
-            authApi.saveUser(response.user);
+            setUser(response.user as any);  // useEffect가 자동으로 MovieStore userId 설정
+            authApi.saveUser(response.user as any);
         } catch (error) {
             if (error instanceof Error) {
                 throw error;
@@ -98,9 +106,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     // 로그아웃
-    const logout = () => {
-        setUser(null);
-        authApi.logout();
+    const logout = async () => {
+        console.log('🚪 로그아웃 시작...');
+        try {
+            // 백엔드 API 호출 (refresh_token 무효화)
+            await authApi.logout();
+            console.log('✅ 백엔드 로그아웃 완료');
+        } catch (error) {
+            console.error('⚠️ 백엔드 로그아웃 실패 (로컬 정리는 진행):', error);
+        } finally {
+            // 백엔드 성공/실패 여부와 관계없이 로컬 상태는 정리
+            setUser(null);
+            console.log('✅ 로컬 상태 정리 완료');
+        }
     };
 
     // 사용자 정보 새로고침 (프로필 업데이트 후 등)

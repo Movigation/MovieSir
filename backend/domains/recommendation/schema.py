@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import date
 
 class RecommendationRequest(BaseModel):
     runtime_limit: int = 120
@@ -22,7 +23,8 @@ class MovieInfo(BaseModel):
     genres: Optional[List[str]] = None
     adult: bool
     popularity: Optional[float] = None
-    
+    release_date: Optional[date] = None
+
     class Config:
         from_attributes = True
 
