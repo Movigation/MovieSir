@@ -12,7 +12,11 @@ import type {
     MovieRecommendationResult,
     BackendRecommendResponse,
     BackendMovieRecommendation,
-    MovieDetail
+    MovieDetail,
+    RecommendResponseV2,
+    RecommendedMovieV2,
+    ReRecommendRequest,
+    ReRecommendResponse
 } from "@/api/movieApi.type";
 
 
@@ -106,43 +110,109 @@ export const postRecommendations = async (filters: {
         });
 
         // 4. 백엔드 응답을 프론트엔드 Movie 타입으로 변환
-        const backendMovies = response.data.results;  // Backend가 results 배열로 반환
+        const backendMovies = response.data.results;  // ✅ 수정 4/5: recommendations → results
 
         // Movie 타입으로 변환하는 헬퍼 함수
         const convertToMovie = (backendMovie: any): Movie => ({
-            id: backendMovie.movie_id,
+            id: backendMovie.movie_id,  // ✅ 수정 4/5: movie_id 매핑
             title: backendMovie.title,
             genres: backendMovie.genres,
             rating: backendMovie.vote_average,
-            poster: `https://image.tmdb.org/t/p/w500${backendMovie.poster_path}`,
+            poster: `https://image.tmdb.org/t/p/w500${backendMovie.poster_path}`,  // ✅ 수정 5/5: URL 조합
             description: backendMovie.overview,
             runtime: backendMovie.runtime,
             popular: false,
             watched: false
         })
 
-        // 5. 전체 영화를 변환
+        // 5. algorithmic과 popular로 분리
+        // 백엔드가 AI 추천 순서대로 반환하므로:
+        // - 전체를 algorithmic으로 사용
+        // - popular는 별도 API 필요 (일단 빈 배열)
         const allMovies = backendMovies.map(convertToMovie);
 
         console.log('전체 추천 영화 개수:', allMovies.length);
 
-        // 6. 절반씩 나누어 algorithmic과 popular로 분리
+        // 전체 영화를 절반씩 나누어 algorithmic과 popular로 분리
         const halfLength = Math.ceil(allMovies.length / 2);
-        const algorithmic = allMovies.slice(0, halfLength);  // 전반부: 맞춤 추천
-        const popular = allMovies.slice(halfLength);         // 후반부: 인기 영화
-
-        console.log('맞춤 추천 영화 개수:', algorithmic.length);
-        console.log('인기 영화 개수:', popular.length);
-
         return {
-            algorithmic,
-            popular
+            algorithmic: allMovies.slice(0, halfLength),  // 전반부: 맞춤 추천
+            popular: allMovies.slice(halfLength)          // 후반부: 인기 영화
         };
     } catch (error: any) {
         console.error("영화 추천 API 호출 중 오류:", error);
         throw error;
     }
 };
+
+
+// ============================================================
+// [V2 API] 시간 맞춤 조합 추천
+// ============================================================
+
+// [용도] 영화 추천 v2 - 시간 맞춤 조합 반환
+// [사용법] const result = await postRecommendationsV2({ time: "02:30", genres: ["SF"], excludeAdult: true });
+export const postRecommendationsV2 = async (filters: {
+    time: string;      // "HH:MM" 형식
+    genres: string[];  // 장르 이름 배열
+    excludeAdult?: boolean;
+}): Promise<RecommendResponseV2> => {
+    try {
+        // 시간 변환: "02:30" -> 150분
+        const [hours, minutes] = filters.time.split(':').map(Number);
+        const runtimeLimit = hours * 60 + minutes;
+
+        const response = await axiosInstance.post<RecommendResponseV2>("/api/v2/recommend", {
+            runtime_limit: runtimeLimit,
+            genres: filters.genres,
+            exclude_adult: filters.excludeAdult ?? true
+        });
+
+        console.log('[V2 API] 추천 결과:', {
+            track_a: response.data.track_a.movies.length + '편',
+            track_b: response.data.track_b.movies.length + '편',
+            elapsed_time: response.data.elapsed_time
+        });
+
+        return response.data;
+    } catch (error: any) {
+        console.error("V2 영화 추천 API 호출 중 오류:", error);
+        throw error;
+    }
+};
+
+// [용도] 개별 영화 재추천 - 단일 영화 교체
+// [사용법] const result = await postReRecommendSingle({ target_runtime: 120, excluded_ids: [550, 27205], track: "a" });
+export const postReRecommendSingle = async (request: ReRecommendRequest): Promise<ReRecommendResponse> => {
+    try {
+        const response = await axiosInstance.post<ReRecommendResponse>("/api/v2/recommend/single", request);
+
+        if (response.data.success && response.data.movie) {
+            console.log('[V2 API] 재추천 성공:', response.data.movie.title);
+        } else {
+            console.log('[V2 API] 재추천 실패:', response.data.message);
+        }
+
+        return response.data;
+    } catch (error: any) {
+        console.error("V2 재추천 API 호출 중 오류:", error);
+        throw error;
+    }
+};
+
+// [용도] RecommendedMovieV2를 프론트엔드 Movie 타입으로 변환
+export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
+    id: v2Movie.tmdb_id,
+    title: v2Movie.title,
+    genres: v2Movie.genres,
+    year: v2Movie.release_date ? new Date(v2Movie.release_date).getFullYear() : undefined,
+    rating: v2Movie.vote_average,
+    poster: v2Movie.poster_path ? `https://image.tmdb.org/t/p/w500${v2Movie.poster_path}` : '',
+    description: v2Movie.overview,
+    runtime: v2Movie.runtime,
+    popular: false,
+    watched: false
+});
 
 
 // 추천 기록 추가
