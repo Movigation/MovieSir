@@ -7,10 +7,12 @@ import MovieCard from './MovieCard';
 import MovieCarousel from '@/components/ui/MovieCarousel';
 
 export default function PopularMoviesSection() {
+    const { trackBLabel } = useMovieStore();
+
     return (
         <div className="w-full">
             <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left mb-3">
-                인기 영화
+                {trackBLabel || "다양성 추천"}
             </h3>
             <PopularList />
         </div>
@@ -22,6 +24,8 @@ const PopularList = () => {
     const { popularMovies, removePopularMovie, setDetailMovieId, userId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+
+    console.log('🎬 PopularMoviesSection - popularMovies:', popularMovies);
 
     // localStorage에서 봤어요 목록 가져오기
     const getWatchedMovies = (): number[] => {
