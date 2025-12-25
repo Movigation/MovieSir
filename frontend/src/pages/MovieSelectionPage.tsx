@@ -17,7 +17,8 @@ export default function MovieSelectionPage() {
         removeLikedMovie,
         movie_ids,
         setMovies: setGlobalMovies,
-        clearMovieSelection  // 영화 선택 초기화 함수
+        clearMovieSelection,
+        movies: storedMovies, // localStorage에서 가져온 영화 목록
     } = useOnboardingStore();
 
     // 온보딩 재조사 팝업에서 왔는지 확인
@@ -31,9 +32,15 @@ export default function MovieSelectionPage() {
 
     // 영화 데이터 로드
     useEffect(() => {
-        // 페이지 진입 시 이전 영화 선택 초기화
-        clearMovieSelection();
+        // localStorage에 이미 영화 목록이 있으면 재사용
+        if (storedMovies && storedMovies.length > 0) {
+            setMovies(storedMovies);
+            setIsLoading(false);
+            console.log("✅ localStorage에서 영화 로딩:", storedMovies);
+            return;
+        }
 
+        // localStorage에 영화가 없을 때만 API 호출
         const loadMovies = async () => {
             setIsLoading(true);
             setError("");
@@ -45,7 +52,7 @@ export default function MovieSelectionPage() {
                 const moviesData = response.data.movies || [];
                 setMovies(moviesData);
                 setGlobalMovies(moviesData); // 스토어에 저장
-                console.log("✅ 영화 로딩 성공:", moviesData);
+                console.log("✅ API에서 영화 로딩 성공:", moviesData);
             } catch (err: any) {
                 console.error("⚠️ 영화 로딩 에러 (백엔드 연결 실패, 임시 데이터 사용):", err);
 
@@ -72,7 +79,7 @@ export default function MovieSelectionPage() {
         };
 
         loadMovies();
-    }, [clearMovieSelection, setGlobalMovies]);
+    }, [storedMovies, setGlobalMovies]);
 
 
     // 영화 선택/해제 토글
