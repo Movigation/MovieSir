@@ -1,38 +1,32 @@
 // ============================================================
-// [용도] 영화 카드 컴포넌트 (포스터 기반 Vertical Overlay 스타일)
-// [사용법] <MovieCard movie={movieData} isExpanded={...} onExpand={...} onCollapse={...} onClick={...} />
+// [용도] 영화 카드 컴포넌트 (포스터, 제목, 장르 표시 + Netflix 스타일 Hover 확장)
+// [사용법] <MovieCard movie={movieData} onClick={handleClick} />
 // ============================================================
 
 import { Eye, RefreshCw } from 'lucide-react';
 import type { Movie } from '@/api/movieApi.type';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
 
 interface MovieCardProps {
     movie: Movie;
-    isExpanded: boolean;
-    onExpand: () => void;
-    onCollapse: () => void;
     onClick: () => void;
-    onReRecommend?: () => void;
-    onAddToWatched?: () => void;
-    showReRecommend?: boolean;
-    shouldAnimate?: boolean;
+    onReRecommend?: () => void;     // 재추천받기 콜백
+    onAddToWatched?: () => void;    // 봤어요 리스트 추가 콜백
+    showReRecommend?: boolean;      // 재추천받기 버튼 표시 여부
 }
 
-export default function MovieCard({
-    movie,
-    isExpanded,
-    onExpand,
-    onCollapse,
-    onClick,
-    onReRecommend,
-    onAddToWatched,
-    showReRecommend = false,
-    shouldAnimate = false
-}: MovieCardProps) {
+export default function MovieCard({ movie, onClick, onReRecommend, onAddToWatched, showReRecommend = false }: MovieCardProps) {
     const [isRemoving, setIsRemoving] = useState(false);
-    const [isWatched] = useState(movie.watched || false);
-    const [isHovered, setIsHovered] = useState(false);
+    const [isWatched, setIsWatched] = useState(movie.watched || false);
+    const [isAppearing, setIsAppearing] = useState(true);
+
+    // 컴포넌트 마운트 시 등장 애니메이션
+    useEffect(() => {
+        setIsAppearing(true);
+        const timer = setTimeout(() => setIsAppearing(false), 700);
+        return () => clearTimeout(timer);
+    }, [movie.id]);
 
     // 재추천받기 버튼 클릭
     const handleReRecommend = (e: React.MouseEvent) => {
@@ -45,44 +39,29 @@ export default function MovieCard({
         }
     };
 
-    // 인터랙션 핸들러
-    const handleClick = (e: React.MouseEvent) => {
+    // 봤어요 버튼 클릭
+    const handleAddToWatched = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const isDesktop = window.innerWidth >= 1024;
-
-        if (!isDesktop) {
-            // 모바일/태블릿: 1차 클릭 -> 내부 정보 확장, 2차 클릭 -> 상세
-            if (isExpanded) {
-                onClick();
-            } else {
-                onExpand();
-            }
-        } else {
-            // 데스크탑: 호버 중 클릭 -> 상세
-            onClick();
-        }
-    };
-
-    const handleMouseEnter = () => {
-        if (window.innerWidth >= 1024) {
-            setIsHovered(true);
-            onExpand();
-        }
-    };
-
-    const handleMouseLeave = () => {
-        if (window.innerWidth >= 1024) {
-            setIsHovered(false);
-            onCollapse();
+        if (onAddToWatched && !isWatched) {
+            setIsWatched(true);
+            onAddToWatched();
         }
     };
 
     // 빈 카드인 경우
     if (movie.isEmpty) {
         return (
-            <div className="relative aspect-[2/3] w-[calc((100vw-48px)/3)] sm:w-[180px] md:w-[200px] rounded-lg overflow-hidden shadow-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <div className="text-gray-400 text-center p-4">
-                    <p className="text-xs font-medium">검색 결과 없음</p>
+            <div className="relative rounded-lg overflow-hidden shadow-md">
+                <div className="aspect-[2/3] w-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex flex-col items-center justify-center p-4">
+                    <div className="text-gray-400 dark:text-gray-500 text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-3-3v6" />
+                        </svg>
+                        <p className="text-sm font-medium">조건에 맞는</p>
+                        <p className="text-sm font-medium">영화가 없습니다</p>
+                        <p className="text-xs mt-2 opacity-75">다른 조건으로<br />시도해보세요</p>
+                    </div>
                 </div>
             </div>
         );
@@ -90,114 +69,132 @@ export default function MovieCard({
 
     return (
         <div
-            className={`
-                relative flex-shrink-0 cursor-pointer overflow-hidden shadow-lg
-                w-full aspect-[2/3]
-                transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
-                group
-                ${isExpanded ? 'z-30 ring-2 ring-blue-500 shadow-2xl' : 'z-10'}
-                ${isRemoving ? 'animate-slide-down-fade' : shouldAnimate ? 'animate-slide-up' : ''}
-            `}
-            onClick={handleClick}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            className={`relative group cursor-pointer rounded-lg overflow-visible shadow-md transition-all duration-300 w-[calc((100vw-48px)/3)] sm:w-[180px] md:w-[200px] flex-shrink-0 md:hover:z-50 ${isRemoving ? 'animate-slide-down' : isAppearing ? 'animate-slide-up' : ''
+                }`}
+            onClick={() => {
+                console.log('MovieCard clicked, movie ID:', movie.id);
+                onClick();
+            }}
         >
-            {/* 1. 배경 포스터 이미지 */}
-            <div className="absolute inset-0 w-full h-full overflow-hidden">
-                <img
-                    src={movie.poster}
-                    alt={movie.title}
-                    className={`
-                        w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.19,1,0.22,1)]
-                        ${(isHovered || isExpanded) ? 'scale-110' : 'scale-105'}
-                    `}
-                />
-            </div>
+            {/* 메인 카드 */}
+            <div className="relative rounded-lg overflow-hidden transition-all duration-300 md:group-hover:rounded-r-none">
+                {/* 포스터 */}
+                <div className="aspect-[2/3] w-full relative">
+                    <img
+                        src={movie.poster}
+                        alt={movie.title}
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
 
-            {/* 2. 그라데이션 오버레이 (Scrim) - 200% 높이로 부드러운 전환 */}
-            <div
-                className={`
-                    absolute inset-0 w-full h-[200%] pointer-events-none
-                    bg-gradient-to-t from-black via-black/30 via-black/20 to-transparent
-                    transition-transform duration-[1200ms] ease-[cubic-bezier(0.19,1,0.22,1)]
-                    ${(isHovered || isExpanded) ? 'translate-y-[-50%]' : 'translate-y-0'}
-                `}
-            />
+                    {/* 시청 완료 배지 */}
+                    {isWatched && (
+                        <div className="absolute top-2 left-2 bg-green-500/90 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-sm z-10">
+                            <Eye size={12} />
+                            <span>Watched</span>
+                        </div>
+                    )}
 
-            {/* 3. 콘텐츠 영역 (Title & Info) */}
-            <div
-                className={`
-                    absolute inset-0 flex flex-col justify-end p-3 sm:p-5
-                    transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
-                    ${(isHovered || isExpanded) ? 'translate-y-0' : 'translate-y-[calc(100%-4.5rem)] sm:translate-y-[calc(100%-5rem)]'}
-                `}
-            >
-                {/* 제목 (항상 노출되는 베이스) */}
-                <h3 className="text-white font-bold text-sm sm:text-lg leading-tight mb-2 drop-shadow-md line-clamp-2">
-                    {movie.title}
-                </h3>
+                    {/* 봤어요 버튼 - 주석처리됨 */}
+                    {/* {showReRecommend && onAddToWatched && (
+                        <button
+                            onClick={handleAddToWatched}
+                            className={`absolute top-2 right-2 p-2 rounded-full shadow-md transition-all duration-300 backdrop-blur-sm z-10 ${isWatched
+                                ? 'bg-gray-400/90 text-white cursor-default'
+                                : 'bg-green-500/90 text-white hover:bg-green-600 hover:scale-110'
+                                }`}
+                            title={isWatched ? '이미 봤어요 리스트에 추가됨' : '봤어요 리스트에 추가'}
+                            disabled={isWatched}
+                        >
+                            <Eye size={16} />
+                        </button>
+                    )} */}
+                </div>
 
-                {/* 상세 정보 (호버/활성 시 노출) */}
-                <div
-                    className={`
-                        flex flex-col gap-2 transition-all duration-700 ease-out
-                        ${(isHovered || isExpanded) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
-                    `}
-                >
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-yellow-400 text-xs">⭐</span>
-                        <span className="text-white font-semibold text-xs sm:text-sm">
-                            {typeof movie.rating === 'number' ? movie.rating.toFixed(1) : movie.rating}
-                        </span>
-                    </div>
+                {/* 제목 및 장르 */}
+                <div className="p-2 bg-white dark:bg-gray-800">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {movie.title}
+                    </h3>
 
-                    <div className="flex flex-wrap gap-1">
-                        {movie.genres.slice(0, 2).map((genre, idx) => (
-                            <span
-                                key={idx}
-                                className="px-1.5 py-0.5 bg-white/20 text-white text-[10px] rounded-md backdrop-blur-sm"
-                            >
-                                {genre}
-                            </span>
-                        ))}
-                    </div>
-
-                    {movie.description && (
-                        <p className="text-gray-300 text-[10px] sm:text-xs leading-relaxed line-clamp-3 sm:line-clamp-4 mt-1 italic">
-                            {movie.description}
+                    {/* 러닝타임 */}
+                    {movie.runtime && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+                            <span>{movie.runtime}분</span>
                         </p>
                     )}
 
-                    <div className="flex flex-col gap-1.5 mt-2">
-                        {showReRecommend && onReRecommend && (
-                            <button
-                                onClick={handleReRecommend}
-                                className="w-full py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
-                            >
-                                <RefreshCw size={10} className="inline mr-1" />
-                                재추천
-                            </button>
-                        )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {movie.genres.join(", ")}
+                    </p>
+
+                    {/* 재추천받기 버튼 */}
+                    {showReRecommend && onReRecommend && (
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onClick();
-                            }}
-                            className="w-full py-1.5 bg-white text-black hover:bg-gray-200 text-[10px] font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
+                            onClick={handleReRecommend}
+                            className="w-full mt-2 py-1.5 px-3 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                         >
-                            상세보기
+                            <RefreshCw size={12} />
+                            재추천받기
                         </button>
-                    </div>
+                    )}
                 </div>
             </div>
 
-            {/* 4. 기타 배지 (Watched 등) */}
-            {isWatched && (
-                <div className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-sm z-20">
-                    <Eye size={12} />
-                    <span>Watched</span>
+            {/* Hover 확장 패널 (오른쪽) - 데스크탑만 */}
+            <div className="hidden md:block absolute left-full top-0 h-full w-64 bg-gray-900 dark:bg-gray-800 rounded-r-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 overflow-hidden">
+                <div className="p-4 h-full flex flex-col justify-between">
+                    {/* 상단: 제목 & 평점 */}
+                    <div>
+                        <h3 className="text-white font-bold text-base mb-2 line-clamp-2">
+                            {movie.title}
+                        </h3>
+
+                        {/* 평점 */}
+                        {movie.rating && (
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-yellow-400 text-lg">⭐</span>
+                                    <span className="text-white font-semibold">
+                                        {typeof movie.rating === 'number' ? movie.rating.toFixed(1) : movie.rating}
+                                    </span>
+                                </div>
+                                <span className="text-gray-400 text-xs">/ 10</span>
+                            </div>
+                        )}
+
+                        {/* 장르 태그 */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                            {movie.genres.slice(0, 3).map((genre: string, idx: number) => (
+                                <span
+                                    key={idx}
+                                    className="px-2 py-0.5 bg-blue-600/30 text-blue-300 text-xs rounded-full border border-blue-500/30"
+                                >
+                                    {genre}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* 설명 */}
+                        {movie.description && (
+                            <p className="text-gray-300 text-xs leading-relaxed line-clamp-4">
+                                {movie.description}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* 하단: 상세보기 버튼 */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onClick();
+                        }}
+                        className="w-full py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-colors border border-white/20"
+                    >
+                        상세보기
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

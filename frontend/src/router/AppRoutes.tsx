@@ -5,8 +5,6 @@ import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/app/routes/ProtectedRoute';
-import OnboardingProtectedRoute from '@/app/routes/OnboardingProtectedRoute';
-import OnboardingCompletedRoute from '@/app/routes/OnboardingCompletedRoute';
 
 // Pages
 import MainPage from '@/pages/MainPage';
@@ -49,23 +47,16 @@ export default function AppRoutes() {
                     <Route path="/" element={<MainPage />} />
 
                     {/* 보호된 라우트 - 로그인 필요 */}
-                    {/* TODO: 개발 완료 후 주석 해제하여 로그인 보호 활성화 */}
-                    {/* <Route element={<ProtectedRoute />}> */}
-                    {/* URL: /mypage - 마이페이지 (모달 스타일) */}
-                    <Route path="/mypage" element={<MyPage />} />
-                    {/* </Route> */}
+                    <Route element={<ProtectedRoute />}>
+                        {/* URL: /mypage - 마이페이지 (모달 스타일) */}
+                        <Route path="/mypage" element={<MyPage />} />
+                    </Route>
                 </Route>
 
-                {/* Onboarding Flow - 완료 후 재접근 방지 */}
-                <Route element={<OnboardingCompletedRoute />}>
-                    <Route path="/onboarding/ott" element={<OTTSelectionPage />} />
-                    <Route path="/onboarding/movies" element={<MovieSelectionPage />} />
-                </Route>
-
-                {/* 온보딩 완료 페이지 - 온보딩 데이터 필요 */}
-                <Route element={<OnboardingProtectedRoute />}>
-                    <Route path="/onboarding/complete" element={<OnboardingCompletePage />} />
-                </Route>
+                {/* Onboarding Flow */}
+                <Route path="/onboarding/ott" element={<OTTSelectionPage />} />
+                <Route path="/onboarding/movies" element={<MovieSelectionPage />} />
+                <Route path="/onboarding/complete" element={<OnboardingCompletePage />} />
 
                 {/* Admin - 중첩 라우팅으로 대시보드 영역에서 컴포넌트 교체 */}
                 <Route path="/admin" element={<AdminLayout />}>

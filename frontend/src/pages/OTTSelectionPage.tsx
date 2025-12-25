@@ -7,12 +7,12 @@ import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { authAxiosInstance } from "@/api/axiosInstance";
 
 // OTT 로고 컴포넌트 - public 폴더의 SVG URL 사용
-const NetflixLogo = () => <img src="/logos/NETFLEX_Logo.svg" alt="Netflix" className="h-9 w-auto" />;
+const NetflixLogo = () => <img src="/logos/NETFLEX_Logo.svg" alt="Netflix" className="h-32 w-auto" />;
 const DisneyLogo = () => <img src="/logos/Disney+_logo.svg" alt="Disney+" className="h-16 w-auto" />;
 const WavveLogo = () => <img src="/logos/WAVVE_Logo.svg" alt="Wavve" className="h-8 w-auto" />;
 const TvingLogo = () => <img src="/logos/TVING_Logo.svg" alt="TVING" className="h-8 w-auto" />;
-const WatchaLogo = () => <img src="/logos/WATCHA_Logo_Main.svg" alt="Watcha" className="h-12 w-auto" />;
-const AppleLogo = () => <img src="/logos/Apple_TV_logo.svg" alt="Apple TV+" className="h-10 w-auto" />;
+const WatchaLogo = () => <img src="/logos/WATCHA_Logo_Main.svg" alt="Watcha" className="h-8 w-auto" />;
+const AppleLogo = () => <img src="/logos/Apple_TV_logo.svg" alt="Apple TV+" className="h-8 w-auto" />;
 
 const OTT_PLATFORMS = [
     { provider_id: 8, name: "Netflix", Logo: NetflixLogo },

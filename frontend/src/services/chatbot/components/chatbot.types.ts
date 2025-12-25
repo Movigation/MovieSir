@@ -11,7 +11,6 @@ export type ChatbotProps = {
 export type ChatbotPanelProps = {
     isOpen: boolean;
     onClose: () => void;
-    onRecommended?: (value: boolean) => void;  // 추천 완료 시 부모에게 알림
 };
 
 export type ChatbotButtonProps = {

@@ -30,7 +30,7 @@ export default function FilterChatBlock({ onApply, reset }: FilterChatBlockProps
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border border-gray-700 dark:border-gray-700 w-full max-w-md">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm border-2 border-gray-900 dark:border-gray-700 w-full max-w-md overflow-hidden">
             {/* Step Indicator */}
             <div className="flex items-center justify-center gap-2 mb-6">
                 {[1, 2].map((step) => (
