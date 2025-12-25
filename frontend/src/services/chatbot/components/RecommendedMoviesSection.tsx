@@ -7,10 +7,12 @@ import MovieCard from './MovieCard';
 import MovieCarousel from '@/components/ui/MovieCarousel';
 
 export default function RecommendedMoviesSection() {
+    const { trackALabel } = useMovieStore();
+
     return (
         <div className="w-full">
             <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left mb-3">
-                맞춤 추천
+                {trackALabel || "맞춤 추천"}
             </h3>
             <RecommendedList />
         </div>
@@ -22,6 +24,8 @@ const RecommendedList = () => {
     const { recommendedMovies, removeRecommendedMovie, setDetailMovieId, userId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+
+    console.log('🎬 RecommendedMoviesSection - recommendedMovies:', recommendedMovies);
 
     // localStorage에서 봤어요 목록 가져오기
     const getWatchedMovies = (): number[] => {
