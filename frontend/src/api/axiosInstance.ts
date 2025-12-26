@@ -78,18 +78,6 @@ axiosInstance.interceptors.response.use(
         ) {
             // 🍪 쿠키 기반 인증: 401 에러 시 로그아웃 처리
             // 사용자 정보만 제거 (토큰은 쿠키로 관리됨)
-            const hasUser = localStorage.getItem("user") || sessionStorage.getItem("user");
-
-            if (hasUser) {
-                // 로그인된 사용자의 세션이 만료된 경우
-                localStorage.removeItem("user");
-                localStorage.removeItem("rememberMe");
-                sessionStorage.removeItem("user");
-                sessionStorage.removeItem("rememberMe");
-
-                alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
-                window.location.href = "/";
-            }
 
             return Promise.reject(error);
         }

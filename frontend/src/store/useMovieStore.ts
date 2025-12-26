@@ -155,9 +155,31 @@ export const useMovieStore = create<MovieState>((set, get) => ({
                 error: null
             });
             console.log('✅ V2 추천 영화 로드 완료');
-        } catch (error) {
+        } catch (error: any) {
             console.error("V2 영화 추천 로드 중 오류:", error);
-            set({ error: "영화 추천을 가져오는 중 오류가 발생했습니다", isLoading: false });
+
+            // 에러 타입별 메시지 설정
+            let errorMessage = "영화 추천을 가져오는 중 오류가 발생했습니다";
+
+            if (error.code === 'ERR_NETWORK') {
+                errorMessage = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
+            } else if (error.response?.status === 401) {
+                errorMessage = "로그인이 필요합니다. 다시 로그인해주세요.";
+            } else if (error.response?.status === 500) {
+                errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+            }
+
+            set({
+                error: errorMessage,
+                isLoading: false,
+                // 에러 발생 시 빈 배열로 설정하여 무한 로딩 방지
+                trackAMovies: [],
+                trackBMovies: [],
+                recommendedMovies: [],
+                popularMovies: []
+            });
+
+            // 에러를 다시 throw하지 않음 (무한 재시도 방지)
         }
     },
 
