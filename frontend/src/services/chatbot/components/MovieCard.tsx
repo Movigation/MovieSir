@@ -91,7 +91,7 @@ export default function MovieCard({
     return (
         <div
             className={`
-                relative flex-shrink-0 cursor-pointer overflow-hidden shadow-lg
+                relative flex-shrink-0 cursor-pointer overflow-hidden rounded-md shadow-xl
                 w-full aspect-[2/3]
                 transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
                 group
@@ -144,6 +144,7 @@ export default function MovieCard({
                         ${(isHovered || isExpanded) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
                     `}
                 >
+                    {/* 평점 */}
                     <div className="flex items-center gap-1.5">
                         <span className="text-yellow-400 text-xs">⭐</span>
                         <span className="text-white font-semibold text-xs sm:text-sm">
@@ -151,6 +152,7 @@ export default function MovieCard({
                         </span>
                     </div>
 
+                    {/* 장르 */}
                     <div className="flex flex-wrap gap-1">
                         {movie.genres.slice(0, 2).map((genre, idx) => (
                             <span
@@ -162,19 +164,14 @@ export default function MovieCard({
                         ))}
                     </div>
 
-                    {movie.description && (
-                        <p className="text-gray-300 text-[10px] sm:text-xs leading-relaxed line-clamp-3 sm:line-clamp-4 mt-1 italic">
-                            {movie.description}
-                        </p>
-                    )}
-
+                    {/* 버튼 영역 */}
                     <div className="flex flex-col gap-1.5 mt-2">
                         {showReRecommend && onReRecommend && (
                             <button
                                 onClick={handleReRecommend}
-                                className="w-full py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
+                                className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
                             >
-                                <RefreshCw size={10} className="inline mr-1" />
+                                <RefreshCw size={14} className="inline mr-1" />
                                 재추천
                             </button>
                         )}
@@ -183,7 +180,7 @@ export default function MovieCard({
                                 e.stopPropagation();
                                 onClick();
                             }}
-                            className="w-full py-1.5 bg-white text-black hover:bg-gray-200 text-[10px] font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
+                            className="w-full py-2 bg-white text-black hover:bg-gray-200 text-xs sm:text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
                         >
                             상세보기
                         </button>

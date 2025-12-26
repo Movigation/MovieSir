@@ -11,8 +11,8 @@ export default function PopularMoviesSection() {
 
     return (
         <div className="w-full">
-            <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left mb-3">
-                {trackBLabel || "다양성 추천"}
+            <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-96">
+                {"인기 영화 추천"}
             </h3>
             <PopularList />
         </div>
@@ -20,7 +20,7 @@ export default function PopularMoviesSection() {
 }
 
 // 인기 영화 목록
-const PopularList = () => {
+const PopularList = ({ label }: { label?: string }) => {
     const { popularMovies, removePopularMovie, setDetailMovieId, userId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
@@ -79,7 +79,7 @@ const PopularList = () => {
                     onCollapse={() => setExpandedCardId(null)}
                     onClick={() => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
-                            setDetailMovieId(movie.id);
+                            setDetailMovieId(movie.movie_id ?? movie.id);  // ✅ movie_id 우선, 없으면 id 사용
                         }
                     }}
                     onReRecommend={() => handleReRecommend(movie.id)}
