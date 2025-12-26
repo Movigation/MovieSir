@@ -38,7 +38,7 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
 
   return (
     <>
-      <div className="w-full flex flex-col items-center mt-4 select-none relative">
+      <div className="w-full flex flex-col items-center mt-4 select-none">
 
         {/* 챗봇 버튼 - 열림/닫힘/추천에 따라 위치 변경 */}
         {/* [반응형 가이드]
@@ -71,7 +71,7 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
             ${!isOpen
               ? "translate-y-[200px] sm:translate-y-[150px]"  // 닫힘
               : isRecommended
-                ? "-translate-x-[7px] translate-y-[calc(100dvh-120px)] scale-[0.35] z-[60] sm:-translate-x-[480px] sm:translate-y-[110px] sm:scale-100"  // 추천 완료 (2차)
+                ? "-translate-x-[7px] translate-y-[calc(100dvh-120px)] scale-[0.35] z-[60] sm:-translate-x-[300px] sm:translate-y-[110px] sm:scale-100 lg:-translate-x-[480px] lg:translate-y-[110px] lg:scale-100"  // 추천 완료 (2차)
                 : "translate-x-[-38vw] -translate-y-[30px] scale-50 sm:-translate-x-[300px] sm:-translate-y-[40px] sm:scale-100"  // 열림 (1차)
             }
           `}

@@ -11,8 +11,8 @@ export default function RecommendedMoviesSection() {
 
     return (
         <div className="w-full">
-            <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left mb-3">
-                {trackALabel || "맞춤 추천"}
+            <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-96">
+                {"취향 맞춤 추천"}
             </h3>
             <RecommendedList />
         </div>
@@ -20,7 +20,7 @@ export default function RecommendedMoviesSection() {
 }
 
 // 맞춤 추천 영화 목록
-const RecommendedList = () => {
+const RecommendedList = ({ label }: { label?: string }) => {
     const { recommendedMovies, removeRecommendedMovie, setDetailMovieId, userId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
@@ -79,7 +79,7 @@ const RecommendedList = () => {
                     onCollapse={() => setExpandedCardId(null)}
                     onClick={() => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
-                            setDetailMovieId(movie.id);
+                            setDetailMovieId(movie.movie_id ?? movie.id);  // ✅ movie_id 우선, 없으면 id 사용
                         }
                     }}
                     onReRecommend={() => handleReRecommend(movie.id)}

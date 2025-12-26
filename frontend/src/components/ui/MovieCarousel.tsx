@@ -1,7 +1,7 @@
 // [용도] 영화 캐러셀 - 3D 원근 효과 + 마우스/터치 드래그
 // [참조] crew-carousel CSS 스타일 기반
 
-import { useState, Children, useRef, useEffect, type TouchEvent, type MouseEvent } from 'react';
+import React, { useState, Children, useRef, useEffect, type TouchEvent, type MouseEvent } from 'react';
 
 interface MovieCarouselProps {
     children: React.ReactNode;
@@ -119,51 +119,8 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
 
     return (
         <div className={`relative w-full ${className}`}>
-            {/* 3D 캐러셀 컨테이너 */}
-            <div
-                className="relative w-full h-[450px] sm:h-[500px] lg:h-[600px] perspective-1000"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                style={{ perspective: '1000px', cursor: isDragging ? 'grabbing' : 'grab' }}
-            >
-                <div className="relative w-full h-full flex items-center justify-center preserve-3d">
-                    {childrenArray.map((child, index) => {
-                        const position = getCardPosition(index);
-
-                        return (
-                            <div
-                                key={index}
-                                className={`
-                                    absolute w-[280px] sm:w-[320px] lg:w-[380px]
-                                    transition-all duration-700 ease-out
-                                    ${position === 'center' ? 'z-10 scale-110 opacity-100' : ''}
-                                    ${position === 'left-1' ? 'z-5 scale-90 opacity-100 grayscale-[80%]' : ''}
-                                    ${position === 'right-1' ? 'z-5 scale-90 opacity-100 grayscale-[80%]' : ''}
-                                    ${position === 'hidden' ? 'opacity-0 pointer-events-none' : ''}
-                                `}
-                                style={{
-                                    transform:
-                                        position === 'center' ? 'translateX(0) scale(1.0)' :
-                                            position === 'left-1' ? 'translateX(-200px) scale(0.9)' :
-                                                position === 'right-1' ? 'translateX(200px) scale(0.9)' :
-                                                    'translateX(0) scale(0.8)',
-                                    cursor: position === 'center' ? 'default' : 'pointer'
-                                }}
-                                onClick={() => position !== 'center' && handleCardClick(index)}
-                            >
-                                {child}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
             {/* 페이지 인디케이터 (점) - 포스터 바로 아래 */}
-            <div className="flex justify-center gap-2 mt-6">
+            <div className="flex justify-center gap-2 mb-2">
                 {childrenArray.map((_, idx) => (
                     <button
                         key={idx}
@@ -175,6 +132,54 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                         aria-label={`${idx + 1}번 영화로 이동`}
                     />
                 ))}
+            </div>
+            {/* 3D 캐러셀 컨테이너 */}
+            <div
+                className="relative w-full h-[370px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[600px] mx-auto"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                style={{ perspective: '1000px', cursor: isDragging ? 'grabbing' : 'grab' }}
+            >
+                <div className="relative w-full h-full flex items-start justify-center preserve-3d">
+                    {childrenArray.map((child, index) => {
+                        const position = getCardPosition(index);
+
+                        return (
+                            <div
+                                key={index}
+                                className={`
+                                    absolute w-[280px] sm:w-[320px] lg:w-[380px] h-[100px] sm:h-[100px] lg:h-[100px]
+                                    transition-all duration-700 ease-out
+                                    ${position === 'center' ? 'z-10 opacity-100' : ''}
+                                    ${position === 'left-1' ? 'z-5 opacity-100 grayscale-[80%] pointer-events-none' : ''}
+                                    ${position === 'right-1' ? 'z-5 opacity-100 grayscale-[80%] pointer-events-none' : ''}
+                                    ${position === 'hidden' ? 'opacity-0 pointer-events-none' : ''}
+                                `}
+                                style={{
+                                    transform:
+                                        position === 'center' ? 'translateX(0) scale(0.8)' :
+                                            position === 'left-1'
+                                                ? `translateX(${window.innerWidth >= 1024 ? '-300' : window.innerWidth >= 640 ? '-260' : '-220'}px) scale(0.72)`
+                                                : position === 'right-1'
+                                                    ? `translateX(${window.innerWidth >= 1024 ? '300' : window.innerWidth >= 640 ? '260' : '220'}px) scale(0.72)`
+                                                    : 'translateX(0) scale(0.8)',
+                                    cursor: position === 'center' ? 'default' : 'pointer'
+                                }}
+                                onClick={() => position !== 'center' && handleCardClick(index)}
+                            >
+                                {React.cloneElement(child as React.ReactElement<any>, {
+                                    isExpanded: position === 'center' ? (child as React.ReactElement<any>).props.isExpanded : false,
+                                    onExpand: position === 'center' ? (child as React.ReactElement<any>).props.onExpand : () => { },
+                                    onCollapse: position === 'center' ? (child as React.ReactElement<any>).props.onCollapse : () => { },
+                                })}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

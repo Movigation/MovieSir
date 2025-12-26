@@ -17,7 +17,7 @@ from backend.domains.recommendation.router import router as recommendation_route
 
 app = FastAPI()
 
-# CORS 설정
+# CORS 설정 (개발 환경)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -26,8 +26,10 @@ app.add_middleware(
         "http://localhost:3001",  # copy2 프론트엔드
     ],
     allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["*"],  # 브라우저에서 접근 가능한 헤더
+    max_age=3600,  # Preflight 요청 캐시 시간 (1시간)
 )
 
 # 라우터 등록

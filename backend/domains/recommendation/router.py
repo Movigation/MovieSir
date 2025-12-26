@@ -147,12 +147,17 @@ def get_movie_detail(
     """영화 상세 정보 조회 (로그인 불필요)"""
     from backend.domains.movie.models import Movie
 
+    # 먼저 movie_id로 조회
     movie = db.query(Movie).filter(Movie.movie_id == movie_id).first()
+    
+    # movie_id로 못 찾으면 tmdb_id로 시도 (AI가 tmdb_id를 반환하는 경우 대응)
+    if not movie:
+        movie = db.query(Movie).filter(Movie.tmdb_id == movie_id).first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
 
-    # OTT 정보 조회
+    # OTT 정보 조회 (실제 movie_id 사용)
     ott_rows = db.execute(
         text("""
             SELECT
@@ -163,7 +168,7 @@ def get_movie_detail(
             JOIN ott_providers p ON m.provider_id = p.provider_id
             WHERE m.movie_id = :mid
         """),
-        {"mid": movie_id}
+        {"mid": movie.movie_id}  # ← movie 객체의 실제 movie_id 사용
     ).fetchall()
 
     return {
