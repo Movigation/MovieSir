@@ -6,12 +6,7 @@ import MovieCard from './MovieCard';
 import MovieCarousel from '@/components/ui/MovieCarousel';
 
 export default function RecommendedMoviesSection() {
-    const { recommendedMovies } = useMovieStore();
-
-    // 러닝타임 합계 계산 (빈 영화 제외)
-    const totalRuntime = recommendedMovies
-        .filter(movie => !movie.isEmpty && movie.runtime)
-        .reduce((sum, movie) => sum + (movie.runtime || 0), 0);
+    const { trackALabel, trackATotalRuntime } = useMovieStore();
 
     // 분을 "X시간 Y분" 형식으로 변환
     const formatRuntime = (minutes: number): string => {
@@ -27,11 +22,11 @@ export default function RecommendedMoviesSection() {
         <>
             <div className="flex items-center gap-2 mb-3">
                 <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left">
-                    맞춤 추천
+                    {trackALabel || "맞춤 추천"}
                 </h3>
-                {totalRuntime > 0 && (
+                {trackATotalRuntime > 0 && (
                     <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                        ({formatRuntime(totalRuntime)})
+                        ({formatRuntime(trackATotalRuntime)})
                     </span>
                 )}
             </div>
