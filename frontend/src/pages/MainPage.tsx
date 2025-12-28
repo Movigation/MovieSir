@@ -48,10 +48,9 @@ export default function MainPage() {
             return;
         }
 
-        // ✅ Step 1: 온보딩 완료 여부 확인
-        const isCompleted = !!(user as any).onboarding_completed || !!user.profile?.onboarding_completed_at;
-        console.log('  - onboarding_completed:', (user as any).onboarding_completed);
-        console.log('  - onboarding_completed_at:', user.profile?.onboarding_completed_at);
+        // ✅ 온보딩 완료 여부 확인 (백엔드에서 계산해준 onboarding_completed 불리언 값만 신뢰)
+        const isCompleted = !!(user as any).onboarding_completed;
+        console.log('  - onboarding_completed:', isCompleted);
         console.log('  - 완료 여부:', isCompleted);
 
         if (isCompleted) {

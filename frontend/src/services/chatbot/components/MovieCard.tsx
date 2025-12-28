@@ -14,7 +14,6 @@ interface MovieCardProps {
     onCollapse: () => void;
     onClick: () => void;
     onReRecommend?: () => void;
-    onAddToWatched?: () => void;
     showReRecommend?: boolean;
     shouldAnimate?: boolean;
 }
@@ -26,7 +25,6 @@ export default function MovieCard({
     onCollapse,
     onClick,
     onReRecommend,
-    onAddToWatched,
     showReRecommend = false,
     shouldAnimate = false
 }: MovieCardProps) {
@@ -59,7 +57,7 @@ export default function MovieCard({
             }
         } else {
             // 데스크탑: 호버 중 클릭 -> 상세
-            onClick();
+            // onClick(); // 데스크탑: 상세보기 버튼만 클릭 가능
         }
     };
 
@@ -167,13 +165,21 @@ export default function MovieCard({
                     {/* 버튼 영역 */}
                     <div className="flex flex-col gap-1.5 mt-2">
                         {showReRecommend && onReRecommend && (
-                            <button
-                                onClick={handleReRecommend}
-                                className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
-                            >
-                                <RefreshCw size={14} className="inline mr-1" />
-                                재추천
-                            </button>
+                            <div className="relative">
+                                {/* 러닝타임 표시 (우측 상단) */}
+                                {movie.runtime && movie.runtime > 0 && (
+                                    <div className="absolute -top-8 right-0 text-white/80 text-[10px] sm:text-xs font-medium">
+                                        {Math.floor(movie.runtime / 60)}시간 {movie.runtime % 60}분
+                                    </div>
+                                )}
+                                <button
+                                    onClick={handleReRecommend}
+                                    className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
+                                >
+                                    <RefreshCw size={14} className="inline mr-1" />
+                                    재추천
+                                </button>
+                            </div>
                         )}
                         <button
                             onClick={(e) => {
