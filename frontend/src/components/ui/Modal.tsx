@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -8,6 +8,17 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, children }: ModalProps) {
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     return (
@@ -16,12 +27,12 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             onClick={onClose}
         >
             <div
-                className="bg-white dark:bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[calc(100vh-100px)] md:rounded-xl shadow-2xl overflow-hidden relative"
+                className="bg-white dark:bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[calc(100vh-100px)] md:rounded-xl shadow-2xl overflow-y-auto md:overflow-hidden relative"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white z-10 bg-white/80 dark:bg-gray-800/80 rounded-full p-1 backdrop-blur-sm"
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white z-50 bg-white/80 dark:bg-gray-800/80 rounded-full p-1 backdrop-blur-sm"
                 >
                     <X size={24} />
                 </button>

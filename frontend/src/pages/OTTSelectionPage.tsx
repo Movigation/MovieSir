@@ -1,8 +1,8 @@
 // [용도] OTT 플랫폼 선택 페이지 - 영화관 스타일
 // [사용법] /onboarding/ott 라우트에서 사용
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { authAxiosInstance } from "@/api/axiosInstance";
 
@@ -27,9 +27,22 @@ const OTT_PLATFORMS = [
 
 export default function OTTSelectionPage() {
     const navigate = useNavigate();
-    const { provider_ids, toggleOTT } = useOnboardingStore();
+    const location = useLocation();
+    const { provider_ids, toggleOTT, reset } = useOnboardingStore();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // OnboardingCompletePage에서 '다시 선택하기'를 눌러 일로 온 경우 데이터 초기화
+    useEffect(() => {
+        if (location.state?.resetOnEntry) {
+            console.log("🔄 온보딩 재요청 감지: 데이터 초기화");
+            reset();
+            navigate(location.pathname, {
+                replace: true,
+                state: { ...location.state, resetOnEntry: false }
+            });
+        }
+    }, [location.state, reset, navigate, location.pathname]);
 
     const handleNext = async () => {
         setIsLoading(true);

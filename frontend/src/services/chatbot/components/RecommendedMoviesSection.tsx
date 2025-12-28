@@ -4,15 +4,28 @@
 import { useState } from 'react';
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from './MovieCard';
-import MovieCarousel from '@/components/ui/MovieCarousel';
+import MovieCarousel from '@/services/chatbot/components/MovieCarousel';
 
 export default function RecommendedMoviesSection() {
-    const { trackALabel } = useMovieStore();
+    const { recommendedMovies } = useMovieStore();
+
+    // 총 상영시간 계산 및 포맷팅
+    const totalRuntime = recommendedMovies.reduce((total, movie) => {
+        return total + (Number(movie.runtime) || 0);
+    }, 0);
+
+    const hours = Math.floor(totalRuntime / 60);
+    const minutes = totalRuntime % 60;
 
     return (
         <div className="w-full">
-            <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-96">
-                {"취향 맞춤 추천"}
+            <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-[320px] flex items-center gap-2">
+                <span>{"취향 맞춤 추천"}</span>
+                {totalRuntime > 0 && (
+                    <span className="text-sm font-medium text-blue-500 px-2 py-0.5 rounded-full">
+                        총 {hours > 0 ? `${hours}시간 ` : ""}{minutes > 0 || hours === 0 ? `${minutes}분` : ""}
+                    </span>
+                )}
             </h3>
             <RecommendedList />
         </div>
@@ -20,34 +33,14 @@ export default function RecommendedMoviesSection() {
 }
 
 // 맞춤 추천 영화 목록
-const RecommendedList = ({ label }: { label?: string }) => {
-    const { recommendedMovies, removeRecommendedMovie, setDetailMovieId, userId } = useMovieStore();
+const RecommendedList = () => {
+    const { recommendedMovies, removeRecommendedMovie, setDetailMovieId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
-    console.log('🎬 RecommendedMoviesSection - recommendedMovies:', recommendedMovies);
 
-    // localStorage에서 봤어요 목록 가져오기
-    const getWatchedMovies = (): number[] => {
-        if (!userId) return [];
-        const stored = localStorage.getItem(`watchedMovies_${userId}`);
-        return stored ? JSON.parse(stored) : [];
-    };
 
-    // localStorage에 봤어요 목록 저장하기
-    const saveWatchedMovie = (movieId: number) => {
-        if (!userId) return;
-        const watched = getWatchedMovies();
-        if (!watched.includes(movieId)) {
-            watched.push(movieId);
-            localStorage.setItem(`watchedMovies_${userId}`, JSON.stringify(watched));
-            console.log('✅ 봤어요 리스트에 추가:', movieId);
-        }
-    };
 
-    const handleAddToWatched = (movieId: number) => {
-        saveWatchedMovie(movieId);
-    };
 
     // 재추천 핸들러
     const handleReRecommend = (movieId: number) => {
@@ -60,7 +53,7 @@ const RecommendedList = ({ label }: { label?: string }) => {
         }, 600);
     };
 
-    const watchedMovieIds = getWatchedMovies();
+    const watchedMovieIds: number[] = [];
 
     // 전체 영화를 그대로 표시 (빈 카드 채우기 제거)
     const displayMovies = recommendedMovies;
@@ -79,11 +72,12 @@ const RecommendedList = ({ label }: { label?: string }) => {
                     onCollapse={() => setExpandedCardId(null)}
                     onClick={() => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
-                            setDetailMovieId(movie.movie_id ?? movie.id);  // ✅ movie_id 우선, 없으면 id 사용
+                            // 🎬 TMDB ID만 사용하여 상세 정보 조회 (ID 불일치 방지)
+                            const targetId = movie.tmdb_id ?? movie.id;
+                            setDetailMovieId(targetId);
                         }
                     }}
                     onReRecommend={() => handleReRecommend(movie.id)}
-                    onAddToWatched={() => handleAddToWatched(movie.id)}
                     showReRecommend={true}
                     shouldAnimate={movie.id === reRecommendingId}
                 />
