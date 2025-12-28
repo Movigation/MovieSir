@@ -27,6 +27,8 @@ def send_signup_code_email(to_email: str, code: str) -> None:
     smtp_password = os.getenv("SMTP_PASSWORD")
     from_email = os.getenv("SMTP_FROM", smtp_user or "")
 
+    print(f"[DEBUG][SMTP] host={smtp_host}, port={smtp_port}, user={smtp_user}, from={from_email}")
+
     # SMTP 설정이 없으면: 개발 모드 → 콘솔 로그만 남기고 끝
     if not (smtp_host and smtp_user and smtp_password):
         print(f"[DEV][SIGNUP] to={to_email}, code={code}")
@@ -42,7 +44,15 @@ def send_signup_code_email(to_email: str, code: str) -> None:
         f"10분 안에 입력해 주세요."
     )
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
+    try:
+        print(f"[DEBUG][SMTP] Connecting to {smtp_host}:{smtp_port}...")
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            print(f"[DEBUG][SMTP] Logging in as {smtp_user}...")
+            server.login(smtp_user, smtp_password)
+            print(f"[DEBUG][SMTP] Sending message to {to_email}...")
+            server.send_message(msg)
+            print(f"[DEBUG][SMTP] Successfully sent email to {to_email}")
+    except Exception as e:
+        print(f"[ERROR][SMTP] Failed to send email: {str(e)}")
+        raise e

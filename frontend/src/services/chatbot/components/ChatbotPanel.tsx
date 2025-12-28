@@ -280,10 +280,10 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
                 <div
                   className={`
                     rounded-[15px] p-3 border shadow-sm
-                    max-w-[75%] sm:max-w-[80%]
+                    w-full sm:w-auto
                     ${msg.type === 'bot'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700 ml-[70px] sm:ml-[400px] md:ml-[145px] lg:ml-[270px] xl:ml-[400px]'
-                      : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700 sm:ml-[400px] md:ml-[145px] lg:ml-[270px] xl:ml-[400px] sm:mr-4'
+                      : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700 max-w-[75%] sm:max-w-[80%]'
                     }
                   `}
                 >

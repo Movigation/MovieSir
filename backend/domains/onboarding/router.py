@@ -37,15 +37,15 @@ def select_ott(
 # =========================
 @router.post(
     "/onboarding/survey",
+    response_model=OnboardingCompleteResponse,
     summary="온보딩: 영화 포스터 설문 응답 저장",
 )
 def survey(
     payload: OnboardingSurveyRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict:
-    service.save_onboarding_answers(db, current_user, payload)
-    return {"status": "ok"}
+) -> OnboardingCompleteResponse:
+    return service.save_onboarding_answers(db, current_user, payload)
 
 
 @router.get(

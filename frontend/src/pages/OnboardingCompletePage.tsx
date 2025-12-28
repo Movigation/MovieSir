@@ -2,9 +2,10 @@
 // [사용법] /onboarding/complete 라우트에서 사용
 
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
-import { completeOnboarding, skipOnboarding } from "@/api/onboardingApi";
+import { skipOnboarding } from "@/api/onboardingApi";
+import { authAxiosInstance } from "@/api/axiosInstance";
 import ChatbotButton from '@/services/chatbot/components/ChatbotButton';
 import { RotateCcw, Undo2, Check } from 'lucide-react';
 
@@ -21,13 +22,12 @@ const OTT_PLATFORMS_MAP: Record<number, { name: string; logo: string; bg: string
 
 export default function OnboardingCompletePage() {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
     const { provider_ids, movie_ids, reset, movies } = useOnboardingStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
-    // 온보딩 재조사 팝업에서 왔는지 확인
-    const isFromReminderModal = searchParams.get('fromReminder') === 'true';
+    // 온보딩 재조사 팝업에서 왔는지 확인 (sessionStorage 기반)
+    const isFromReminderModal = sessionStorage.getItem('onboarding_from_reminder') === 'true';
 
     // 선택한 영화 데이터는 store(movies)에서 직접 사용하므로 별도 로딩 필요 없음
 
@@ -36,55 +36,39 @@ export default function OnboardingCompletePage() {
         setError("");
 
         try {
-            console.log("=== 온보딩 데이터 전송 ===");
-            console.log("ottList:", provider_ids);
-            console.log("likedMovieIds:", movie_ids);
+            // 1. 서버에 최종 완료 요청
+            const response = await authAxiosInstance.post("/onboarding/complete");
+            console.log("✅ 서버 온보딩 완료 처리 성공");
 
-            let response;
-
-            // movie_ids가 비어있으면 건너뛰기로 처리
-            if (movie_ids.length === 0) {
-                console.log("영화 선택 없음 - skipOnboarding 호출");
-                response = await skipOnboarding();
-            } else {
-                console.log("온보딩 데이터 전송:");
-                console.log("  - provider_ids:", provider_ids);
-                console.log("  - movie_ids:", movie_ids);
-
-                // 백엔드에 온보딩 완료 요청
-                response = await completeOnboarding();
-            }
-
-            console.log("=== API 응답 ===");
-            console.log("응답:", response);
-
-            // ✅ localStorage의 user 데이터 업데이트 (온보딩 완료 상태 반영)
+            // 2. localStorage의 user 데이터 업데이트 (온보딩 완료 상태 반영)
             const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
             if (userStr) {
                 try {
                     const userData = JSON.parse(userStr);
-                    userData.onboarding_completed = true;
+                    userData.onboarding_completed = response.data.onboarding_completed;
                     const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
                     storage.setItem("user", JSON.stringify(userData));
-                    console.log("✅ 온보딩 완료 상태 저장됨:", userData);
+                    console.log("✅ 로컬 온보딩 완료 상태 저장 완료:", userData);
+
+                    // AuthContext 등에 동기화 알림
+                    window.dispatchEvent(new Event('storage'));
                 } catch (e) {
                     console.error("user 데이터 업데이트 실패:", e);
                 }
             }
 
-            // 온보딩 스토어 초기화
+            // 3. sessionStorage 플래그 정리 (리마인더 진입 표시 제거)
+            sessionStorage.removeItem('onboarding_from_reminder');
+
+            // 4. 온보딩 스토어 초기화
             reset();
 
-            // localStorage에서 온보딩 데이터 완전 삭제
-            localStorage.removeItem('onboarding-storage');
-            console.log('✅ localStorage 온보딩 데이터 삭제 완료');
-
-            // 메인 페이지로 이동
+            // 5. 메인 페이지로 이동
             navigate("/");
 
         } catch (err: any) {
-            console.error("온보딩 완료 오류:", err);
-            setError(err.message || "온보딩 완료 중 오류가 발생했습니다");
+            console.error("온보딩 완료 처리 중 오류:", err);
+            setError(err.response?.data?.message || "온보딩 완료 중 오류가 발생했습니다");
         } finally {
             setIsSubmitting(false);
         }
@@ -108,36 +92,37 @@ export default function OnboardingCompletePage() {
 
                 {/* 요약 정보 */}
                 <div className="space-y-6 mb-10">
-                    {/* OTT 플랫폼 - 로고로 표시 */}
-                    <div className="border border-gray-800 rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                            선택한 OTT 플랫폼
-                        </h2>
-                        {provider_ids.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {provider_ids.map((provider_id) => {
-                                    const platform = OTT_PLATFORMS_MAP[provider_id];
-                                    if (!platform) return null;
+                    {/* OTT 플랫폼 - 로고로 표시 (리마인더 진입 시 숨김) */}
+                    {!isFromReminderModal && (
+                        <div className="border border-gray-800 rounded-2xl p-6">
+                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                선택한 OTT 플랫폼
+                            </h2>
+                            {provider_ids.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {provider_ids.map((provider_id) => {
+                                        const platform = OTT_PLATFORMS_MAP[provider_id];
+                                        if (!platform) return null;
 
-                                    return (
-                                        <div
-                                            key={provider_id}
-                                            className={`${platform.bg} bg-white rounded-full w-16 h-16 flex items-center justify-center border border-gray-700 p-3`}
-                                        >
-                                            <img
-                                                src={platform.logo}
-                                                alt={platform.name}
-                                                className="max-w-full max-h-full w-auto h-auto object-contain opacity-90"
-                                            />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <p className="text-gray-400">선택한 플랫폼이 없습니다</p>
-                        )}
-                    </div>
-
+                                        return (
+                                            <div
+                                                key={provider_id}
+                                                className={`${platform.bg} bg-white rounded-full w-16 h-16 flex items-center justify-center border border-gray-700 p-3`}
+                                            >
+                                                <img
+                                                    src={platform.logo}
+                                                    alt={platform.name}
+                                                    className="max-w-full max-h-full w-auto h-auto object-contain opacity-90"
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="text-gray-400">선택한 플랫폼이 없습니다</p>
+                            )}
+                        </div>
+                    )}
                     {/* 좋아요한 영화 - 포스터로 표시 */}
                     <div className="border border-gray-800 rounded-2xl p-6">
                         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
@@ -192,12 +177,33 @@ export default function OnboardingCompletePage() {
                     {/* 재조사 팝업에서 온 경우 '다시 선택하기' 버튼 숨김 */}
                     {!isFromReminderModal && (
                         <button
-                            onClick={() => {
-                                // 기존 조사 값 초기화
-                                reset();
-                                console.log("✅ 온보딩 데이터 초기화 완료");
-                                // OTT 선택 페이지부터 다시 시작
-                                navigate("/onboarding/ott");
+                            onClick={async () => {
+                                try {
+                                    // 1. 백엔드 상태를 미완료(시간 NULL)로 초기화
+                                    await skipOnboarding();
+
+                                    // 2. 로컬 유저 상태 업데이트 (미완료로)
+                                    const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+                                    if (userStr) {
+                                        try {
+                                            const userData = JSON.parse(userStr);
+                                            userData.onboarding_completed = false;
+                                            const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+                                            storage.setItem("user", JSON.stringify(userData));
+                                            window.dispatchEvent(new Event('storage'));
+                                        } catch (e) {
+                                            console.error("user 데이터 업데이트 실패:", e);
+                                        }
+                                    }
+
+                                    console.log("✅ 온보딩 초기화 완료. OTT 선택으로 이동.");
+
+                                    // 3. OTT 선택 페이지로 리셋 플래그와 함께 이동
+                                    navigate("/onboarding/ott", { state: { resetOnEntry: true } });
+                                } catch (e) {
+                                    console.error("초기화 실패:", e);
+                                    navigate("/onboarding/ott", { state: { resetOnEntry: true } });
+                                }
                             }}
                             className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
                         >
