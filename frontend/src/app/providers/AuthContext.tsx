@@ -58,6 +58,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         loadUser();
     }, []);
 
+    // 401 에러 시 axios interceptor에서 발행하는 로그아웃 이벤트 리스너
+    useEffect(() => {
+        const handleAuthLogout = () => {
+            console.log('🔔 auth:logout 이벤트 받음 - AuthContext에서 로그아웃 처리');
+            setUser(null);
+            localStorage.removeItem('user');
+            sessionStorage.removeItem('user');
+            setMovieStoreUserId(null);
+        };
+
+        window.addEventListener('auth:logout', handleAuthLogout);
+        return () => window.removeEventListener('auth:logout', handleAuthLogout);
+    }, [setMovieStoreUserId]);
+
     // user 상태가 변경될 때마다 MovieStore에 userId 동기화
     useEffect(() => {
         if (user) {

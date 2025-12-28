@@ -1,7 +1,7 @@
 // [용도] 애플리케이션 헤더 컴포넌트
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { HelpCircle, LogIn, User, LogOut, Moon, Sun, Home } from 'lucide-react';
 // import Button from "@/components/ui/Button";
@@ -19,6 +19,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
   const [isLoginOpen, setLoginOpen] = useState(false);
   const [isSignupOpen, setSignupOpen] = useState(false);
   const [isForgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   // AuthContext에서 인증 상태 가져오기
   const { isAuthenticated, logout } = useAuth();
@@ -41,12 +42,28 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
     }
   };
 
+  // 모바일 하단 헤더에서 스크롤 방지 (passive: false 옵션)
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // passive: false로 명시하여 preventDefault 허용
+    header.addEventListener('wheel', handleWheel, { passive: false });
+    return () => header.removeEventListener('wheel', handleWheel);
+  }, []);
+
   return (
     <header
+      ref={headerRef}
       /* [디자인] 헤더 컨테이너 */
       /* 모바일: 하단 고정 네비게이션 바 (모든 버튼 균등 배치) */
       /* 데스크톱: 상단 헤더 */
-      className="w-full px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav"
+      className="w-full px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav select-none overscroll-none"
     >
       {/* 데스크톱 전용 로고 */}
       <div className="hidden sm:block">
