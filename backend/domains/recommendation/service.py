@@ -10,7 +10,7 @@ from backend.domains.recommendation.models import MovieLog, MovieClick
 from . import schema
 
 
-def _get_user_ott_names(db: Session, user_id: str) -> Optional[List[str]]:
+def get_user_ott_names(db: Session, user_id: str) -> Optional[List[str]]:
     """사용자가 선택한 OTT provider_name 목록 조회"""
     result = db.execute(
         text("""
@@ -34,7 +34,7 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     2. DB -> 영화 상세 정보 조회
     """
     # 사용자 OTT 선호 조회
-    user_otts = _get_user_ott_names(db, user_id)
+    user_otts = get_user_ott_names(db, user_id)
     print(f"[DEBUG] User OTT preferences: {user_otts}")
 
     # 1. AI 모델 예측 (user_id를 int로 변환하거나 매핑 필요할 수 있음)

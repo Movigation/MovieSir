@@ -67,9 +67,6 @@ def request_signup(
     redis = get_redis_client()
     key = _redis_key(payload.email)
 
-    print(f"[DEBUG] Saving to Redis key: '{key}'")
-    print(f"[DEBUG] Code to save: '{code}'")
-
     redis.hset(
         key,
         mapping={  # type: ignore[arg-type]
@@ -80,10 +77,6 @@ def request_signup(
         },
     )
     redis.expire(key, SIGNUP_CODE_TTL)
-
-    # 확인
-    saved_data = redis.hgetall(key)
-    print(f"[DEBUG] Saved data in Redis: {saved_data}")
 
     # 메일 발송 (SMTP 환경변수 없으면 콘솔에만 출력)
     send_signup_code_email(payload.email, code)
