@@ -3,17 +3,17 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { authAxiosInstance } from '@/api/axiosInstance';
+// import { authAxiosInstance } from '@/api/axiosInstance'; 주석 해제 요망
 
 // OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
-    { provider_id: 8, name: "Netflix", logo: "/logos/NETFLEX_Logo.svg" },
-    { provider_id: 97, name: "Watcha", logo: "/logos/WATCHA_Logo_Main.svg" },
-    { provider_id: 337, name: "Disney+", logo: "/logos/Disney+_logo.svg" },
-    { provider_id: 356, name: "Wavve", logo: "/logos/WAVVE_Logo.svg" },
-    { provider_id: 1883, name: "TVING", logo: "/logos/TVING_Logo.svg" },
-    { provider_id: 350, name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg" },
-    { provider_id: 119, name: "Prime Video", logo: "/logos/Amazon_Prime_Logo.svg" }
+    { provider_id: 8, name: "Netflix", logo: "/logos/NETFLEX_Logo.svg", logoSize: "h-12" },
+    { provider_id: 97, name: "Watcha", logo: "/logos/WATCHA_Logo_Main.svg", logoSize: "h-5" },
+    { provider_id: 337, name: "Disney+", logo: "/logos/Disney+_logo.svg", logoSize: "h-12" },
+    { provider_id: 356, name: "Wavve", logo: "/logos/WAVVE_Logo.svg", logoSize: "h-4" },
+    { provider_id: 1883, name: "TVING", logo: "/logos/TVING_Logo.svg", logoSize: "h-4" },
+    { provider_id: 350, name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg", logoSize: "h-4" },
+    // { provider_id: 119, name: "Prime Video", logo: "/logos/Amazon_Prime_Logo.svg", logoSize: "h-4" }
 ];
 
 type OTTSelectionProps = {
@@ -33,16 +33,14 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const loadUserOTT = async () => {
         setIsLoading(true);
         try {
-            // 백엔드에서 사용자 OTT 목록 가져오기
-            // TODO: 실제 API 엔드포인트가 있으면 사용
+            // TODO: 백엔드 API 연동 시 주석 해제
             // const response = await authAxiosInstance.get("/user/ott");
             // setSelectedProviderIds(response.data.provider_ids);
 
-            // 임시: localStorage에서 로드 (개발 중)
-            const saved = localStorage.getItem('userOttProviders');
-            if (saved) {
-                setSelectedProviderIds(JSON.parse(saved));
-            }
+            // 임시 데이터: 개발용 (Netflix, Disney+, TVING 선택된 상태)
+            const mockSelectedProviders = [8, 337, 1883];
+            setSelectedProviderIds(mockSelectedProviders);
+            console.log('🎬 임시 OTT 데이터 로드:', mockSelectedProviders);
         } catch (error) {
             console.error('OTT 불러오기 실패:', error);
         } finally {
@@ -61,15 +59,15 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // POST /onboarding/ott 재사용 (Idempotent 패턴)
-            await authAxiosInstance.post("/onboarding/ott", {
-                provider_ids: selectedProviderIds
-            });
+            // TODO: 백엔드 API 연동 시 주석 해제
+            // await authAxiosInstance.post("/onboarding/ott", {
+            //     provider_ids: selectedProviderIds
+            // });
 
-            // 로컬 스토리지에도 저장 (캐싱)
-            localStorage.setItem('userOttProviders', JSON.stringify(selectedProviderIds));
+            // 임시: 로컬 상태만 업데이트
+            console.log('💾 OTT 저장 (임시):', selectedProviderIds);
 
-            alert('OTT 선택이 저장되었습니다!');
+            alert('OTT 선택이 저장되었습니다! (개발 모드)');
             onBack();
         } catch (error: any) {
             console.error('OTT 저장 실패:', error);
@@ -129,7 +127,9 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                                     onChange={() => handleToggleOTT(platform.provider_id)}
                                     className="w-5 h-5 rounded border-gray-400 text-blue-500 focus:ring-blue-500"
                                 />
-                                <platform.logo />
+                                <div className="w-12 h-8 flex items-center justify-center">
+                                    <img src={platform.logo} alt={platform.name} className={`${platform.logoSize} w-auto object-contain`} />
+                                </div>
                                 <span className="text-white font-medium">{platform.name}</span>
                             </label>
                         ))}
@@ -145,7 +145,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                                     key={platform.provider_id}
                                     className="px-3 py-1.5 bg-blue-500 text-white rounded-full text-sm flex items-center gap-2"
                                 >
-                                    <platform.logo />
+                                    <img src={platform.logo} alt={platform.name} className="h-3 w-auto object-contain" />
                                     {platform.name}
                                 </span>
                             ))}

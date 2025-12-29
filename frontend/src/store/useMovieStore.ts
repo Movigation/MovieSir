@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { type Movie, type RecommendedMovieV2 } from '@/api/movieApi.type';
+import { type Movie } from '@/api/movieApi.type';
 import { postRecommendationsV2, postReRecommendSingle, convertV2MovieToMovie } from '@/api/movieApi';
 
 
@@ -108,11 +108,10 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
     // [함수] 백엔드 API로 추천 영화 로드 (V2 API)
     loadRecommended: async () => {
-        const { filters, excludedIds } = get();
+        const { filters } = get();
 
         console.log('=== loadRecommended V2 호출 ===');
         console.log('filters:', filters);
-        console.log('excludedIds:', excludedIds.length, '개');
 
         set({ isLoading: true, error: null });
         try {
@@ -120,8 +119,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             const result = await postRecommendationsV2({
                 time: filters.time,
                 genres: filters.genres,
-                excludeAdult: filters.excludeAdult,
-                excludedIds: excludedIds  // 이전 추천 영화 제외
+                excludeAdult: filters.excludeAdult
             });
 
             console.log('V2 API 응답:', result);
@@ -130,19 +128,15 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             const trackAMovies = result.track_a.movies.map(convertV2MovieToMovie);
             const trackBMovies = result.track_b.movies.map(convertV2MovieToMovie);
 
-            // 새로 추천된 영화 ID를 기존 excludedIds에 추가 (중복 제거, 최대 200개)
-            const newMovieIds = [
+            // 모든 영화 ID를 excludedIds에 추가 (재추천 시 제외용)
+            const allMovieIds = [
                 ...result.track_a.movies.map(m => m.tmdb_id),
                 ...result.track_b.movies.map(m => m.tmdb_id)
             ];
-            const allExcludedIds = [...new Set([...excludedIds, ...newMovieIds])];
-            // 최대 200개로 제한 (오래된 것부터 삭제)
-            const updatedExcludedIds = allExcludedIds.slice(-200);
 
             console.log('📦 V2 API 응답 데이터:');
             console.log('  - Track A:', result.track_a.label, '-', trackAMovies.length, '편,', result.track_a.total_runtime, '분');
             console.log('  - Track B:', result.track_b.label, '-', trackBMovies.length, '편,', result.track_b.total_runtime, '분');
-            console.log('  - excludedIds:', excludedIds.length, '→', updatedExcludedIds.length, '개');
 
             set({
                 // Track A
@@ -155,8 +149,8 @@ export const useMovieStore = create<MovieState>((set, get) => ({
                 trackBTotalRuntime: result.track_b.total_runtime,
                 trackBLabel: result.track_b.label,
 
-                // 재추천용 (기존 + 새로운 영화 ID 누적)
-                excludedIds: updatedExcludedIds,
+                // 재추천용
+                excludedIds: allMovieIds,
 
                 // 하위 호환 (기존 UI 지원)
                 recommendedMovies: trackAMovies,
@@ -166,9 +160,31 @@ export const useMovieStore = create<MovieState>((set, get) => ({
                 error: null
             });
             console.log('✅ V2 추천 영화 로드 완료');
-        } catch (error) {
+        } catch (error: any) {
             console.error("V2 영화 추천 로드 중 오류:", error);
-            set({ error: "영화 추천을 가져오는 중 오류가 발생했습니다", isLoading: false });
+
+            // 에러 타입별 메시지 설정
+            let errorMessage = "영화 추천을 가져오는 중 오류가 발생했습니다";
+
+            if (error.code === 'ERR_NETWORK') {
+                errorMessage = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
+            } else if (error.response?.status === 401) {
+                errorMessage = "로그인이 필요합니다. 다시 로그인해주세요.";
+            } else if (error.response?.status === 500) {
+                errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+            }
+
+            set({
+                error: errorMessage,
+                isLoading: false,
+                // 에러 발생 시 빈 배열로 설정하여 무한 로딩 방지
+                trackAMovies: [],
+                trackBMovies: [],
+                recommendedMovies: [],
+                popularMovies: []
+            });
+
+            // 에러를 다시 throw하지 않음 (무한 재시도 방지)
         }
     },
 
@@ -178,14 +194,15 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         console.log('🔄 Track A 재추천 시작 ========================');
         console.log('  제거할 영화 ID:', movieId);
 
-        // 제거할 영화 찾기
-        const movieToRemove = state.trackAMovies.find(m => m.id === movieId);
-        if (!movieToRemove) {
+        // 제거할 영화 찾기 및 인덱스 저장
+        const movieIndex = state.trackAMovies.findIndex(m => m.id === movieId);
+        const movieToRemove = state.trackAMovies[movieIndex];
+        if (!movieToRemove || movieIndex === -1) {
             console.log('⚠️ 제거할 영화를 찾을 수 없습니다');
             return;
         }
 
-        console.log('  제거할 영화:', movieToRemove.title, `(${movieToRemove.runtime}분)`);
+        console.log('  제거할 영화:', movieToRemove.title, `(${movieToRemove.runtime}분)`, '위치:', movieIndex);
 
         // 현재 영화에서 제거
         const newTrackAMovies = state.trackAMovies.filter(m => m.id !== movieId);
@@ -204,13 +221,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         console.log('  남은 영화 러닝타임:', remainingRuntime, '분');
         console.log('  재추천 target_runtime:', targetRuntime, '분');
 
-        set({
-            trackAMovies: newTrackAMovies,
-            recommendedMovies: newTrackAMovies,
-            excludedIds: newExcludedIds
-        });
-
-        // V2 API로 재추천 요청
+        // V2 API로 재추천 요청 (먼저 API 호출)
         try {
             const response = await postReRecommendSingle({
                 target_runtime: targetRuntime,
@@ -222,14 +233,23 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
             if (response.success && response.movie) {
                 const newMovie = convertV2MovieToMovie(response.movie);
-                console.log('✅ Track A 재추천 성공:', newMovie.title, `(${newMovie.runtime}분)`);
+                console.log('✅ Track A 재추천 성공:', newMovie.title, `(${newMovie.runtime}분)`, '삽입 위치:', movieIndex);
 
-                set((s) => ({
-                    trackAMovies: [...s.trackAMovies, newMovie],
-                    recommendedMovies: [...s.trackAMovies, newMovie],
-                    trackATotalRuntime: remainingRuntime + (newMovie.runtime || 0),
-                    excludedIds: [...s.excludedIds, newMovie.id]
-                }));
+                // 카드가 당겨지는 효과 방지: 제거 전에 300ms 대기
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // 제거와 삽입을 한 번에 처리
+                set((s) => {
+                    const updatedMovies = s.trackAMovies.filter(m => m.id !== movieId);
+                    updatedMovies.splice(movieIndex, 0, newMovie);
+
+                    return {
+                        trackAMovies: updatedMovies,
+                        recommendedMovies: updatedMovies,
+                        trackATotalRuntime: remainingRuntime + (newMovie.runtime || 0),
+                        excludedIds: [...newExcludedIds, newMovie.id]
+                    };
+                });
             } else {
                 console.log('⚠️ Track A 재추천 실패:', response.message);
             }
@@ -246,14 +266,15 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         console.log('🎬 Track B 재추천 시작 ========================');
         console.log('  제거할 영화 ID:', movieId);
 
-        // 제거할 영화 찾기
-        const movieToRemove = state.trackBMovies.find(m => m.id === movieId);
-        if (!movieToRemove) {
+        // 제거할 영화 찾기 및 인덱스 저장
+        const movieIndex = state.trackBMovies.findIndex(m => m.id === movieId);
+        const movieToRemove = state.trackBMovies[movieIndex];
+        if (!movieToRemove || movieIndex === -1) {
             console.log('⚠️ 제거할 영화를 찾을 수 없습니다');
             return;
         }
 
-        console.log('  제거할 영화:', movieToRemove.title, `(${movieToRemove.runtime}분)`);
+        console.log('  제거할 영화:', movieToRemove.title, `(${movieToRemove.runtime}분)`, '위치:', movieIndex);
 
         // 현재 영화에서 제거
         const newTrackBMovies = state.trackBMovies.filter(m => m.id !== movieId);
@@ -272,13 +293,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         console.log('  남은 영화 러닝타임:', remainingRuntime, '분');
         console.log('  재추천 target_runtime:', targetRuntime, '분');
 
-        set({
-            trackBMovies: newTrackBMovies,
-            popularMovies: newTrackBMovies,
-            excludedIds: newExcludedIds
-        });
-
-        // V2 API로 재추천 요청
+        // V2 API로 재추천 요청 (먼저 API 호출)
         try {
             const response = await postReRecommendSingle({
                 target_runtime: targetRuntime,
@@ -290,14 +305,23 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
             if (response.success && response.movie) {
                 const newMovie = convertV2MovieToMovie(response.movie);
-                console.log('✅ Track B 재추천 성공:', newMovie.title, `(${newMovie.runtime}분)`);
+                console.log('✅ Track B 재추천 성공:', newMovie.title, `(${newMovie.runtime}분)`, '삽입 위치:', movieIndex);
 
-                set((s) => ({
-                    trackBMovies: [...s.trackBMovies, newMovie],
-                    popularMovies: [...s.trackBMovies, newMovie],
-                    trackBTotalRuntime: remainingRuntime + (newMovie.runtime || 0),
-                    excludedIds: [...s.excludedIds, newMovie.id]
-                }));
+                // 카드가 당겨지는 효과 방지: 제거 전에 300ms 대기
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // 제거와 삽입을 한 번에 처리
+                set((s) => {
+                    const updatedMovies = s.trackBMovies.filter(m => m.id !== movieId);
+                    updatedMovies.splice(movieIndex, 0, newMovie);
+
+                    return {
+                        trackBMovies: updatedMovies,
+                        popularMovies: updatedMovies,
+                        trackBTotalRuntime: remainingRuntime + (newMovie.runtime || 0),
+                        excludedIds: [...newExcludedIds, newMovie.id]
+                    };
+                });
             } else {
                 console.log('⚠️ Track B 재추천 실패:', response.message);
             }

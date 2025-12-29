@@ -84,66 +84,77 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
     }
 };
 
-// [용도] 백엔드 API를 통한 영화 추천
-// [사용법] const result = await postRecommendations({ time: "02:30", genres: ["SF", "드라마"], userId: 1, excludeAdult: true });
-export const postRecommendations = async (filters: {
+
+// ============================================================
+// [V2 API] 시간 맞춤 조합 추천 (V1 제거됨 - V2만 사용)
+// ============================================================
+
+// [용도] 영화 추천 v2 - 시간 맞춤 조합 반환
+// [사용법] const result = await postRecommendationsV2({ time: "02:30", genres: ["SF"], excludeAdult: true });
+export const postRecommendationsV2 = async (filters: {
     time: string;      // "HH:MM" 형식
-    genres: string[];  // 장르 이름 배열 ["SF", "드라마"]
-    userId: number;
-    excludeAdult?: boolean;  // 성인 콘텐츠 제외 여부 (기본값: false)
-}): Promise<MovieRecommendationResult> => {
+    genres: string[];  // 장르 이름 배열
+    excludeAdult?: boolean;
+}): Promise<RecommendResponseV2> => {
+    console.log('🚀 [V2 API] postRecommendationsV2 호출!', filters);
+
     try {
-        // 1. 시간 변환: "02:30" -> 150분
+        // 시간 변환: "02:30" -> 150분
         const [hours, minutes] = filters.time.split(':').map(Number);
         const runtimeLimit = hours * 60 + minutes;
 
-        // 2. 장르: 문자열 배열 그대로 사용 (ID 변환 불필요)
-        const genreIds = filters.genres
-            .map(genreName => genreName)
-            .filter(id => id !== undefined);  // undefined 제외
-
-        // 3. 백엔드 API 호출
-        const response = await axiosInstance.post<BackendRecommendResponse>("/api/recommend", {
-            runtime_limit: runtimeLimit,  // ✅ 수정 1/5: runtime → runtime_limit
-            genres: genreIds,  // ✅ 수정 2/5: 문자열 배열 그대로
-            exclude_adult: filters.excludeAdult || false  // ✅ 수정 3/5: include_adult → exclude_adult (반대 아님!)
+        const response = await axiosInstance.post<RecommendResponseV2>("/api/v2/recommend", {
+            runtime_limit: runtimeLimit,
+            genres: filters.genres,
+            exclude_adult: filters.excludeAdult ?? true
         });
 
-        // 4. 백엔드 응답을 프론트엔드 Movie 타입으로 변환
-        const backendMovies = response.data.results;  // ✅ 수정 4/5: recommendations → results
+        console.log('[V2 API] 추천 결과:', {
+            track_a: response.data.track_a.movies.length + '편',
+            track_b: response.data.track_b.movies.length + '편',
+            elapsed_time: response.data.elapsed_time
+        });
 
-        // Movie 타입으로 변환하는 헬퍼 함수
-        const convertToMovie = (backendMovie: any): Movie => ({
-            id: backendMovie.movie_id,  // ✅ 수정 4/5: movie_id 매핑
-            title: backendMovie.title,
-            genres: backendMovie.genres,
-            rating: backendMovie.vote_average,
-            poster: `https://image.tmdb.org/t/p/w500${backendMovie.poster_path}`,  // ✅ 수정 5/5: URL 조합
-            description: backendMovie.overview,
-            runtime: backendMovie.runtime,
-            popular: false,
-            watched: false
-        })
-
-        // 5. algorithmic과 popular로 분리
-        // 백엔드가 AI 추천 순서대로 반환하므로:
-        // - 전체를 algorithmic으로 사용
-        // - popular는 별도 API 필요 (일단 빈 배열)
-        const allMovies = backendMovies.map(convertToMovie);
-
-        console.log('전체 추천 영화 개수:', allMovies.length);
-
-        // 전체 영화를 절반씩 나누어 algorithmic과 popular로 분리
-        const halfLength = Math.ceil(allMovies.length / 2);
-        return {
-            algorithmic: allMovies.slice(0, halfLength),  // 전반부: 맞춤 추천
-            popular: allMovies.slice(halfLength)          // 후반부: 인기 영화
-        };
+        return response.data;
     } catch (error: any) {
-        console.error("영화 추천 API 호출 중 오류:", error);
+        console.error("V2 영화 추천 API 호출 중 오류:", error);
         throw error;
     }
 };
+
+// [용도] 개별 영화 재추천 - 단일 영화 교체
+// [사용법] const result = await postReRecommendSingle({ target_runtime: 120, excluded_ids: [550, 27205], track: "a" });
+export const postReRecommendSingle = async (request: ReRecommendRequest): Promise<ReRecommendResponse> => {
+    try {
+        const response = await axiosInstance.post<ReRecommendResponse>("/api/v2/recommend/single", request);
+
+        if (response.data.success && response.data.movie) {
+            console.log('[V2 API] 재추천 성공:', response.data.movie.title);
+        } else {
+            console.log('[V2 API] 재추천 실패:', response.data.message);
+        }
+
+        return response.data;
+    } catch (error: any) {
+        console.error("V2 재추천 API 호출 중 오류:", error);
+        throw error;
+    }
+};
+
+// [용도] RecommendedMovieV2를 프론트엔드 Movie 타입으로 변환
+export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
+    id: v2Movie.tmdb_id,
+    tmdb_id: v2Movie.tmdb_id,  // ✅ tmdb_id 보존 (영화 상세 API에서 사용)
+    title: v2Movie.title,
+    genres: v2Movie.genres,
+    year: v2Movie.release_date ? new Date(v2Movie.release_date).getFullYear() : undefined,
+    rating: v2Movie.vote_average,
+    poster: v2Movie.poster_path ? `https://image.tmdb.org/t/p/w500${v2Movie.poster_path}` : '',
+    description: v2Movie.overview,
+    runtime: v2Movie.runtime,
+    popular: false,
+    watched: false
+});
 
 
 // ============================================================
