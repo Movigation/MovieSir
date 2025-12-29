@@ -48,10 +48,9 @@ export default function MainPage() {
             return;
         }
 
-        // ✅ Step 1: 온보딩 완료 여부 확인
-        const isCompleted = !!(user as any).onboarding_completed || !!user.profile?.onboarding_completed_at;
-        console.log('  - onboarding_completed:', (user as any).onboarding_completed);
-        console.log('  - onboarding_completed_at:', user.profile?.onboarding_completed_at);
+        // ✅ 온보딩 완료 여부 확인 (백엔드에서 계산해준 onboarding_completed 불리언 값만 신뢰)
+        const isCompleted = !!(user as any).onboarding_completed;
+        console.log('  - onboarding_completed:', isCompleted);
         console.log('  - 완료 여부:', isCompleted);
 
         if (isCompleted) {
@@ -77,15 +76,16 @@ export default function MainPage() {
                 console.log(`❌ 24시간 이내 (${hoursRemaining}시간 후 다시 표시)`);
                 return;
             }
+        } else {
+            // ✅ 첫 진입 시 (localStorage 데이터 없음): 타이머만 시작하고 모달 안 띄움
+            console.log('⏰ 첫 진입 감지: 24시간 타이머 시작 (모달 표시 안 함)');
+            localStorage.setItem(lastShownKey, now.toString());
+            return;
         }
 
-        // ✅ Step 3: 모달 표시
+        // ✅ Step 3: 모달 표시 (타이머는 닫을 때 다시 갱신됨)
         console.log('🎉 모달 표시! (온보딩 미완료 + 24시간 경과)');
         setShowOnboardingReminder(true);
-
-        // localStorage에 현재 시간 저장
-        localStorage.setItem(lastShownKey, now.toString());
-        console.log('  - localStorage 업데이트:', new Date(now).toLocaleString());
     }, [isAuthenticated, user]);
 
     // 로그아웃 시 챗봇 자동 닫기
@@ -120,17 +120,18 @@ export default function MainPage() {
 
     const handleCloseOnboardingReminder = () => {
         setShowOnboardingReminder(false);
-    };
 
-    const handlePermanentDismissOnboardingReminder = () => {
-        // 온보딩을 완료하면 자동으로 리마인더가 표시되지 않음
-        // 여기서는 단순히 모달만 닫음
-        setShowOnboardingReminder(false);
-        console.log('ℹ️ 온보딩을 완료하시면 리마인더가 표시되지 않습니다');
+        // ✨ 모달을 닫을 때 24시간 타이머 시작
+        const userId = user?.id;
+        if (userId) {
+            const lastShownKey = `onboarding_reminder_last_shown_user_${userId}`;
+            localStorage.setItem(lastShownKey, Date.now().toString());
+            console.log('⏰ 24시간 타이머 시작:', new Date().toLocaleString());
+        }
     };
 
     return (
-        <div className="flex flex-col items-center max-w-screen-xl mx-auto px-8 py-4">
+        <div className="flex flex-col items-center max-w-screen-lg mx-auto px-8 py-4">
             {/* 히어로 타이틀 */}
             {/* [위치 조정 가이드]
                 - mt-6: 타이틀을 아래로 24px 이동 (이 값을 바꾸면 타이틀 위치 조정)
@@ -230,7 +231,6 @@ export default function MainPage() {
             <OnboardingReminderModal
                 visible={showOnboardingReminder}
                 onClose={handleCloseOnboardingReminder}
-                onPermanentDismiss={handlePermanentDismissOnboardingReminder}
             />
 
             {/* 영화 상세 모달 - ChatbotPanel 외부에서 렌더링하여 z-index 문제 해결 */}

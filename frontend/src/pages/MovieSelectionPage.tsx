@@ -1,8 +1,5 @@
-// [용도] 온보딩 영화 선택 페이지 (그리드 선택 방식)
-// [사용법] /onboarding/movies 라우트에서 사용
-
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import type { OnboardingMovie } from "@/api/onboardingApi.type";
@@ -11,7 +8,7 @@ import axiosInstance from "@/api/axiosInstance";
 
 export default function MovieSelectionPage() {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+
     const {
         addLikedMovie,
         removeLikedMovie,
@@ -21,14 +18,14 @@ export default function MovieSelectionPage() {
         movies: storedMovies, // localStorage에서 가져온 영화 목록
     } = useOnboardingStore();
 
-    // 온보딩 재조사 팝업에서 왔는지 확인
-    const isFromReminderModal = searchParams.get('fromReminder') === 'true';
-
     const [movies, setMovies] = useState<OnboardingMovie[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false); // 제출 중 상태
     const [error, setError] = useState("");
     const [isSkipModalOpen, setIsSkipModalOpen] = useState(false); // 건너뛰기 확인 모달
+
+    // 리마인더에서 진입했는지 확인 (건너뛰기 버튼 숨김 처리)
+    const isFromReminder = sessionStorage.getItem('onboarding_from_reminder') === 'true';
 
     // 영화 데이터 로드
     useEffect(() => {
@@ -108,11 +105,8 @@ export default function MovieSelectionPage() {
 
             console.log("✅ 취향 영화 저장 성공:", movie_ids);
 
-            // 성공 시 다음 페이지로 이동 (fromReminder 파라미터 전달)
-            const nextUrl = isFromReminderModal
-                ? "/onboarding/complete?fromReminder=true"
-                : "/onboarding/complete";
-            navigate(nextUrl);
+            // 성공 시 다음 페이지로 이동
+            navigate("/onboarding/complete");
         } catch (err: any) {
             console.error("❌ 취향 영화 저장 실패:", err);
 
@@ -140,24 +134,17 @@ export default function MovieSelectionPage() {
             // 1. 영화 선택 데이터 초기화 (건너뛰기이므로)
             clearMovieSelection();
 
-            // 2. POST /onboarding/skip API 호출 (온보딩 완료 처리)
-            // skip 엔드포인트가 영화 선택 없이 온보딩 완료 처리
+            // 2. POST /onboarding/skip API 호출
             await skipOnboarding();
             console.log("✅ 온보딩 스킵 완료");
 
-            // 온보딩 완료 페이지로 이동 (fromReminder 파라미터 전달)
-            const nextUrl = isFromReminderModal
-                ? "/onboarding/complete?fromReminder=true"
-                : "/onboarding/complete";
-            navigate(nextUrl);
+            // 3. 완료 페이지로 이동
+            navigate("/onboarding/complete");
         } catch (err: any) {
             console.error("❌ 온보딩 스킵 실패:", err);
 
-            // 스킵이므로 실패해도 완료 페이지로 이동 (fromReminder 파라미터 전달)
-            const nextUrl = isFromReminderModal
-                ? "/onboarding/complete?fromReminder=true"
-                : "/onboarding/complete";
-            navigate(nextUrl);
+            // 스킵이므로 실패해도 완료 페이지로 이동
+            navigate("/onboarding/complete");
         } finally {
             setIsSubmitting(false);
         }
@@ -193,22 +180,24 @@ export default function MovieSelectionPage() {
 
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
-            <div className="max-w-6xl w-full">
+            <div className="max-w-screen-lg w-full">
                 {/* 헤더 */}
                 <div className="mb-12">
                     {/* 제목과 건너뛰기 버튼을 포함하는 컨테이너 */}
                     <div className="relative mb-4">
-                        {/* 건너뛰기 버튼 - 오른쪽 상단에 고정 */}
-                        <button
-                            onClick={handleSkip}
-                            disabled={isSubmitting}
-                            className={`absolute right-0 top-0 px-4 md:px-8 py-2 md:py-3 border border-gray-700 font-semibold rounded-xl transition-colors text-sm md:text-base ${isSubmitting
-                                ? 'text-gray-600 cursor-not-allowed'
-                                : 'text-gray-400 hover:border-white hover:text-white'
-                                }`}
-                        >
-                            {isSubmitting ? "처리 중..." : "건너뛰기"}
-                        </button>
+                        {/* 건너뛰기 버튼 - 오른쪽 상단에 고정 (리마인더에서 진입 시 숨김) */}
+                        {!isFromReminder && (
+                            <button
+                                onClick={handleSkip}
+                                disabled={isSubmitting}
+                                className={`absolute right-0 top-0 px-4 md:px-8 py-2 md:py-3 border border-gray-700 font-semibold rounded-xl transition-colors text-sm md:text-base ${isSubmitting
+                                    ? 'text-gray-600 cursor-not-allowed'
+                                    : 'text-gray-400 hover:border-white hover:text-white'
+                                    }`}
+                            >
+                                {isSubmitting ? "처리 중..." : "건너뛰기"}
+                            </button>
+                        )}
 
                         {/* 제목 - 중앙 정렬 */}
                         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight text-center">
@@ -290,12 +279,15 @@ export default function MovieSelectionPage() {
 
                 {/* 버튼 */}
                 <div className="flex gap-4 justify-center">
-                    <button
-                        onClick={handlePrevious}
-                        className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
-                    >
-                        이전 단계
-                    </button>
+                    {/* 이전 버튼 - 리마인더에서 진입 시 숨김 */}
+                    {!isFromReminder && (
+                        <button
+                            onClick={handlePrevious}
+                            className="px-8 py-3 border border-gray-700 text-gray-400 font-semibold rounded-xl hover:border-white hover:text-white transition-colors"
+                        >
+                            이전 단계
+                        </button>
+                    )}
                     <button
                         onClick={handleNext}
                         disabled={movie_ids.length === 0 || isSubmitting}

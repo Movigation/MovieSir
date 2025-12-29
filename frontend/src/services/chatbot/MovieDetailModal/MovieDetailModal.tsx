@@ -50,10 +50,7 @@ export default function MovieDetailModal() {
             setIsLoading(true);
             setError(null);
             try {
-                console.log('📡 Fetching movie detail for ID:', detailMovieId);
                 const detail = await getMovieDetail(detailMovieId);
-                console.log('✅ Movie detail loaded:', detail);
-                console.log('🎬 OTT Providers:', detail.ott_providers);
                 setMovieDetail(detail);
             } catch (err) {
                 console.error('❌ 영화 상세 정보 로드 실패:', err);

@@ -53,10 +53,13 @@ def save_onboarding_answers(
             )
         )
 
-    # 설문 완료 시 온보딩 완료 처리
-    user.onboarding_completed_at = datetime.utcnow()
-    db.add(user)
     db.commit()
+    db.refresh(user)
+
+    return OnboardingCompleteResponse(
+        user_id=str(user.user_id),
+        onboarding_completed=False, # 아직 완료 처리 안 함
+    )
 
 
 # ========================================
@@ -65,10 +68,27 @@ def save_onboarding_answers(
 def complete_onboarding(
     db: Session, user: User
 ) -> OnboardingCompleteResponse:  # 온보딩 완료
-    user.onboarding_completed_at = datetime.utcnow()
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    # 영화 선택 내역이 있는 경우에만 완료 처리 (리마인더 노출 제어를 위해)
+    answers_query = db.query(UserOnboardingAnswer).filter(UserOnboardingAnswer.user_id == user.user_id)
+    has_answers = answers_query.first() is not None
+    
+    print(f"[DEBUG] complete_onboarding called for user: {user.user_id}")
+    print(f"[DEBUG] has_answers: {has_answers}")
+    print(f"[DEBUG] current onboarding_completed_at (before): {user.onboarding_completed_at}")
+
+    if has_answers:
+        user.onboarding_completed_at = datetime.utcnow()
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        print(f"[DEBUG] Set onboarding_completed_at to: {user.onboarding_completed_at}")
+    else:
+        # 영화 선택이 없으면 타임스탬프를 초기화 (리마인더 재표시를 위해)
+        user.onboarding_completed_at = None
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        print("[DEBUG] No answers found. Clearing onboarding_completed_at.")
 
     return OnboardingCompleteResponse(
         user_id=str(user.user_id),
@@ -82,20 +102,24 @@ def complete_onboarding(
 def skip_onboarding(
     db: Session, user: User
 ) -> OnboardingCompleteResponse:  # 온보딩 스킵으로 완료
+    print(f"[DEBUG] skip_onboarding called for user: {user.user_id}")
+    
     # 스킵 시 기존 선택 내역 삭제
     db.execute(
         delete(UserOnboardingAnswer).where(UserOnboardingAnswer.user_id == user.user_id)
     )
 
-    # 스킵 시에도 온보딩 완료 처리 (메인 진입 허용)
-    user.onboarding_completed_at = datetime.utcnow()
+    # 스킵 시에는 온보딩 완료 시간을 초기화 (리마인더 노출을 위해)
+    user.onboarding_completed_at = None
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    print(f"[DEBUG] skip_onboarding finished. onboarding_completed_at: {user.onboarding_completed_at}")
 
     return OnboardingCompleteResponse(
         user_id=str(user.user_id),
-        onboarding_completed=user.onboarding_completed_at is not None,
+        onboarding_completed=False,
     )
 
 
