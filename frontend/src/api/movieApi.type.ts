@@ -3,6 +3,7 @@
 
 export interface Movie {
     id: number;
+    tmdb_id?: number;  // TMDB ID (백엔드 API 호출용, id와 다를 수 있음)
     title: string;
     genres: string[];
     year?: number;
