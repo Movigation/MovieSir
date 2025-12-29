@@ -14,6 +14,7 @@ from backend.domains.auth.router import router as auth_router
 from backend.domains.registration.router import router as registration_router
 from backend.domains.onboarding.router import router as onboarding_router
 from backend.domains.recommendation.router import router as recommendation_router
+from backend.domains.mypage.router import router as mypage_router
 
 import os
 
@@ -41,6 +42,7 @@ app.include_router(auth_router)
 app.include_router(registration_router)
 app.include_router(onboarding_router)
 app.include_router(recommendation_router)
+app.include_router(mypage_router)
 
 
 @app.get("/")
