@@ -42,14 +42,18 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
     }
   };
 
-  // 모바일 하단 헤더에서 스크롤 방지 (passive: false 옵션)
+  // 모바일 하단 헤더에서 스크롤 방지 (모바일에서만)
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
 
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+      // 모바일(640px 미만)에서만 차단, 데스크탑/태블릿은 통과
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
 
     // passive: false로 명시하여 preventDefault 허용
@@ -63,7 +67,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
       /* [디자인] 헤더 컨테이너 */
       /* 모바일: 하단 고정 네비게이션 바 (모든 버튼 균등 배치) */
       /* 데스크톱: 상단 헤더 */
-      className="w-full px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav select-none overscroll-none"
+      className="w-full max-w-screen-lg mx-auto px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav select-none overscroll-none"
     >
       {/* 데스크톱 전용 로고 */}
       <div className="hidden sm:block">

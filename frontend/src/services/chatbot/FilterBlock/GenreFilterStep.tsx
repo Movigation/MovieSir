@@ -29,9 +29,9 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
         <div className="space-y-3 sm:space-y-6 animate-slide-in-right px-1">
             {/* Title */}
             <div className="text-center px-2">
-                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-3 sm:mb-4">
+                {/* <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-3 sm:mb-4">
                     <Sparkles className="text-white" size={24} />
-                </div>
+                </div> */}
                 <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
                     어떤 장르를 좋아하시나요?
                 </h3>
@@ -120,7 +120,7 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
                         }
                     `}
                 >
-                    <Sparkles size={16} className="sm:w-5 sm:h-5" />
+                    {/* <Sparkles size={16} className="sm:w-5 sm:h-5" /> */}
                     영화 추천받기
                 </button>
             </div>

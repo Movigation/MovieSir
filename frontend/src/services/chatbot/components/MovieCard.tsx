@@ -89,7 +89,7 @@ export default function MovieCard({
     return (
         <div
             className={`
-                relative flex-shrink-0 cursor-pointer overflow-hidden rounded-md shadow-xl
+                relative flex-shrink-0 cursor-pointer overflow-hidden rounded-lg shadow-xl
                 w-full aspect-[2/3]
                 transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
                 group

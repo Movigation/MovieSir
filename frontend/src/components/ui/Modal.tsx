@@ -5,9 +5,10 @@ interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     children: React.ReactNode;
+    allowScroll?: boolean;  // 모달 내부 스크롤 허용 여부 (기본: false)
 }
 
-export default function Modal({ isOpen, onClose, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, children, allowScroll = false }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -27,7 +28,8 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             onClick={onClose}
         >
             <div
-                className="bg-white dark:bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[calc(100vh-100px)] md:rounded-xl shadow-2xl overflow-y-auto md:overflow-hidden relative"
+                className={`bg-white dark:bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[calc(100vh-100px)] md:rounded-xl shadow-2xl relative ${allowScroll ? 'overflow-y-auto' : 'overflow-y-auto md:overflow-hidden'
+                    }`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <button

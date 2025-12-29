@@ -57,14 +57,16 @@ export default function OnboardingCompletePage() {
                 }
             }
 
-            // 3. sessionStorage 플래그 정리 (리마인더 진입 표시 제거)
+            // 3. sessionStorage 플래그 정리
             sessionStorage.removeItem('onboarding_from_reminder');
+            sessionStorage.removeItem('onboarding_in_progress');
+            console.log('🎬 온보딩 플로우 완료');
 
             // 4. 온보딩 스토어 초기화
             reset();
 
-            // 5. 메인 페이지로 이동
-            navigate("/");
+            // 5. 메인 페이지로 이동 (뒤로가기 방지)
+            navigate("/", { replace: true });
 
         } catch (err: any) {
             console.error("온보딩 완료 처리 중 오류:", err);
@@ -76,7 +78,7 @@ export default function OnboardingCompletePage() {
 
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
-            <div className="max-w-5xl w-full">
+            <div className="max-w-screen-lg w-full">
                 {/* 미니멀 헤더 */}
                 <div className="text-center mb-12">
                     <div className="flex justify-center text-6xl mb-6 pointer-events-none">

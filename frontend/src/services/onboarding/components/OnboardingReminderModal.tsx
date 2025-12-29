@@ -7,10 +7,9 @@ import { useAuth } from "@/app/providers/AuthContext";
 interface Props {
     visible: boolean;
     onClose: () => void;
-    onPermanentDismiss: () => void; // "다시 보지 않기" 콜백
 }
 
-export default function OnboardingReminderModal({ visible, onClose, onPermanentDismiss }: Props) {
+export default function OnboardingReminderModal({ visible, onClose }: Props) {
     const navigate = useNavigate();
     const { user } = useAuth(); // 사용자 정보 가져오기
 
@@ -19,11 +18,11 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
     const handleRedoSurvey = () => {
         onClose();
 
-        // sessionStorage에 리마인더에서 진입했음을 표시 (완료 시까지 유지)
+        // sessionStorage에 플래그 설정
         sessionStorage.setItem('onboarding_from_reminder', 'true');
+        sessionStorage.setItem('onboarding_in_progress', 'true');
+        console.log("🎬 온보딩 플로우 시작 (리마인더)");
 
-        // ⚠️ OTT는 선택사항이므로 재조사 불필요
-        // 장르 선호도 조사만 다시 진행
         // 항상 장르 스와이프 페이지로 이동
         console.log("재조사 시작 - 장르 선호도 페이지로 이동");
         navigate("/onboarding/movies");
@@ -34,14 +33,9 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
         onClose();
     };
 
-    const handlePermanentDismiss = () => {
-        // 영구적으로 모달을 보지 않음
-        onPermanentDismiss();
-    };
-
     // 장르만 중요하므로 메시지 간소화
     const getSkippedMessage = () => {
-        return "지난번에 장르 선호도 조사를 건너뛰셨어요.";
+        return "";
     };
 
     return (
@@ -74,31 +68,24 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
                         />
                     </svg>
                 </button>
-
-                {/* 아이콘 */}
-                {/* <div className="flex justify-center mb-6">
-                    <div className="text-7xl">🎯</div>
-                </div> */}
-
                 {/* 제목 */}
-                <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
-                    정확한 추천을 위해서는<br />
-                    {user?.nickname || '당신'}님의 취향 정보가 필요해요
+                <h2 className="text-xl md:text-[28px] font-bold text-white text-center mb-5">
+                    아직 추천 정보가 부족해요!<br />
                 </h2>
-
                 {/* 설명 - 스킵 항목에 따라 동적으로 표시 */}
-                <p className="text-gray-300 text-center mb-8 leading-relaxed">
-                    {getSkippedMessage()}<br />
-                    지금 완료하시겠어요?
+                <p className="text-gray-300 text-center mb-5 leading-relaxed text-[10px] md:text-base">
+                    {getSkippedMessage()}
+                    {user?.nickname || '당신'}님의 취향을 알면 더 좋은 영화를 찾을 수 있어요!<br />
+                    어떤 영화를 좋아하시나요?
                 </p>
 
                 {/* 버튼 */}
                 <div className="flex flex-col gap-3">
                     <button
                         onClick={handleRedoSurvey}
-                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg hover:scale-105"
+                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-bold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:scale-105"
                     >
-                        다시 설문하기 🚀
+                        추천 정확도 높이기
                     </button>
                     <button
                         onClick={handleSkip}
@@ -107,22 +94,9 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
                         건너뛰기
                     </button>
                 </div>
-
-                {/* 하단: 다시 보지 않기 & 안내 */}
-                <div className="flex justify-between items-center mt-6">
-                    {/* 왼쪽: 다시 보지 않기 */}
-                    <button
-                        onClick={handlePermanentDismiss}
-                        className="text-xs text-gray-500 hover:text-gray-300 transition-colors underline"
-                    >
-                        다시 보지 않기
-                    </button>
-
-                    {/* 오른쪽: 부가 안내 */}
-                    <p className="text-xs text-gray-500 text-right">
-                        언제든 마이페이지에서 취향 정보를 업데이트할 수 있습니다
-                    </p>
-                </div>
+                <p className="text-[8px] sm:text-sm text-gray-500 text-right">
+                    취향 영화 조사를 완료해야 더 정확한 추천을 받을 수 있어요.
+                </p>
             </div>
         </div>
     );
