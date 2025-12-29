@@ -4,15 +4,30 @@
 import { useState } from 'react';
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from './MovieCard';
-import MovieCarousel from '@/components/ui/MovieCarousel';
+import MovieCarousel from '@/services/chatbot/components/MovieCarousel';
 
 export default function PopularMoviesSection() {
-    const { trackBLabel } = useMovieStore();
+    const { popularMovies } = useMovieStore();
+
+    // 총 상영시간 계산 및 포맷팅
+    const totalRuntime = popularMovies.reduce((total, movie) => {
+        console.log(`🎬 [Popular] Movie: ${movie.title}, Runtime: ${movie.runtime}`);
+        return total + (Number(movie.runtime) || 0);
+    }, 0);
+    console.log(`📊 [Popular] Total Runtime: ${totalRuntime}`);
+
+    const hours = Math.floor(totalRuntime / 60);
+    const minutes = totalRuntime % 60;
 
     return (
         <div className="w-full">
-            <h3 className="text-gray-800 dark:text-white font-bold text-lg text-left mb-3">
-                {trackBLabel || "다양성 추천"}
+            <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-[320px] flex items-center gap-2">
+                {"인기 영화 추천"}
+                {totalRuntime > 0 && (
+                    <span className="text-sm font-medium text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
+                        총 {hours > 0 ? `${hours}시간 ` : ""}{minutes > 0 || hours === 0 ? `${minutes}분` : ""}
+                    </span>
+                )}
             </h3>
             <PopularList />
         </div>
@@ -21,33 +36,13 @@ export default function PopularMoviesSection() {
 
 // 인기 영화 목록
 const PopularList = () => {
-    const { popularMovies, removePopularMovie, setDetailMovieId, userId } = useMovieStore();
+    const { popularMovies, removePopularMovie, setDetailMovieId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
     console.log('🎬 PopularMoviesSection - popularMovies:', popularMovies);
 
-    // localStorage에서 봤어요 목록 가져오기
-    const getWatchedMovies = (): number[] => {
-        if (!userId) return [];
-        const stored = localStorage.getItem(`watchedMovies_${userId}`);
-        return stored ? JSON.parse(stored) : [];
-    };
 
-    // localStorage에 봤어요 목록 저장하기
-    const saveWatchedMovie = (movieId: number) => {
-        if (!userId) return;
-        const watched = getWatchedMovies();
-        if (!watched.includes(movieId)) {
-            watched.push(movieId);
-            localStorage.setItem(`watchedMovies_${userId}`, JSON.stringify(watched));
-            console.log('✅ 봤어요 리스트에 추가:', movieId);
-        }
-    };
-
-    const handleAddToWatched = (movieId: number) => {
-        saveWatchedMovie(movieId);
-    };
 
     // 재추천 핸들러
     const handleReRecommend = (movieId: number) => {
@@ -60,7 +55,7 @@ const PopularList = () => {
         }, 600);
     };
 
-    const watchedMovieIds = getWatchedMovies();
+    const watchedMovieIds: number[] = [];
 
     // 전체 영화를 그대로 표시 (빈 카드 채우기 제거)
     const displayMovies = popularMovies;
@@ -79,11 +74,13 @@ const PopularList = () => {
                     onCollapse={() => setExpandedCardId(null)}
                     onClick={() => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
-                            setDetailMovieId(movie.id);
+                            // 🎬 TMDB ID만 사용하여 상세 정보 조회 (ID 불일치 방지)
+                            const targetId = movie.tmdb_id ?? movie.id;
+                            console.log('🎬 Opening detail modal for TMDB ID:', targetId);
+                            setDetailMovieId(targetId);
                         }
                     }}
                     onReRecommend={() => handleReRecommend(movie.id)}
-                    onAddToWatched={() => handleAddToWatched(movie.id)}
                     showReRecommend={true}
                     shouldAnimate={movie.id === reRecommendingId}
                 />

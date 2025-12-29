@@ -10,6 +10,7 @@ export default function ChatbotButton({
   onClick,
 }: ChatbotButtonProps) {
   const botRef = useRef<HTMLButtonElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // ref로 변경하여 불필요한 리렌더링 방지
   const targetRef = useRef<Offset>({ x: 0, y: 0 });
@@ -115,8 +116,25 @@ export default function ChatbotButton({
   const pupilX = smooth.x * EYE_MOVE;
   const pupilY = smooth.y * EYE_MOVE;
 
+  // 챗봇 버튼 스크롤 방지 (passive: false 옵션)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
+
   return (
-    <div className="relative z-float">
+    <div
+      ref={containerRef}
+      className="relative z-float select-none overscroll-none"
+    >
       {/* Glow */}
       <div
         className={`pointer-events-none absolute inset-0 rounded-full blur-2xl opacity-40 animate-pulse scale-125 transition-colors duration-500 ${isDark ? "bg-blue-400" : "bg-blue-500"

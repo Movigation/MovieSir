@@ -29,6 +29,20 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
     }
   };
 
+  // 챗봇 버튼 영역 스크롤 방지
+  useEffect(() => {
+    const button = buttonRef.current;
+    if (!button) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    button.addEventListener('wheel', handleWheel, { passive: false });
+    return () => button.removeEventListener('wheel', handleWheel);
+  }, []);
+
   // 챗봇 닫힐 때 추천 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -38,48 +52,42 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
 
   return (
     <>
-      <div className="w-full flex flex-col items-center mt-4 select-none relative">
+      {/* 부모 컨테이너 */}
+      <div className="w-full flex flex-col items-center mt-4 select-none">
 
-        {/* 챗봇 버튼 - 열림/닫힘/추천에 따라 위치 변경 */}
-        {/* [반응형 가이드]
-            - Tailwind Breakpoints:
-              * (기본/모바일): < 640px
-              * sm: ≥ 640px (태블릿)
-              * lg: ≥ 1024px (데스크톱)
-            
-            - 닫힘 상태:
-              * 모바일: translate-y-[200px]
-              * sm 이상: translate-y-60
-            
-            - 열림 상태 (1차 이동):
-              * 모바일: translate-x-[-38vw] -translate-y-[30px] scale-50
-              * sm: -translate-x-[300px] -translate-y-[40px] scale-100
-            
-            - 추천 완료 (2차 이동):
-              * 모바일: -translate-x-[7px] translate-y-[calc(100dvh-160px)] (푸터 Home 위치 위)
-              * sm: -translate-x-[480px] -translate-y-[-110px] (더 왼쪽)
-        */}
+        {/* 챗봇 버튼 외부 컨테이너 (위치만 담당, transform 없음) */}
         <div
           ref={buttonRef}
           className={`
             ${!isOpen
-              ? "transition-all duration-500 ease-out"  // 닫힘 → 열림: 부드럽게
+              ? "transition-all duration-500 ease-out"
               : isRecommended
-                ? "transition-none sm:transition-all sm:duration-500 sm:ease-out"  // 추천 완료: 모바일 즉시, 데스크탑 부드럽게
-                : "transition-all duration-500 ease-out"  // 열림: 부드럽게
+                ? "transition-none sm:transition-all sm:duration-500 sm:ease-out"
+                : "transition-all duration-500 ease-out"
             }
             ${!isOpen
-              ? "translate-y-[200px] sm:translate-y-[150px]"  // 닫힘
+              ? "translate-y-[200px] sm:translate-y-[150px]"
               : isRecommended
-                ? "-translate-x-[7px] translate-y-[calc(100dvh-120px)] scale-[0.35] z-[60] sm:-translate-x-[480px] sm:translate-y-[110px] sm:scale-100"  // 추천 완료 (2차)
-                : "translate-x-[-38vw] -translate-y-[30px] scale-50 sm:-translate-x-[300px] sm:-translate-y-[40px] sm:scale-100"  // 열림 (1차)
+                ? "-translate-x-[5px] translate-y-[calc(100dvh-120px)] z-[60] sm:-translate-x-[300px] sm:translate-y-[110px] lg:-translate-x-[480px] lg:translate-y-[110px]"
+                : "-translate-x-[5px] translate-y-[calc(100dvh-120px)] z-[60] sm:-translate-x-[300px] sm:-translate-y-[40px]"
+            /* ↑ fixed (transform 없음!) + 데스크탑은 relative로 복원 */
             }
           `}
         >
-          <ChatbotButton
-            isDark={isDark}
-            onClick={handleChatbotButtonClick}
-          />
+          {/* 챗봇 버튼 내부 컨테이너 (scale만 담당) */}
+          <div className={`
+            ${!isOpen
+              ? ""
+              : isRecommended
+                ? "scale-[0.35] sm:scale-100"
+                : "scale-[0.35] sm:scale-100"
+            }
+          `}>
+            <ChatbotButton
+              isDark={isDark}
+              onClick={handleChatbotButtonClick}
+            />
+          </div>
         </div>
       </div>
 
