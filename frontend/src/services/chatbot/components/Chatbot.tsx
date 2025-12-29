@@ -29,19 +29,26 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
     }
   };
 
-  // 챗봇 버튼 영역 스크롤 방지
+  // 챗봇 버튼 영역 스크롤 방지 (모바일에서만)
   useEffect(() => {
     const button = buttonRef.current;
     if (!button) return;
 
+    // 챗봇 패널이 열려있으면 wheel 차단 안 함
+    if (isOpen) return;
+
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+      // 모바일(640px 미만)에서만 차단, 데스크탑/태블릿은 통과
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
 
     button.addEventListener('wheel', handleWheel, { passive: false });
     return () => button.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [isOpen]);
 
   // 챗봇 닫힐 때 추천 상태 초기화
   useEffect(() => {
@@ -55,27 +62,24 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
       {/* 부모 컨테이너 */}
       <div className="w-full flex flex-col items-center mt-4 select-none">
 
-        {/* 챗봇 버튼 외부 컨테이너 (위치만 담당, transform 없음) */}
+        {/* 챗봇 버튼 외부 컨테이너 (스티키 위치 제어) */}
         <div
           ref={buttonRef}
           className={`
+            inline-block w-28 h-28
+            transition-all duration-500 ease-out
             ${!isOpen
-              ? "transition-all duration-500 ease-out"
+              ? "relative translate-y-[200px] sm:translate-y-[150px]"
               : isRecommended
-                ? "transition-none sm:transition-all sm:duration-500 sm:ease-out"
-                : "transition-all duration-500 ease-out"
-            }
-            ${!isOpen
-              ? "translate-y-[200px] sm:translate-y-[150px]"
-              : isRecommended
-                ? "-translate-x-[5px] translate-y-[calc(100dvh-120px)] z-[60] sm:-translate-x-[300px] sm:translate-y-[110px] lg:-translate-x-[480px] lg:translate-y-[110px]"
-                : "-translate-x-[5px] translate-y-[calc(100dvh-120px)] z-[60] sm:-translate-x-[300px] sm:-translate-y-[40px]"
-            /* ↑ fixed (transform 없음!) + 데스크탑은 relative로 복원 */
+                // 추천 상태일 때는 버튼이 화면 중앙 아래에 고정 (모바일)
+                ? "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-[60] sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-43%] xl:ml-[-40%] 2xl:ml-[-17%]"
+                : "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-[60] sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-30%] xl:ml-[-23%] 2xl:ml-[-12%]"
             }
           `}
         >
           {/* 챗봇 버튼 내부 컨테이너 (scale만 담당) */}
           <div className={`
+            inline-block w-28
             ${!isOpen
               ? ""
               : isRecommended

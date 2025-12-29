@@ -83,7 +83,12 @@ def complete_onboarding(
         db.refresh(user)
         print(f"[DEBUG] Set onboarding_completed_at to: {user.onboarding_completed_at}")
     else:
-        print("[DEBUG] No answers found. Skipping timestamp update.")
+        # 영화 선택이 없으면 타임스탬프를 초기화 (리마인더 재표시를 위해)
+        user.onboarding_completed_at = None
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        print("[DEBUG] No answers found. Clearing onboarding_completed_at.")
 
     return OnboardingCompleteResponse(
         user_id=str(user.user_id),

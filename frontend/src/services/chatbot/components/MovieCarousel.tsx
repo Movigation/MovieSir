@@ -1,7 +1,8 @@
 // [용도] 영화 캐러셀 - 3D 원근 효과 + 마우스/터치 드래그
 // [참조] crew-carousel CSS 스타일 기반
 
-import React, { useState, Children, useRef, useEffect, type TouchEvent, type MouseEvent } from 'react';
+import React, { useState, Children, useRef, useEffect, type TouchEvent } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MovieCarouselProps {
     children: React.ReactNode;
@@ -18,35 +19,15 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
     const totalMovies = childrenArray.length;
 
     // 이전/다음 카드로 이동
-    const goToPrev = () => setCurrentIndex(prev => Math.max(0, prev - 1));
-    const goToNext = () => setCurrentIndex(prev => Math.min(totalMovies - 1, prev + 1));
+    const goToPrev = () => setCurrentIndex(prev => (prev - 1 + totalMovies) % totalMovies);
+    const goToNext = () => setCurrentIndex(prev => (prev + 1) % totalMovies);
 
     // 마우스 드래그 시작 (데스크탑)
-    const handleMouseDown = (e: MouseEvent) => {
+    const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsDragging(true);
         startX.current = e.clientX;
         currentX.current = e.clientX;
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        currentX.current = e.clientX;
-    };
-
-    const handleMouseUp = () => {
-        if (!isDragging) return;
-        setIsDragging(false);
-
-        const diff = startX.current - currentX.current;
-        if (Math.abs(diff) > 50) {
-            if (diff > 0) goToNext();
-            else goToPrev();
-        }
-
-        startX.current = 0;
-        currentX.current = 0;
     };
 
     // 전역 마우스 이벤트 리스너 (드래그 중 마우스가 컨테이너 밖으로 나가도 작동)
@@ -96,24 +77,15 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
         }
     };
 
-    // 카드 클릭 시 해당 카드로 이동
-    const handleCardClick = (index: number) => {
-        setCurrentIndex(index);
-    };
-
     if (totalMovies === 0) {
         return <div className="text-center text-gray-500">영화가 없습니다.</div>;
     }
 
-    // 카드 위치 계산 (center, left-1, left-2, right-1, right-2, hidden)
+    // 카드 위치 계산 (center, left-1, right-1, hidden)
     const getCardPosition = (index: number) => {
-        const diff = index - currentIndex;
-
-        if (diff === 0) return 'center';
-        if (diff === -1) return 'left-1';
-        // if (diff === -2) return 'left-2';
-        if (diff === 1) return 'right-1';
-        // if (diff === 2) return 'right-2';
+        if (index === currentIndex) return 'center';
+        if (index === (currentIndex - 1 + totalMovies) % totalMovies) return 'left-1';
+        if (index === (currentIndex + 1) % totalMovies) return 'right-1';
         return 'hidden';
     };
 
@@ -135,15 +107,30 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
             </div>
             {/* 3D 캐러셀 컨테이너 */}
             <div
-                className="relative w-full h-[370px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[600px] mx-auto"
+                className="relative w-full h-[370px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto"
                 onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 style={{ perspective: '1000px', cursor: isDragging ? 'grabbing' : 'grab' }}
             >
+                {/* 좌측 화살표 - 항상 표시 */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                    className="absolute left-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110 active:scale-95 group"
+                    aria-label="이전 영화"
+                >
+                    <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
+                </button>
+
+                {/* 우측 화살표 - 항상 표시 */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                    className="absolute right-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110 active:scale-95 group"
+                    aria-label="다음 영화"
+                >
+                    <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
                 <div className="relative w-full h-full flex items-start justify-center preserve-3d">
                     {childrenArray.map((child, index) => {
                         const position = getCardPosition(index);
@@ -169,7 +156,7 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                                                     : 'translateX(0) scale(0.8)',
                                     cursor: position === 'center' ? 'default' : 'pointer'
                                 }}
-                                onClick={() => position !== 'center' && handleCardClick(index)}
+                                onClick={() => position !== 'center' && setCurrentIndex(index)}
                             >
                                 {React.cloneElement(child as React.ReactElement<any>, {
                                     isExpanded: position === 'center' ? (child as React.ReactElement<any>).props.isExpanded : false,

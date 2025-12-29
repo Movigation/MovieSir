@@ -186,9 +186,9 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
               <div className="flex justify-center mt-6">
                 <button
                   onClick={() => handleResetFilters()}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
-                  다시 추천받기
+                  처음으로
                 </button>
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
           z-panel
           flex flex-col
           transition-opacity duration-200
-          max-w-screen-xl mx-auto
+          max-w-screen-lg mx-auto
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
         style={{ transition: 'opacity 0.2s ease-in-out' }}
@@ -264,8 +264,8 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
         {/* Chat Messages */}
         {/* [반응형] 메시지 영역 - 기본 padding 사용 */}
         {/* [모바일] pb-24: 하단 네비게이션 바(헤더)가 버튼을 가리지 않도록 96px 패딩 추가 */}
-        {/* [데스크톱] sm:pb-4: 상단 헤더이므로 기본 패딩만 유지 */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 pb-24 sm:pb-4 space-y-4">
+        {/* [데스크톱] sm:pb-4: 상단 헤더이므로        {/* 메시지 컨테이너 */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 pb-24 sm:pb-4 space-y-4 overscroll-contain">
           {messages.map((msg) => (
             // [메시지 컨테이너] 메시지 정렬 위치
             // [수정 가이드]
@@ -274,7 +274,7 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
             // - justify-end: 오른쪽 정렬 (현재 사용자 메시지)
             <div
               key={msg.id}
-              className={`flex w-full ${msg.type === 'bot' ? 'justify-start' : 'justify-end'}`}
+              className={`flex w-full ${msg.type === 'bot' ? 'w-full flex justify-center' : 'justify-end'}`}
             >
               {typeof msg.content === 'string' ? (
                 <div
@@ -282,7 +282,7 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
                     rounded-[15px] p-3 border shadow-sm
                     w-full sm:w-auto
                     ${msg.type === 'bot'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700 sm:ml-[400px] md:ml-[145px] lg:ml-[270px] xl:ml-[400px] sm:mr-4'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700] sm:mr-[105px]'
                       : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700 max-w-[75%] sm:max-w-[80%]'
                     }
                   `}
