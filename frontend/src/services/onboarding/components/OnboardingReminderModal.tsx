@@ -19,12 +19,14 @@ export default function OnboardingReminderModal({ visible, onClose, onPermanentD
     const handleRedoSurvey = () => {
         onClose();
 
+        // sessionStorage에 리마인더에서 진입했음을 표시 (완료 시까지 유지)
+        sessionStorage.setItem('onboarding_from_reminder', 'true');
+
         // ⚠️ OTT는 선택사항이므로 재조사 불필요
         // 장르 선호도 조사만 다시 진행
         // 항상 장르 스와이프 페이지로 이동
         console.log("재조사 시작 - 장르 선호도 페이지로 이동");
-        // fromReminder 파라미터 추가로 재조사 팝업에서 왔음을 표시
-        navigate("/onboarding/movies?fromReminder=true");
+        navigate("/onboarding/movies");
     };
 
     const handleSkip = () => {

@@ -11,10 +11,8 @@ export default function RecommendedMoviesSection() {
 
     // 총 상영시간 계산 및 포맷팅
     const totalRuntime = recommendedMovies.reduce((total, movie) => {
-        console.log(`🎬 [Recommended] Movie: ${movie.title}, Runtime: ${movie.runtime}`);
         return total + (Number(movie.runtime) || 0);
     }, 0);
-    console.log(`📊 [Recommended] Total Runtime: ${totalRuntime}`);
 
     const hours = Math.floor(totalRuntime / 60);
     const minutes = totalRuntime % 60;
@@ -40,7 +38,7 @@ const RecommendedList = () => {
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
-    console.log('🎬 RecommendedMoviesSection - recommendedMovies:', recommendedMovies);
+
 
 
 
@@ -76,7 +74,6 @@ const RecommendedList = () => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
                             // 🎬 TMDB ID만 사용하여 상세 정보 조회 (ID 불일치 방지)
                             const targetId = movie.tmdb_id ?? movie.id;
-                            console.log('🎬 Opening detail modal for TMDB ID:', targetId);
                             setDetailMovieId(targetId);
                         }
                     }}

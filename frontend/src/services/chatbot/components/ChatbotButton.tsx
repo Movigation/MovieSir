@@ -129,7 +129,6 @@ export default function ChatbotButton({
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
-
   return (
     <div
       ref={containerRef}

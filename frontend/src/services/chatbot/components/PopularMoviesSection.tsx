@@ -11,10 +11,8 @@ export default function PopularMoviesSection() {
 
     // 총 상영시간 계산 및 포맷팅
     const totalRuntime = popularMovies.reduce((total, movie) => {
-        console.log(`🎬 [Popular] Movie: ${movie.title}, Runtime: ${movie.runtime}`);
         return total + (Number(movie.runtime) || 0);
     }, 0);
-    console.log(`📊 [Popular] Total Runtime: ${totalRuntime}`);
 
     const hours = Math.floor(totalRuntime / 60);
     const minutes = totalRuntime % 60;
@@ -39,9 +37,6 @@ const PopularList = () => {
     const { popularMovies, removePopularMovie, setDetailMovieId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-
-    console.log('🎬 PopularMoviesSection - popularMovies:', popularMovies);
-
 
 
     // 재추천 핸들러
@@ -76,7 +71,6 @@ const PopularList = () => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
                             // 🎬 TMDB ID만 사용하여 상세 정보 조회 (ID 불일치 방지)
                             const targetId = movie.tmdb_id ?? movie.id;
-                            console.log('🎬 Opening detail modal for TMDB ID:', targetId);
                             setDetailMovieId(targetId);
                         }
                     }}
