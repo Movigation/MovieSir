@@ -79,7 +79,10 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
     setUserId: (userId) => set({ userId }),
 
-    setTime: (time) => set((state) => ({ filters: { ...state.filters, time } })),
+    setTime: (time) => set((state) => ({
+        filters: { ...state.filters, time },
+        excludedIds: []  // 시간 변경 시 중복 제외 목록 초기화
+    })),
 
     toggleGenre: (genre) =>
         set((state) => ({
@@ -88,7 +91,8 @@ export const useMovieStore = create<MovieState>((set, get) => ({
                 genres: state.filters.genres.includes(genre)
                     ? state.filters.genres.filter((g) => g !== genre)
                     : [...state.filters.genres, genre]
-            }
+            },
+            excludedIds: []  // 장르 변경 시 중복 제외 목록 초기화
         })),
 
     toggleExcludeAdult: () =>
@@ -96,7 +100,8 @@ export const useMovieStore = create<MovieState>((set, get) => ({
             filters: {
                 ...state.filters,
                 excludeAdult: !state.filters.excludeAdult
-            }
+            },
+            excludedIds: []  // 성인 제외 변경 시 중복 제외 목록 초기화
         })),
 
 

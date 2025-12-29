@@ -92,9 +92,6 @@ class HybridRecommenderV2:
         print("Pre-aligning models...")
         self._align_models()
 
-        # 4. 추천 히스토리 (중복 방지용)
-        self.recommendation_history = []
-
         print(f"Initialization complete. Target movies: {len(self.common_movie_ids)}")
 
     def _load_metadata_from_db(self):
@@ -384,8 +381,6 @@ class HybridRecommenderV2:
         for i, (mid, _) in enumerate(filtered_indices):
             if mid in exclude_ids:
                 continue
-            if mid in self.recommendation_history[-100:]:
-                continue
 
             # 모델 점수 (가중 합)
             model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
@@ -530,7 +525,8 @@ class HybridRecommenderV2:
         available_time: int,
         preferred_genres: Optional[List[str]] = None,
         preferred_otts: Optional[List[str]] = None,
-        allow_adult: bool = False
+        allow_adult: bool = False,
+        excluded_ids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
         초기 추천 - 영화 조합 반환
@@ -541,6 +537,7 @@ class HybridRecommenderV2:
             preferred_genres: 선호 장르
             preferred_otts: 구독 OTT
             allow_adult: 성인물 허용 여부
+            excluded_ids: 제외할 영화 ID 리스트 (이전 추천 영화 등)
 
         Returns:
             {
@@ -549,10 +546,13 @@ class HybridRecommenderV2:
                 'elapsed_time': float
             }
         """
+        excluded_ids = excluded_ids or []
+
         print(f"\n=== Recommend ===")
         print(f"Available time: {available_time} min")
         print(f"Genres: {preferred_genres}")
         print(f"OTTs: {preferred_otts}")
+        print(f"Excluded: {len(excluded_ids)} movies")
 
         start_time = time.time()
 
@@ -569,13 +569,16 @@ class HybridRecommenderV2:
         )
         print(f"Track A filtered: {len(filtered_a)} movies")
 
+        # excluded_ids와 user_movie_ids 합치기
+        all_exclude_a = list(set(user_movie_ids + excluded_ids))
+
         top_100_a = self._get_top_movies(
             user_sbert_profile, user_gcn_profile,
             filtered_a,
             sbert_weight=0.7,
             lightgcn_weight=0.3,
             top_k=100,
-            exclude_ids=user_movie_ids
+            exclude_ids=all_exclude_a
         )
         print(f"Track A top candidates: {len(top_100_a)} movies")
 
@@ -599,7 +602,7 @@ class HybridRecommenderV2:
                 sbert_weight=0.7,
                 lightgcn_weight=0.3,
                 top_k=100,
-                exclude_ids=user_movie_ids
+                exclude_ids=all_exclude_a
             )
 
             combo_a_relaxed = self._find_combination(top_100_a_relaxed, available_time)
@@ -616,11 +619,6 @@ class HybridRecommenderV2:
             'total_runtime': combo_a['total_runtime'] if combo_a else 0
         }
 
-        # 히스토리에 추가
-        if combo_a:
-            for m in combo_a['movies']:
-                self.recommendation_history.append(m['tmdb_id'])
-
         # ===== Track B: 2000년 이상만 (장르/OTT 무시) =====
         filtered_b = self._apply_filters(
             self.common_movie_ids,
@@ -630,8 +628,12 @@ class HybridRecommenderV2:
             allow_adult=allow_adult
         )
 
-        # Track A에서 추천된 영화 제외
-        exclude_b = user_movie_ids + [m['tmdb_id'] for m in track_a_result['movies']]
+        # Track A에서 추천된 영화 + excluded_ids 제외
+        exclude_b = list(set(
+            user_movie_ids +
+            excluded_ids +
+            [m['tmdb_id'] for m in track_a_result['movies']]
+        ))
 
         top_100_b = self._get_top_movies(
             user_sbert_profile, user_gcn_profile,
@@ -649,11 +651,6 @@ class HybridRecommenderV2:
             'movies': combo_b['movies'] if combo_b else [],
             'total_runtime': combo_b['total_runtime'] if combo_b else 0
         }
-
-        # 히스토리에 추가
-        if combo_b:
-            for m in combo_b['movies']:
-                self.recommendation_history.append(m['tmdb_id'])
 
         elapsed = time.time() - start_time
         print(f"Elapsed: {elapsed:.2f}s")
@@ -740,14 +737,12 @@ class HybridRecommenderV2:
         if candidates:
             # 랜덤 선택
             selected = random.choice(candidates)
-            self.recommendation_history.append(selected['tmdb_id'])
             return selected
 
         # 조건에 맞는 영화 없으면 런타임 이하 중 가장 가까운 영화
         under_time = [m for m in top_100 if 0 < m['runtime'] <= max_runtime]
         if under_time:
             closest = max(under_time, key=lambda m: m['runtime'])
-            self.recommendation_history.append(closest['tmdb_id'])
             return closest
 
         return None

@@ -57,7 +57,8 @@ class AIModelAdapter:
         available_time: int = 180,
         preferred_genres: Optional[List[str]] = None,
         preferred_otts: Optional[List[str]] = None,
-        allow_adult: bool = False
+        allow_adult: bool = False,
+        excluded_ids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
         초기 추천 - 영화 조합 반환 (v2)
@@ -82,11 +83,12 @@ class AIModelAdapter:
                 "available_time": available_time,
                 "preferred_genres": preferred_genres,
                 "preferred_otts": preferred_otts,
-                "allow_adult": allow_adult
+                "allow_adult": allow_adult,
+                "excluded_ids": excluded_ids or []
             }
 
             print(f"[AI Model] Calling recommend: {self.ai_service_url}/recommend")
-            print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}")
+            print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}, excluded={len(excluded_ids or [])}")
 
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(

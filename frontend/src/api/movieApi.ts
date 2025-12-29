@@ -157,6 +157,77 @@ export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
 });
 
 
+// ============================================================
+// [V2 API] 시간 맞춤 조합 추천
+// ============================================================
+
+// [용도] 영화 추천 v2 - 시간 맞춤 조합 반환
+// [사용법] const result = await postRecommendationsV2({ time: "02:30", genres: ["SF"], excludeAdult: true, excludedIds: [123, 456] });
+export const postRecommendationsV2 = async (filters: {
+    time: string;      // "HH:MM" 형식
+    genres: string[];  // 장르 이름 배열
+    excludeAdult?: boolean;
+    excludedIds?: number[];  // 제외할 영화 ID (이전 추천 영화 등)
+}): Promise<RecommendResponseV2> => {
+    try {
+        // 시간 변환: "02:30" -> 150분
+        const [hours, minutes] = filters.time.split(':').map(Number);
+        const runtimeLimit = hours * 60 + minutes;
+
+        const response = await axiosInstance.post<RecommendResponseV2>("/api/v2/recommend", {
+            runtime_limit: runtimeLimit,
+            genres: filters.genres,
+            exclude_adult: filters.excludeAdult ?? true,
+            excluded_ids: filters.excludedIds || []
+        });
+
+        console.log('[V2 API] 추천 결과:', {
+            track_a: response.data.track_a.movies.length + '편',
+            track_b: response.data.track_b.movies.length + '편',
+            elapsed_time: response.data.elapsed_time
+        });
+
+        return response.data;
+    } catch (error: any) {
+        console.error("V2 영화 추천 API 호출 중 오류:", error);
+        throw error;
+    }
+};
+
+// [용도] 개별 영화 재추천 - 단일 영화 교체
+// [사용법] const result = await postReRecommendSingle({ target_runtime: 120, excluded_ids: [550, 27205], track: "a" });
+export const postReRecommendSingle = async (request: ReRecommendRequest): Promise<ReRecommendResponse> => {
+    try {
+        const response = await axiosInstance.post<ReRecommendResponse>("/api/v2/recommend/single", request);
+
+        if (response.data.success && response.data.movie) {
+            console.log('[V2 API] 재추천 성공:', response.data.movie.title);
+        } else {
+            console.log('[V2 API] 재추천 실패:', response.data.message);
+        }
+
+        return response.data;
+    } catch (error: any) {
+        console.error("V2 재추천 API 호출 중 오류:", error);
+        throw error;
+    }
+};
+
+// [용도] RecommendedMovieV2를 프론트엔드 Movie 타입으로 변환
+export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
+    id: v2Movie.tmdb_id,
+    title: v2Movie.title,
+    genres: v2Movie.genres,
+    year: v2Movie.release_date ? new Date(v2Movie.release_date).getFullYear() : undefined,
+    rating: v2Movie.vote_average,
+    poster: v2Movie.poster_path ? `https://image.tmdb.org/t/p/w500${v2Movie.poster_path}` : '',
+    description: v2Movie.overview,
+    runtime: v2Movie.runtime,
+    popular: false,
+    watched: false
+});
+
+
 // 추천 기록 추가
 export const addRecommendation = async (
     userId: number,

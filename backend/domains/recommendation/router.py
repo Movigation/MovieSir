@@ -42,7 +42,8 @@ def recommend_movies_v2(
         available_time=req.runtime_limit or 180,
         preferred_genres=req.genres or None,
         preferred_otts=user_otts,
-        allow_adult=not req.exclude_adult
+        allow_adult=not req.exclude_adult,
+        excluded_ids=req.excluded_ids or []
     )
 
     return result
