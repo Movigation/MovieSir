@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
+from datetime import timedelta
 import os
 
 from backend.core.db import get_db
@@ -48,9 +49,10 @@ def login(
             detail="탈퇴한 회원입니다",
         )
 
-    # 4. JWT 토큰 생성 (둘 다 새로 발급)
-    access_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname})
-    refresh_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname})
+    # 4. JWT 토큰 생성 (24시간 만료)
+    token_data = {"sub": str(user.user_id), "nickname": user.nickname}
+    access_token = create_access_token(data=token_data, expires_delta=timedelta(hours=24))
+    refresh_token = create_access_token(data=token_data, expires_delta=timedelta(hours=24))
 
     # DB에 Refresh Token 저장 (로그인 시 업데이트)
     user.refresh_token = refresh_token
@@ -58,13 +60,18 @@ def login(
     db.commit()
 
     # 5. HttpOnly 쿠키에 토큰 설정 (XSS 공격 방어)
+    # remember_me 체크 여부에 따라 쿠키 만료 시간 설정
+    # - 체크 안함: 세션 쿠키 (브라우저 종료 시 삭제) + JWT 24시간 만료
+    # - 체크함: 24시간 쿠키 + JWT 24시간 만료
+    cookie_max_age = 86400 if request.remember_me else None  # 86400초 = 24시간
+    
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,          # JavaScript 접근 차단
         secure=COOKIE_SECURE,   # HTTPS에서만 전송 (프로덕션)
         samesite=COOKIE_SAMESITE,  # CSRF 방어
-        max_age=1800,           # 30분 (초 단위)
+        max_age=cookie_max_age, # 체크 안함: None (세션), 체크함: 24시간
         path="/",               # 모든 경로에서 사용
     )
 
@@ -74,7 +81,7 @@ def login(
         httponly=True,
         secure=COOKIE_SECURE,
         samesite=COOKIE_SAMESITE,
-        max_age=604800,         # 7일 (초 단위)
+        max_age=cookie_max_age, # 체크 안함: None (세션), 체크함: 24시간
         path="/",
     )
 
