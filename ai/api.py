@@ -32,25 +32,39 @@ recommender = None
 @app.on_event("startup")
 async def load_model():
     global recommender
-    try:
-        db_config = {
-            'host': os.getenv("DATABASE_HOST", "localhost"),
-            'port': int(os.getenv("DATABASE_PORT", 5432)),
-            'database': os.getenv("DATABASE_NAME", "moviesir"),
-            'user': os.getenv("DATABASE_USER", "movigation"),
-            'password': os.getenv("DATABASE_PASSWORD", "")
-        }
-        recommender = HybridRecommenderV2(
-            db_config=db_config,
-            lightgcn_model_path="training/lightgcn_model/best_model.pt",
-            lightgcn_data_path="training/lightgcn_data"
-        )
-        print("✅ AI Model v2 loaded successfully")
-    except Exception as e:
-        print(f"❌ Failed to load AI model: {e}")
-        import traceback
-        traceback.print_exc()
-        raise e
+    import asyncio
+
+    db_config = {
+        'host': os.getenv("DATABASE_HOST", "localhost"),
+        'port': int(os.getenv("DATABASE_PORT", 5432)),
+        'database': os.getenv("DATABASE_NAME", "moviesir"),
+        'user': os.getenv("DATABASE_USER", "movigation"),
+        'password': os.getenv("DATABASE_PASSWORD", "")
+    }
+
+    # DB 연결 재시도 (최대 30초 대기)
+    max_retries = 10
+    retry_delay = 3  # 초
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            recommender = HybridRecommenderV2(
+                db_config=db_config,
+                lightgcn_model_path="training/lightgcn_model/best_model.pt",
+                lightgcn_data_path="training/lightgcn_data"
+            )
+            print("✅ AI Model v2 loaded successfully")
+            return
+        except Exception as e:
+            if attempt < max_retries:
+                print(f"⏳ DB connection failed (attempt {attempt}/{max_retries}), retrying in {retry_delay}s...")
+                await asyncio.sleep(retry_delay)
+            else:
+                print(f"❌ Failed to load AI model after {max_retries} attempts: {e}")
+                import traceback
+                traceback.print_exc()
+                raise e
+
 
 
 @app.get("/")
@@ -60,7 +74,11 @@ def health():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "model_loaded": recommender is not None, "version": "v2"}
+    return {
+        "status": "healthy",
+        "model_loaded": recommender is not None,
+        "version": "v2"
+    }
 
 
 # ==================== Request/Response Models ====================
@@ -71,6 +89,7 @@ class RecommendRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
     allow_adult: bool = False
+    excluded_ids: Optional[List[int]] = None  # 제외할 영화 ID (이전 추천 영화 등)
 
 
 class RecommendSingleRequest(BaseModel):
@@ -128,7 +147,8 @@ def recommend(request: RecommendRequest):
             available_time=request.available_time,
             preferred_genres=request.preferred_genres,
             preferred_otts=request.preferred_otts,
-            allow_adult=request.allow_adult
+            allow_adult=request.allow_adult,
+            excluded_ids=request.excluded_ids or []
         )
 
         # numpy 타입 변환
@@ -147,6 +167,12 @@ def recommend(request: RecommendRequest):
             ),
             elapsed_time=result.get('elapsed_time', 0)
         )
+
+        if result:
+            return convert_numpy_types(result)
+        else:
+            return None
+
     except Exception as e:
         import traceback
         traceback.print_exc()

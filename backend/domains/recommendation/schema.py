@@ -12,6 +12,17 @@ class RecommendationRequest(BaseModel):
     runtime_limit: int = 120
     genres: List[str] = []
     exclude_adult: bool = True
+    excluded_ids: List[int] = []  # 제외할 영화 ID (이전 추천 영화 등)
+
+
+class ReRecommendRequest(BaseModel):
+    """개별 영화 재추천 요청"""
+    target_runtime: int  # 교체할 영화의 런타임
+    excluded_ids: List[int]  # 이미 추천된 영화 ID 리스트
+    track: str = "a"  # "a" 또는 "b"
+    genres: List[str] = []
+    exclude_adult: bool = True
+
 
 
 class ReRecommendRequest(BaseModel):
