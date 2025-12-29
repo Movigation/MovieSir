@@ -167,12 +167,6 @@ def recommend(request: RecommendRequest):
             ),
             elapsed_time=result.get('elapsed_time', 0)
         )
-
-        if result:
-            return convert_numpy_types(result)
-        else:
-            return None
-
     except Exception as e:
         import traceback
         traceback.print_exc()
