@@ -3,8 +3,7 @@
 
 export interface Movie {
     id: number;
-    movie_id?: number;  // 데이터베이스 movie_id (상세 조회용)
-    tmdb_id?: number;  // TMDB ID (AI 추천에서 사용)
+    tmdb_id?: number;  // TMDB ID (백엔드 API 호출용, id와 다를 수 있음)
     title: string;
     genres: string[];
     year?: number;

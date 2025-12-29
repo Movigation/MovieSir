@@ -39,9 +39,6 @@ const PopularList = () => {
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
 
 
-
-
-
     // 재추천 핸들러
     const handleReRecommend = (movieId: number) => {
         setReRecommendingId(movieId);
