@@ -108,24 +108,19 @@ def recommend_movies(
 
 # ==================== 공통 API ====================
 
-@router.post("/api/movies/{tmdb_id}/play")
+@router.post("/api/movies/{movie_id}/play")
 def click_ott(
-    tmdb_id: int,
+    movie_id: int,
     req: schema.ClickLogRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """OTT 링크 클릭 로깅 (TMDB ID 기준)"""
-    from backend.domains.movie.models import Movie
-    movie = db.query(Movie).filter(Movie.tmdb_id == tmdb_id).first()
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-
-    service.log_click(db, str(current_user.user_id), movie.movie_id, req.provider_id)
+    """OTT 링크 클릭 로깅"""
+    service.log_click(db, str(current_user.user_id), movie_id, req.provider_id)
 
     url_row = db.execute(
         text("SELECT link_url FROM movie_ott_map WHERE movie_id=:mid AND provider_id=:pid"),
-        {"mid": movie.movie_id, "pid": req.provider_id}
+        {"mid": movie_id, "pid": req.provider_id}
     ).fetchone()
 
     if not url_row:
@@ -134,19 +129,14 @@ def click_ott(
     return {"redirect_url": url_row[0]}
 
 
-@router.post("/api/movies/{tmdb_id}/watched")
+@router.post("/api/movies/{movie_id}/watched")
 def mark_watched(
-    tmdb_id: int,
+    movie_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """영화 시청 완료 표시 (TMDB ID 기준)"""
-    from backend.domains.movie.models import Movie
-    movie = db.query(Movie).filter(Movie.tmdb_id == tmdb_id).first()
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-
-    service.mark_watched(db, str(current_user.user_id), movie.movie_id)
+    """영화 시청 완료 표시"""
+    service.mark_watched(db, str(current_user.user_id), movie_id)
     return {"status": "success"}
 
 
@@ -155,16 +145,15 @@ def get_movie_detail(
     tmdb_id: int,
     db: Session = Depends(get_db),
 ):
-    """영화 상세 정보 조회 (TMDB ID 기준)"""
+    """영화 상세 정보 조회 (로그인 불필요) - tmdb_id로 조회"""
     from backend.domains.movie.models import Movie
 
-    # TMDB ID로 조회 (AI 추천 및 프론트엔드 기준 ID)
     movie = db.query(Movie).filter(Movie.tmdb_id == tmdb_id).first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
 
-    # OTT 정보 조회 (실제 movie_id 사용)
+    # OTT 정보 조회 (내부 movie_id 사용)
     ott_rows = db.execute(
         text("""
             SELECT
@@ -175,7 +164,7 @@ def get_movie_detail(
             JOIN ott_providers p ON m.provider_id = p.provider_id
             WHERE m.movie_id = :mid
         """),
-        {"mid": movie.movie_id}  # ← movie 객체의 실제 movie_id 사용
+        {"mid": movie.movie_id}
     ).fetchall()
 
     return {
