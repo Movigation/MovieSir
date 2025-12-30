@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import ProtectedRoute from '@/app/routes/ProtectedRoute';
+// import ProtectedRoute from '@/app/routes/ProtectedRoute';  // TODO: 개발 완료 후 주석 해제
 import OnboardingProtectedRoute from '@/app/routes/OnboardingProtectedRoute';
 import OnboardingCompletedRoute from '@/app/routes/OnboardingCompletedRoute';
 

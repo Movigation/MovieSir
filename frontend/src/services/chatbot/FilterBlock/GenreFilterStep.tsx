@@ -1,7 +1,7 @@
 // [용도] Step 2 - Genre Filter Component
 // [사용법] <GenreFilterStep onBack={() => goBack()} onRecommend={() => apply()} />
 
-import { ChevronLeft, Sparkles } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useMovieStore } from '@/store/useMovieStore';
 
 interface GenreFilterStepProps {
