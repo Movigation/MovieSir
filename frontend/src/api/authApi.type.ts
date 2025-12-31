@@ -5,15 +5,14 @@
 export interface UserProfile {
     favoriteGenres: string[];
     ottServices: string[];
-    onboarding_completed_at?: string | null;  // 온보딩 완료 시간 (완료 여부 판단)
 }
 
 // 사용자 정보
 export interface User {
     id: string;  // UUID (PostgreSQL user_id와 일치)
     email: string;
-    password: string;
     nickname: string;
+    onboarding_completed: boolean; // 온보딩 완료 여부
     createdAt: string;
     profile: UserProfile;
 }

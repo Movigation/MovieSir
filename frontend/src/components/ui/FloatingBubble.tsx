@@ -14,6 +14,7 @@ type Props = {
     children: React.ReactNode;
     className?: string;
     onClick?: () => void; // 클릭 이벤트 핸들러
+    position?: 'left' | 'right'; // 말풍선 꼬리 방향 (기본값: 'left')
 };
 
 export default function FloatingBubble({
@@ -23,52 +24,63 @@ export default function FloatingBubble({
     float = false,
     children,
     className = "",
-    onClick
+    onClick,
+    position = 'left' // 기본값: 왼쪽 (챗봇 오른쪽에 배치)
 }: Props) {
     // 1. 내부 콘텐츠 (디자인)
+    // 말풍선 꼬리 위치에 따른 스타일 분기
+    // const tailStyles = position === 'left'
+    //     ? {
+    //         // 왼쪽 꼬리 (챗봇 오른쪽에 배치)
+    //         before: `
+    //             before:bottom-[-4px]
+    //             before:left-[-15px]
+    //             before:border-r-gray-200
+    //             before:rotate-[45deg]
+    //         `,
+    //         after: `
+    //             after:bottom-[-4px]
+    //             after:left-[-15px]
+    //             after:border-r-white
+    //             after:rotate-[45deg]
+    //         `
+    //     }
+    //     : {
+    //     // 오른쪽 꼬리 (챗봇 왼쪽에 배치)
+    //     before: `
+    //             before:bottom-[-4px]
+    //             before:right-[-15px]
+    //             before:border-l-gray-200
+    //             before:rotate-[-45deg]
+    //         `,
+    //         after: `
+    //             after:bottom-[-4px]
+    //             after:right-[-15px]
+    //             after:border-l-white
+    //             after:rotate-[-45deg]
+    //         `
+    // };
+
     const InnerContent = (
         <div
-            className="
+            className={`
                 relative
                 bg-white
-                shadow-lg
-                rounded-2xl
+                shadow-xl
+                rounded-3xl
+                ${position === 'left' ? 'rounded-bl-none sm:rounded-bl-none' : 'rounded-3xl sm:rounded-br-none'}
                 py-9 px-6
                 text-sm
                 text-blue-400
                 border
-                border-gray-200
-                min-w-[290px]
+                border-gray-100
                 
-                /* 말풍선 꼬리 - 데스크탑에서만 왼쪽 하단에 표시 */
-                /* before: 테두리가 있는 삼각형 (회색) */
-                before:content-['']
-                before:absolute
-                before:hidden
-                sm:before:block
-                before:bottom-[-4px]
-                before:left-[-15px]
-                before:w-0
-                before:h-0
-                before:border-[15px]
-                before:border-transparent
-                before:border-r-gray-200
-                before:rotate-[45deg]
-                
-                /* after: 배경 삼각형 (흰색) - 테두리 안쪽 */
-                after:content-['']
-                after:absolute
-                after:hidden
-                sm:after:block
-                after:bottom-[-4px]
-                after:left-[-15px]
-                after:w-0
-                after:h-0
-                after:border-[15px]
-                after:border-transparent
-                after:border-r-white
-                after:rotate-[45deg]
-            "
+                /* 호버 효과 */
+                transform transition-all duration-500
+                hover:scale-105
+                hover:shadow-2xl
+                hover:border-blue-200
+            `}
             onClick={onClick}
         >
             {children}

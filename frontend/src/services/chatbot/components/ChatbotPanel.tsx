@@ -5,6 +5,39 @@ import RecommendedMoviesSection from '@/services/chatbot/components/RecommendedM
 import PopularMoviesSection from '@/services/chatbot/components/PopularMoviesSection';
 import { useMovieStore } from '@/store/useMovieStore';
 
+// [컴포넌트] 필터 요약 표시
+function FilterSummary() {
+  const { filters } = useMovieStore();
+
+  // 시간 포맷: "02:30" → "2시간 30분"
+  const formatTime = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+
+    if (hours === 0 && minutes === 0) return "제한 없이";
+    if (hours === 0) return `${minutes}분`;
+    if (minutes === 0) return `${hours}시간`;
+    return `${hours}시간 ${minutes}분`;
+  };
+
+  // 장르 포맷: ["액션", "스릴러"] → "액션, 스릴러"
+  const formatGenres = (genres: string[]): string => {
+    if (genres.length === 0) return "전체";
+    return genres.join(", ");
+  };
+
+  const timeText = formatTime(filters.time);
+  const genreText = formatGenres(filters.genres);
+
+  return (
+    <div className="text-center mb-4">
+      <p className="text-base text-gray-700 dark:text-gray-300 font-bold">
+        <span className="font-semibold text-blue-600 dark:text-blue-400">{timeText}</span>동안 볼 수 있는{" "}
+        <span className="font-semibold text-blue-600 dark:text-blue-400">{genreText}</span> 장르의 영화를 추천하였습니다.
+      </p>
+    </div>
+  );
+}
+
 // [타입] 메시지 인터페이스
 export interface Message {
   id: string;
@@ -13,7 +46,7 @@ export interface Message {
   position?: 'left' | 'center' | 'right';
 }
 
-export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
+export default function ChatbotPanel({ isOpen, onClose, onRecommended }: ChatbotPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasRecommended, setHasRecommended] = useState(false);  // 추천 완료 플래그
   const { loadRecommended, resetFilters } = useMovieStore();
@@ -116,6 +149,9 @@ export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
     loadRecommended().then(() => {
       console.log('✅ 추천 완료');
 
+      // 부모 컴포넌트에 추천 완료 알림 (2단계 위치 이동)
+      onRecommended?.(true);
+
       // 초기 메시지(welcome)와 로딩 메시지 모두 제거 후 추천 결과만 표시
       setMessages([
         {
@@ -129,16 +165,19 @@ export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
                 <p className="text-sm mt-1">마음에 드는 영화를 선택해보세요</p>
               </div>
 
+              {/* 필터 요약 */}
+              <FilterSummary />
+
               {/* 맞춤 추천 섹션 */}
               <div className="flex flex-col items-center w-full">
-                <div className="w-full max-w-fit">
+                <div className="w-full">
                   <RecommendedMoviesSection />
                 </div>
               </div>
 
               {/* 인기 영화 섹션 */}
               <div className="flex flex-col items-center w-full">
-                <div className="w-full max-w-fit">
+                <div className="w-full">
                   <PopularMoviesSection />
                 </div>
               </div>
@@ -147,9 +186,9 @@ export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
               <div className="flex justify-center mt-6">
                 <button
                   onClick={() => handleResetFilters()}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
-                  다시 추천받기
+                  처음으로
                 </button>
               </div>
             </div>
@@ -205,11 +244,12 @@ export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
           top-0 sm:top-[70px]
           left-0
           right-0
-          h-screen sm:h-[calc(100vh-70px)]
+          h-dvh sm:h-[calc(100vh-70px)]
           bg-transparent
           z-panel
           flex flex-col
           transition-opacity duration-200
+          max-w-screen-lg mx-auto
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
         style={{ transition: 'opacity 0.2s ease-in-out' }}
@@ -224,8 +264,8 @@ export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
         {/* Chat Messages */}
         {/* [반응형] 메시지 영역 - 기본 padding 사용 */}
         {/* [모바일] pb-24: 하단 네비게이션 바(헤더)가 버튼을 가리지 않도록 96px 패딩 추가 */}
-        {/* [데스크톱] sm:pb-4: 상단 헤더이므로 기본 패딩만 유지 */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 pb-24 sm:pb-4 space-y-4">
+        {/* [데스크톱] sm:pb-4: 상단 헤더이므로        {/* 메시지 컨테이너 */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 pb-24 sm:pb-4 space-y-4 overscroll-contain">
           {messages.map((msg) => (
             // [메시지 컨테이너] 메시지 정렬 위치
             // [수정 가이드]
@@ -234,16 +274,16 @@ export default function ChatbotPanel({ isOpen, onClose }: ChatbotPanelProps) {
             // - justify-end: 오른쪽 정렬 (현재 사용자 메시지)
             <div
               key={msg.id}
-              className={`flex w-full ${msg.type === 'bot' ? 'justify-start' : 'justify-end'}`}
+              className={`flex w-full ${msg.type === 'bot' ? 'w-full flex justify-center' : 'justify-end'}`}
             >
               {typeof msg.content === 'string' ? (
                 <div
                   className={`
-                    rounded-[15px] p-3 border-2 shadow-sm
-                    max-w-[75%] sm:max-w-[80%] lg:max-w-[85%]
+                    rounded-[15px] p-3 border shadow-sm
+                    w-full sm:w-auto
                     ${msg.type === 'bot'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-900 dark:border-gray-600 ml-[70px] sm:ml-[150px] lg:ml-[320px]'
-                      : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700] sm:mr-[105px]'
+                      : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700 max-w-[75%] sm:max-w-[80%]'
                     }
                   `}
                 >

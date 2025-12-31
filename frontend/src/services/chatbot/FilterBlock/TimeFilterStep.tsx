@@ -77,6 +77,7 @@ function WheelPicker({ items, selectedIndex, onChange, unit }: WheelPickerProps)
         }
     };
 
+
     return (
         <div className="relative h-48 w-20 overflow-hidden">
             {/* 선택 영역 블록 - 흰색 배경 */}
@@ -135,16 +136,17 @@ function WheelPicker({ items, selectedIndex, onChange, unit }: WheelPickerProps)
 
 export default function TimeFilterStep({ onNext }: TimeFilterStepProps) {
     const { setTime } = useMovieStore();
-    const [hours, setHours] = useState(0);
-    const [minutes, setMinutes] = useState(0);
+    const [hours, setHours] = useState(2);  // 실제 시간 값
+    const [minutes, setMinutes] = useState(0);  // 실제 분 값
+    const [showWarning, setShowWarning] = useState(false);  // 경고 메시지 표시
 
     // 시간과 분 배열 생성
-    const hoursList = Array.from({ length: 13 }, (_, i) => i); // 0~12
+    const hoursList = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];  // 명시적 배열
     const minutesList = Array.from({ length: 60 }, (_, i) => i); // 0~59 (1분 단위)
 
-    // 컴포넌트 마운트 시 초기값 00:00 설정
+    // 컴포넌트 마운트 시 초기값 02:00 설정
     useEffect(() => {
-        setTime("00:00");
+        setTime("02:00");
     }, [setTime]);
 
     useEffect(() => {
@@ -152,7 +154,31 @@ export default function TimeFilterStep({ onNext }: TimeFilterStepProps) {
         setTime(timeStr);
     }, [hours, minutes, setTime]);
 
+    // 인덱스 → 실제 값 변환 핸들러
+    const handleHourChange = (index: number) => {
+        setHours(hoursList[index]);
+    };
+
+    const handleMinuteChange = (index: number) => {
+        setMinutes(minutesList[index]);
+    };
+
+    // 최소 시간 검증 (2시간 = 120분)
+    const totalMinutes = hours * 60 + minutes;
+    const isValidTime = totalMinutes >= 120;
     const hasTimeSelected = hours > 0 || minutes > 0;
+
+    // 다음 버튼 클릭 핸들러
+    const handleNext = () => {
+        if (!isValidTime) {
+            setShowWarning(true);
+            // 3초 후 경고 메시지 숨기기
+            setTimeout(() => setShowWarning(false), 3000);
+            return;
+        }
+        setShowWarning(false);
+        onNext();
+    };
 
     return (
         <div className="space-y-4 sm:space-y-6 animate-slide-in-right">
@@ -171,30 +197,39 @@ export default function TimeFilterStep({ onNext }: TimeFilterStepProps) {
                     {`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`}
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1.5 sm:mt-2">
-                    {!hasTimeSelected ? "시간을 선택해주세요" : "선택된 시간"}
+                    선택된 시간
                 </p>
+
+                {/* 경고 메시지 */}
+                {showWarning && (
+                    <div className="mt-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg animate-shake">
+                        <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 font-medium">
+                            ⚠️ 최소 2시간 이상 선택해주세요
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* iOS Style Wheel Picker */}
             <div className="flex items-center justify-center gap-2 px-4">
                 <WheelPicker
                     items={hoursList}
-                    selectedIndex={hours}
-                    onChange={setHours}
+                    selectedIndex={hoursList.indexOf(hours)}
+                    onChange={handleHourChange}
                     unit=""
                 />
                 <span className="text-2xl font-bold text-gray-400 dark:text-gray-600">:</span>
                 <WheelPicker
                     items={minutesList}
                     selectedIndex={minutes}
-                    onChange={setMinutes}
+                    onChange={handleMinuteChange}
                     unit=""
                 />
             </div>
 
             {/* Next Button */}
             <button
-                onClick={onNext}
+                onClick={handleNext}
                 disabled={!hasTimeSelected}
                 className={`
                     w-full py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg flex items-center justify-center gap-2
@@ -217,6 +252,14 @@ export default function TimeFilterStep({ onNext }: TimeFilterStepProps) {
                 .scrollbar-hide {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-5px); }
+                    75% { transform: translateX(5px); }
+                }
+                .animate-shake {
+                    animation: shake 0.3s ease-in-out;
                 }
             `}</style>
         </div>
