@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+.venv
+venv
+__pycache__
+*.pyc
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs
+
+# Testing
+.pytest_cache
+.ruff_cache
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Documentation
+*.md
+
+# Training data (large files)
+training/original_data
+training/lightgcn_data
+training/sbert_data
+
+# Other
+.DS_Store
+tmp
+temp
