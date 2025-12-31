@@ -22,10 +22,10 @@ jobs:
           script: |
             set -e  # 에러 발생 시 즉시 중단
 
-            cd ~/MovieSir-middle || git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+            cd ~/MovieSir || git clone https://github.com/${{ github.repository }}.git ~/MovieSir
 
             echo "📌 Fetch latest code"
-            cd ~/MovieSir-middle
+            cd ~/MovieSir
             git fetch --all
             git reset --hard origin/main
 

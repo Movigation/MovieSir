@@ -66,7 +66,6 @@ async def load_model():
                 raise e
 
 
-
 @app.get("/")
 def health():
     return {"message": "ok", "service": "ai", "version": "v2"}
@@ -89,7 +88,8 @@ class RecommendRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
     allow_adult: bool = False
-    excluded_ids: Optional[List[int]] = None  # 제외할 영화 ID (이전 추천 영화 등)
+    excluded_ids_a: Optional[List[int]] = None  # Track A 제외 (같은 장르 이전 추천)
+    excluded_ids_b: Optional[List[int]] = None  # Track B 제외 (전체 이전 추천)
 
 
 class RecommendSingleRequest(BaseModel):
@@ -148,7 +148,8 @@ def recommend(request: RecommendRequest):
             preferred_genres=request.preferred_genres,
             preferred_otts=request.preferred_otts,
             allow_adult=request.allow_adult,
-            excluded_ids=request.excluded_ids or []
+            excluded_ids_a=request.excluded_ids_a or [],
+            excluded_ids_b=request.excluded_ids_b or []
         )
 
         # numpy 타입 변환
