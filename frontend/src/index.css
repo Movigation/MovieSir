@@ -1,1 +1,144 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Slide animation for step transitions */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* 슬라이드 다운 & 페이드 애니메이션 (영화 카드 거절 시) */
+@keyframes slide-down-fade {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+
+.animate-slide-down-fade {
+  animation: slide-down-fade 300ms ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+/* Carousel slide animations */
+@keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-left {
+  animation: slide-left 0.4s ease-out;
+}
+
+.animate-slide-right {
+  animation: slide-right 0.4s ease-out;
+}
+
+/* Wave Animations */
+@keyframes move-forever {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+
+.animate-wave1 {
+  animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+.animate-wave2 {
+  animation: move-forever 15s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+.animate-wave3 {
+  animation: move-forever 5s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+.animate-wave4 {
+  animation: move-forever 10s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+@layer base {
+
+  html {
+    /* 오버스크롤 영역 배경색 (브라우저 상단/하단 넘어간 영역) */
+    @apply bg-gray-50 dark:bg-gray-900;
+    /* 전체 뷰포트 높이 최소 보장 */
+    min-height: 100%;
+    /* 세로 오버스크롤만 방지 (가로는 허용 - 뒤로가기/앞으로가기 제스처 유지) */
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: auto;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    /* 다크/라이트 기본값 */
+    @apply bg-gray-50 dark:bg-gray-900 text-black dark:text-white;
+    margin: 0;
+    /* 브라우저 기본 margin 제거(혹시 없더라도 안전) */
+    /* 오버스크롤 시에도 배경색 유지 */
+    min-height: 100vh;
+    /* 세로 오버스크롤만 방지 (가로는 허용) */
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: auto;
+  }
+}
