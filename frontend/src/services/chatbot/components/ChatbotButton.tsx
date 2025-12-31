@@ -10,6 +10,7 @@ export default function ChatbotButton({
   onClick,
 }: ChatbotButtonProps) {
   const botRef = useRef<HTMLButtonElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // ref로 변경하여 불필요한 리렌더링 방지
   const targetRef = useRef<Offset>({ x: 0, y: 0 });
@@ -115,13 +116,29 @@ export default function ChatbotButton({
   const pupilX = smooth.x * EYE_MOVE;
   const pupilY = smooth.y * EYE_MOVE;
 
+  // 챗봇 버튼 스크롤 방지 (passive: false 옵션)
+  // 챗봇 버튼 스크롤 방지 (모바일에서만)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // 모바일(640px 미만)에서만 차단, 데스크탑/태블릿은 통과
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
   return (
-    <div className="relative z-float">
-      {/* Glow */}
-      <div
-        className={`pointer-events-none absolute inset-0 rounded-full blur-2xl opacity-40 animate-pulse scale-125 transition-colors duration-500 ${isDark ? "bg-blue-400" : "bg-blue-500"
-          }`}
-      ></div>
+    <div
+      ref={containerRef}
+      className="inline-block w-fit z-float select-none overscroll-none"
+    >
 
       {/* 캐릭터 전체 (몸통) */}
       <button
@@ -142,6 +159,12 @@ export default function ChatbotButton({
           transition: "transform 0.15s ease-out",
         }}
       >
+        {/* Glow - 챗봇 버튼 기준으로 위치 */}
+        <div
+          className={`pointer-events-none absolute inset-0 rounded-full blur-2xl opacity-40 animate-pulse scale-125 transition-colors duration-500 ${isDark ? "bg-blue-400" : "bg-blue-500"
+            }`}
+        ></div>
+
         {/* === 얼굴 전체(head) === */}
         <div
           className="flex flex-col items-center gap-2 select-none"
