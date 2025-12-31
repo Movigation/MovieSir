@@ -14,27 +14,20 @@ from backend.domains.auth.router import router as auth_router
 from backend.domains.registration.router import router as registration_router
 from backend.domains.onboarding.router import router as onboarding_router
 from backend.domains.recommendation.router import router as recommendation_router
-from backend.domains.mypage.router import router as mypage_router
-
-import os
 
 app = FastAPI()
 
-# CORS 설정 (환경 변수에서 로드, 기본값은 로컬 호스트)
-cors_origins_str = os.getenv(
-    "CORS_ORIGINS", 
-    "http://localhost:5173,http://localhost:3000,http://localhost:3001"
-)
-cors_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
-
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:3000",  # copy 프론트엔드
+        "http://localhost:3001",  # copy2 프론트엔드
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
-    expose_headers=["*"],  # 브라우저에서 접근 가능한 헤더
-    max_age=3600,  # Preflight 요청 캐시 시간 (1시간)
+    allow_methods=["*"],  # 모든 HTTP 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
 )
 
 # 라우터 등록
@@ -42,7 +35,6 @@ app.include_router(auth_router)
 app.include_router(registration_router)
 app.include_router(onboarding_router)
 app.include_router(recommendation_router)
-app.include_router(mypage_router)
 
 
 @app.get("/")

@@ -27,8 +27,8 @@ def recommend_movies_v2(
     """
     영화 추천 v2 - 시간 맞춤 조합 추천
 
-    - Track A: 선호 장르 + OTT 필터
-    - Track B: 장르 확장 (다양성)
+    - Track A: 선호 장르 + OTT 필터 (같은 장르일 때만 이전 기록 제외)
+    - Track B: 장르 확장 (장르 상관없이 이전 기록 제외)
     - 총 런타임이 입력 시간의 90%~100% 범위
     """
     user_id = str(current_user.user_id)
@@ -36,15 +36,35 @@ def recommend_movies_v2(
     # 사용자 OTT 조회
     user_otts = service.get_user_ott_names(db, user_id)
 
-    # AI 추천 호출
+    # Track A: 같은 장르일 때만 이전 기록 제외 (최근 20개 세션)
+    recent_a = service.get_recent_recommended_ids_by_genre(db, user_id, req.genres, limit=20)
+    # Track B: 장르 상관없이 이전 기록 제외 (최근 20개 세션)
+    recent_b = service.get_recent_recommended_ids_all(db, user_id, limit=20)
+
+    excluded_a = list(set((req.excluded_ids or []) + recent_a))
+    excluded_b = list(set((req.excluded_ids or []) + recent_b))
+
+    print(f"[Recommend] Track A 제외: {len(recent_a)}개, Track B 제외: {len(recent_b)}개")
+
+    # AI 추천 호출 (Track A, B 별도 제외 목록)
     result = ai_model.recommend(
         user_id=user_id,
         available_time=req.runtime_limit or 180,
         preferred_genres=req.genres or None,
         preferred_otts=user_otts,
         allow_adult=not req.exclude_adult,
-        excluded_ids=req.excluded_ids or []
+        excluded_ids_a=excluded_a,
+        excluded_ids_b=excluded_b
     )
+
+    # 추천 결과 저장 (Track A, B 분리)
+    track_a_ids = [m['tmdb_id'] for m in result.get('track_a', {}).get('movies', [])]
+    track_b_ids = [m['tmdb_id'] for m in result.get('track_b', {}).get('movies', [])]
+
+    if track_a_ids or track_b_ids:
+        service.save_recommendation_session(
+            db, user_id, req.genres, req.runtime_limit or 180, track_a_ids, track_b_ids
+        )
 
     return result
 
