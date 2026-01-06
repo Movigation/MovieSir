@@ -15,10 +15,10 @@ interface LearningHistory {
 export default function LearningMonitorPage() {
     const [currentStatus, setCurrentStatus] = useState<"idle" | "running" | "completed">("idle");
     const [progress, setProgress] = useState(0);
-    const [startTime, setStartTime] = useState<string | null>(null);
-    const [estimatedTime, setEstimatedTime] = useState<string | null>(null);
+    const [startTime] = useState<string | null>(null);
+    const [estimatedTime] = useState<string | null>(null);
 
-    const [history, setHistory] = useState<LearningHistory[]>([
+    const [history] = useState<LearningHistory[]>([
         {
             startTime: "2025-12-17 10:00",
             endTime: "2025-12-17 12:15",

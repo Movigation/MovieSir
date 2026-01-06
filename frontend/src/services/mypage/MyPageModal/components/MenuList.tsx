@@ -1,7 +1,7 @@
 // [용도] 마이페이지 메뉴 리스트
 // [사용법] <MenuList onMenuClick={handleMenuClick} />
 
-import { BarChart3, Film, Tv, Calendar, Settings } from 'lucide-react';
+import { Film, Tv, Settings } from 'lucide-react';
 import MenuItem from '@/services/mypage/MyPageModal/components/MenuItem';
 import type { MyPageView } from '@/services/mypage/MyPageModal/myPage.types';
 
@@ -20,11 +20,11 @@ export default function MenuList({ onMenuClick }: MenuListProps) {
             className="flex flex-col gap-2 px-4 pb-4"
         >
             {/* 각 메뉴 아이템 - 아이콘과 텍스트 변경 가능 */}
-            <MenuItem
-                label="내 통계" /* 메뉴 이름 변경 가능 */
-                icon={<BarChart3 size={20} />} /* 아이콘 변경 가능 (lucide-react 아이콘 사용) */
+            {/* <MenuItem
+                label="내 통계"
+                icon={<BarChart3 size={20} />}
                 onClick={() => onMenuClick('stats')}
-            />
+            /> */}
             <MenuItem
                 label="내가 본 영화 조회"
                 icon={<Film size={20} />}
@@ -35,11 +35,11 @@ export default function MenuList({ onMenuClick }: MenuListProps) {
                 icon={<Tv size={20} />}
                 onClick={() => onMenuClick('ott')}
             />
-            <MenuItem
+            {/* <MenuItem
                 label="무비 캘린더"
                 icon={<Calendar size={20} />}
                 onClick={() => onMenuClick('calendar')}
-            />
+            /> */}
             <MenuItem
                 label="사용자 설정"
                 icon={<Settings size={20} />}

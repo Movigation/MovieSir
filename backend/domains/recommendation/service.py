@@ -10,7 +10,7 @@ from backend.domains.recommendation.models import MovieLog, MovieClick
 from . import schema
 
 
-def _get_user_ott_names(db: Session, user_id: str) -> Optional[List[str]]:
+def get_user_ott_names(db: Session, user_id: str) -> Optional[List[str]]:
     """사용자가 선택한 OTT provider_name 목록 조회"""
     result = db.execute(
         text("""
@@ -34,7 +34,7 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     2. DB -> 영화 상세 정보 조회
     """
     # 사용자 OTT 선호 조회
-    user_otts = _get_user_ott_names(db, user_id)
+    user_otts = get_user_ott_names(db, user_id)
     print(f"[DEBUG] User OTT preferences: {user_otts}")
 
     # 1. AI 모델 예측 (user_id를 int로 변환하거나 매핑 필요할 수 있음)
@@ -93,4 +93,116 @@ def mark_watched(db: Session, user_id: str, movie_id: int):
         ON CONFLICT (user_id, movie_id) DO UPDATE SET watched_at = NOW()
     """)
     db.execute(stmt, {"uid": user_id, "mid": movie_id})
+    db.commit()
+
+
+def get_recent_recommended_ids_by_genre(
+    db: Session,
+    user_id: str,
+    genres: Optional[List[str]],
+    limit: int = 5
+) -> List[int]:
+    """
+    Track A용: 같은 장르일 때만 이전 기록 제외
+    장르가 같은 최근 N회 추천된 Track A 영화 ID 조회
+    """
+    if not genres:
+        return []
+
+    # 장르가 일치하는 세션에서 track_a_ids 조회
+    result = db.execute(
+        text("""
+            SELECT feedback_details->>'track_a_ids' as track_a_ids
+            FROM recommendation_sessions
+            WHERE user_id = :uid
+              AND req_genres IS NOT NULL
+              AND req_genres && CAST(:genres AS varchar[])
+            ORDER BY created_at DESC
+            LIMIT :lim
+        """),
+        {"uid": user_id, "genres": genres, "lim": limit}
+    ).fetchall()
+
+    all_ids = set()
+    for row in result:
+        if row[0]:
+            try:
+                import json
+                ids = json.loads(row[0])
+                all_ids.update(ids)
+            except:
+                pass
+
+    return list(all_ids)
+
+
+def get_recent_recommended_ids_all(db: Session, user_id: str, limit: int = 5) -> List[int]:
+    """
+    Track B용: 장르 상관없이 최근 N회 추천된 전체 영화 ID 조회
+    Track A + Track B 모두 제외 (어떤 트랙에서든 추천된 영화는 제외)
+    """
+    result = db.execute(
+        text("""
+            SELECT
+                feedback_details->>'track_a_ids' as track_a_ids,
+                feedback_details->>'track_b_ids' as track_b_ids
+            FROM recommendation_sessions
+            WHERE user_id = :uid
+            ORDER BY created_at DESC
+            LIMIT :lim
+        """),
+        {"uid": user_id, "lim": limit}
+    ).fetchall()
+
+    all_ids = set()
+    import json
+    for row in result:
+        # Track A IDs
+        if row[0]:
+            try:
+                ids = json.loads(row[0])
+                all_ids.update(ids)
+            except:
+                pass
+        # Track B IDs
+        if row[1]:
+            try:
+                ids = json.loads(row[1])
+                all_ids.update(ids)
+            except:
+                pass
+
+    return list(all_ids)
+
+
+def save_recommendation_session(
+    db: Session,
+    user_id: str,
+    genres: Optional[List[str]],
+    runtime_max: int,
+    track_a_ids: List[int],
+    track_b_ids: List[int]
+):
+    """추천 세션 저장 (Track A, B 분리 저장)"""
+    import json
+
+    feedback_details = {
+        "track_a_ids": track_a_ids,
+        "track_b_ids": track_b_ids
+    }
+
+    db.execute(
+        text("""
+            INSERT INTO recommendation_sessions
+            (user_id, req_genres, req_runtime_max, recommended_movie_ids, feedback_details, created_at)
+            VALUES (:uid, :genres, :runtime, :movie_ids, :feedback, NOW())
+        """),
+        {
+            "uid": user_id,
+            "genres": genres,
+            "runtime": runtime_max,
+            "movie_ids": track_a_ids + track_b_ids,
+            "feedback": json.dumps(feedback_details)
+        }
+    )
     db.commit()
