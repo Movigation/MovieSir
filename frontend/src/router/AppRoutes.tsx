@@ -1,0 +1,87 @@
+// [용도] 애플리케이션의 모든 라우팅 정의
+// [사용법] App.tsx에서 <AppRoutes />로 사용
+
+import { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import MainLayout from '@/components/layout/MainLayout';
+// import ProtectedRoute from '@/app/routes/ProtectedRoute';  // TODO: 개발 완료 후 주석 해제
+import OnboardingProtectedRoute from '@/app/routes/OnboardingProtectedRoute';
+import OnboardingCompletedRoute from '@/app/routes/OnboardingCompletedRoute';
+
+// Pages
+import MainPage from '@/pages/MainPage';
+import MyPage from '@/pages/MyPage';
+import Error400Page from '@/pages/Error400Page';
+import Error423Page from '@/pages/Error423Page';
+import Error500Page from '@/pages/Error500Page';
+import OTTSelectionPage from '@/pages/OTTSelectionPage';
+import MovieSelectionPage from '@/pages/MovieSelectionPage';
+import OnboardingCompletePage from '@/pages/OnboardingCompletePage';
+import AdminLayout from '@/pages/admin/AdminLayout';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import TmdbSyncPage from '@/pages/admin/TmdbSyncPage';
+import PopularityUpdatePage from '@/pages/admin/PopularityUpdatePage';
+import LearningMonitorPage from '@/pages/admin/LearningMonitorPage';
+import VectorRetrainPage from '@/pages/admin/VectorRetrainPage';
+import TagModelRetrainPage from '@/pages/admin/TagModelRetrainPage';
+
+// 스크롤 복원 컴포넌트
+function ScrollToTop() {
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [pathname]);
+
+    return null;
+}
+
+export default function AppRoutes() {
+    return (
+        <>
+            {/* 페이지 전환 시 스크롤을 맨 위로 복원 */}
+            <ScrollToTop />
+
+            <Routes>
+                {/* 메인 레이아웃을 사용하는 라우트들 */}
+                <Route element={<MainLayout />}>
+                    {/* URL: / - 메인 페이지 */}
+                    <Route path="/" element={<MainPage />} />
+
+                    {/* 보호된 라우트 - 로그인 필요 */}
+                    {/* TODO: 개발 완료 후 주석 해제하여 로그인 보호 활성화 */}
+                    {/* <Route element={<ProtectedRoute />}> */}
+                    {/* URL: /mypage - 마이페이지 (모달 스타일) */}
+                    <Route path="/mypage" element={<MyPage />} />
+                    {/* </Route> */}
+                </Route>
+
+                {/* Onboarding Flow - 완료 후 재접근 방지 */}
+                <Route element={<OnboardingCompletedRoute />}>
+                    <Route path="/onboarding/ott" element={<OTTSelectionPage />} />
+                    <Route path="/onboarding/movies" element={<MovieSelectionPage />} />
+                </Route>
+
+                {/* 온보딩 완료 페이지 - 온보딩 데이터 필요 */}
+                <Route element={<OnboardingProtectedRoute />}>
+                    <Route path="/onboarding/complete" element={<OnboardingCompletePage />} />
+                </Route>
+
+                {/* Admin - 중첩 라우팅으로 대시보드 영역에서 컴포넌트 교체 */}
+                <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="tmdb-sync" element={<TmdbSyncPage />} />
+                    <Route path="popularity" element={<PopularityUpdatePage />} />
+                    <Route path="learning-monitor" element={<LearningMonitorPage />} />
+                    <Route path="vector-retrain" element={<VectorRetrainPage />} />
+                    <Route path="tag-retrain" element={<TagModelRetrainPage />} />
+                </Route>
+
+                {/* Error pages */}
+                <Route path="/error/400" element={<Error400Page />} />
+                <Route path="/error/423" element={<Error423Page />} />
+                <Route path="/error/500" element={<Error500Page />} />
+            </Routes>
+        </>
+    );
+}
