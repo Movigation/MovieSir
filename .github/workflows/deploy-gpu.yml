@@ -22,22 +22,22 @@ jobs:
           script: |
             set -e  # 에러 발생 시 즉시 중단
 
-            if [ ! -d ~/MovieSir-middle/.git ]; then
+            if [ ! -d ~/MovieSir/.git ]; then
               echo "📌 Git repo not found, cloning..."
               # 모델 파일 백업
-              if [ -d ~/MovieSir-middle/ai/training ]; then
-                mv ~/MovieSir-middle/ai/training ~/backup-training
+              if [ -d ~/MovieSir/ai/training ]; then
+                mv ~/MovieSir/ai/training ~/backup-training
               fi
-              rm -rf ~/MovieSir-middle
-              git clone https://github.com/${{ github.repository }}.git ~/MovieSir-middle
+              rm -rf ~/MovieSir
+              git clone https://github.com/${{ github.repository }}.git ~/MovieSir
               # 모델 파일 복원
               if [ -d ~/backup-training ]; then
-                cp -r ~/backup-training/* ~/MovieSir-middle/ai/training/
+                cp -r ~/backup-training/* ~/MovieSir/ai/training/
               fi
             fi
 
             echo "📌 Fetch latest code"
-            cd ~/MovieSir-middle
+            cd ~/MovieSir
             git fetch --all
             git reset --hard origin/main
 

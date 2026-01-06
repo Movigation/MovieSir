@@ -5,11 +5,6 @@ export type FadeInProps = {
     children: React.ReactNode;
 };
 
-export type SlideUpProps = {
-    isVisible: boolean;
-    children?: React.ReactNode;
-};
-
 export type FloatProps = {
     children: React.ReactNode;
     speed?: number;

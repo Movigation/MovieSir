@@ -22,7 +22,7 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
     }
 
     try {
-        const response = await axiosInstance.post("/auth/login", {
+        const response = await authAxiosInstance.post("/auth/login", {
             email: data.email,
             password: data.password,
         }, {
