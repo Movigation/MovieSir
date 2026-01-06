@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+.venv
+venv
+__pycache__
+*.pyc
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs
+
+# Testing
+.pytest_cache
+coverage
+.ruff_cache
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+docs
+
+# AI & Frontend (not needed for backend)
+ai
+frontend
+
+# Other
+.DS_Store
+tmp
+temp
