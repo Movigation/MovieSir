@@ -229,10 +229,15 @@ class HybridRecommenderV2:
         common_ids = set(self.sbert_movie_to_idx.keys()) & set(self.lightgcn_movie_to_idx.keys())
         self.common_movie_ids = sorted(list(common_ids))
 
+        # 역매핑 딕셔너리 생성 (O(1) 인덱스 조회용)
+        self.movie_id_to_idx = {}
         self.target_sbert_matrix = []
         self.target_lightgcn_matrix = []
 
-        for mid in self.common_movie_ids:
+        for idx, mid in enumerate(self.common_movie_ids):
+            # 역매핑 저장
+            self.movie_id_to_idx[mid] = idx
+
             s_idx = self.sbert_movie_to_idx[mid]
             self.target_sbert_matrix.append(self.sbert_embeddings[s_idx])
 
@@ -245,6 +250,86 @@ class HybridRecommenderV2:
         self.target_sbert_norm = self.target_sbert_matrix / (
             np.linalg.norm(self.target_sbert_matrix, axis=1, keepdims=True) + 1e-10
         )
+
+        print(f"Created reverse mapping dictionary for {len(self.movie_id_to_idx):,} movies")
+
+        # 평점 점수 사전 계산 (Phase 1 최적화)
+        print("Pre-calculating rating scores...")
+        self.rating_scores = {}
+        current_date = datetime.now()  # 한 번만 호출
+
+        for mid in self.common_movie_ids:
+            meta = self.metadata_map.get(mid, {})
+            vote_average = meta.get('vote_average', 0)
+            vote_count = meta.get('vote_count', 0)
+            release_date = meta.get('release_date', '')
+
+            # 최소 투표수 3000 이상만 (비인기 영화 제외)
+            if vote_count < 3000 or not release_date:
+                self.rating_scores[mid] = 0.0
+                continue
+
+            # 개봉일로부터 경과일 계산
+            try:
+                release = datetime.strptime(release_date[:10], '%Y-%m-%d')
+                days_since_release = (current_date - release).days
+                days_since_release = max(days_since_release, 30)  # 최소 30일
+            except:
+                days_since_release = 365  # 파싱 실패시 1년으로 가정
+
+            # 일평균 투표수 계산
+            votes_per_day = vote_count / days_since_release
+
+            # 최종 점수: vote_average * log(votes_per_day + 1)
+            self.rating_scores[mid] = (vote_average / 10.0) * log(votes_per_day + 1)
+
+        print(f"Pre-calculated rating scores for {len(self.rating_scores):,} movies")
+
+        # 필터링 인덱스 생성 (Phase 2 최적화)
+        print("Building filtering indexes...")
+        self.movies_by_year = {}
+        self.movies_by_genre = {}
+        self.movies_by_ott = {}
+        self.adult_movies = set()
+        self.non_adult_movies = set()
+
+        for mid in self.common_movie_ids:
+            meta = self.metadata_map.get(mid, {})
+
+            # 연도 인덱스
+            release_date = meta.get('release_date', '')
+            if release_date:
+                try:
+                    year = int(release_date[:4])
+                    if year not in self.movies_by_year:
+                        self.movies_by_year[year] = []
+                    self.movies_by_year[year].append(mid)
+                except:
+                    pass
+
+            # 장르 인덱스
+            genres = meta.get('genres', [])
+            for genre in genres:
+                if genre not in self.movies_by_genre:
+                    self.movies_by_genre[genre] = []
+                self.movies_by_genre[genre].append(mid)
+
+            # OTT 인덱스
+            otts = self.movie_ott_map.get(mid, [])
+            for ott in otts:
+                if ott not in self.movies_by_ott:
+                    self.movies_by_ott[ott] = []
+                self.movies_by_ott[ott].append(mid)
+
+            # 성인물 인덱스
+            if meta.get('adult', False):
+                self.adult_movies.add(mid)
+            else:
+                self.non_adult_movies.add(mid)
+
+        print(f"  Year index: {len(self.movies_by_year)} years")
+        print(f"  Genre index: {len(self.movies_by_genre)} genres")
+        print(f"  OTT index: {len(self.movies_by_ott)} providers")
 
     def _get_user_profile(self, user_movie_ids: List[int]):
         """사용자 프로필 벡터 생성"""
@@ -279,32 +364,10 @@ class HybridRecommenderV2:
 
     def _calculate_rating_score(self, movie_id: int) -> float:
         """
-        평점 점수 계산: vote_average * log(votes_per_day + 1)
-        - 일평균 투표수로 정규화하여 최신 영화도 공정하게 평가
+        평점 점수 조회 (Phase 1 최적화: 사전 계산된 값 반환)
+        - 초기화 시 계산된 rating_scores 딕셔너리에서 O(1) 조회
         """
-        meta = self.metadata_map.get(movie_id, {})
-        vote_average = meta.get('vote_average', 0)
-        vote_count = meta.get('vote_count', 0)
-        release_date = meta.get('release_date', '')
-
-        # 최소 투표수 3000 이상만 (비인기 영화 제외)
-        if vote_count < 3000 or not release_date:
-            return 0.0
-
-        # 개봉일로부터 경과일 계산
-        try:
-            release = datetime.strptime(release_date[:10], '%Y-%m-%d')
-            days_since_release = (datetime.now() - release).days
-            days_since_release = max(days_since_release, 30)  # 최소 30일
-        except:
-            days_since_release = 365  # 파싱 실패시 1년으로 가정
-
-        # 일평균 투표수 계산
-        votes_per_day = vote_count / days_since_release
-
-        # 최종 점수: vote_average * log(votes_per_day + 1)
-        # votes_per_day 범위: 0.1 ~ 50+ → log: 0.1 ~ 4
-        return (vote_average / 10.0) * log(votes_per_day + 1)
+        return self.rating_scores.get(movie_id, 0.0)
 
     def _apply_filters(
         self,
@@ -314,45 +377,31 @@ class HybridRecommenderV2:
         min_year: int = 2000,
         allow_adult: bool = False
     ) -> List[int]:
-        """필터링 적용 (장르, OTT, 연도, 성인물)"""
-        filtered_ids = []
+        """필터링 적용 (Phase 2 최적화: 인덱스 기반 set 연산)"""
+        # 1. 연도 필터 (인덱스 사용)
+        year_filtered = set()
+        for year in range(min_year, 2026):
+            year_filtered.update(self.movies_by_year.get(year, []))
 
-        for movie_id in movie_ids:
-            meta = self.metadata_map.get(movie_id, {})
-            if not meta:
-                continue
+        # 2. 성인물 필터
+        if not allow_adult:
+            year_filtered &= self.non_adult_movies
 
-            # 성인물 필터
-            if not allow_adult and meta.get('adult', False):
-                continue
+        # 3. 장르 필터 (있으면)
+        if preferred_genres:
+            genre_filtered = set()
+            for genre in preferred_genres:
+                genre_filtered.update(self.movies_by_genre.get(genre, []))
+            year_filtered &= genre_filtered
 
-            # 연도 필터
-            release_date = meta.get('release_date', '')
-            if release_date:
-                try:
-                    year = int(release_date[:4])
-                    if year < min_year:
-                        continue
-                except:
-                    continue
-            else:
-                continue
+        # 4. OTT 필터 (있으면)
+        if preferred_otts:
+            ott_filtered = set()
+            for ott in preferred_otts:
+                ott_filtered.update(self.movies_by_ott.get(ott, []))
+            year_filtered &= ott_filtered
 
-            # 장르 필터 (Track A만)
-            if preferred_genres:
-                genres = meta.get('genres', [])
-                if not genres or not any(g in genres for g in preferred_genres):
-                    continue
-
-            # OTT 필터 (Track A만)
-            if preferred_otts:
-                movie_otts = self.movie_ott_map.get(movie_id, [])
-                if not any(ott in movie_otts for ott in preferred_otts):
-                    continue
-
-            filtered_ids.append(movie_id)
-
-        return filtered_ids
+        return list(year_filtered)
 
     def _get_top_movies(
         self,
@@ -367,11 +416,11 @@ class HybridRecommenderV2:
         """상위 영화 선정 (모델 점수 + 평점 점수)"""
         exclude_ids = exclude_ids or []
 
-        # 필터된 영화들의 인덱스
+        # 필터된 영화들의 인덱스 (O(1) 딕셔너리 조회)
         filtered_indices = []
         for mid in filtered_ids:
-            if mid in self.common_movie_ids:
-                idx = self.common_movie_ids.index(mid)
+            idx = self.movie_id_to_idx.get(mid)
+            if idx is not None:
                 filtered_indices.append((mid, idx))
 
         if not filtered_indices:
@@ -387,8 +436,8 @@ class HybridRecommenderV2:
         filtered_sbert = np.array([sbert_scores[idx] for _, idx in filtered_indices])
         filtered_lightgcn = np.array([lightgcn_scores[idx] for _, idx in filtered_indices])
 
-        # 평점 점수도 계산
-        filtered_rating = np.array([self._calculate_rating_score(mid) for mid, _ in filtered_indices])
+        # 평점 점수 조회 (Phase 1 최적화: 사전 계산된 값 사용)
+        filtered_rating = np.array([self.rating_scores.get(mid, 0.0) for mid, _ in filtered_indices])
 
         if len(filtered_sbert) > 1:
             norm_sbert = scaler.fit_transform(filtered_sbert.reshape(-1, 1)).squeeze()
