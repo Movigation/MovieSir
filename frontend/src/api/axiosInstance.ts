@@ -77,19 +77,20 @@ axiosInstance.interceptors.response.use(
             !originalRequest.skipAuth
         ) {
             // 🍪 쿠키 기반 인증: 401 에러 시 로그아웃 처리
-            // 사용자 정보만 제거 (토큰은 쿠키로 관리됨)
-            const hasUser = localStorage.getItem("user") || sessionStorage.getItem("user");
-
-            if (hasUser) {
-                // 로그인된 사용자의 세션이 만료된 경우
-                localStorage.removeItem("user");
-                localStorage.removeItem("rememberMe");
-                sessionStorage.removeItem("user");
-                sessionStorage.removeItem("rememberMe");
-
-                alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
-                window.location.href = "/";
+            // 1. 사용자 정보 및 상태 초기화 (Zustand)
+            try {
+                const { useMovieStore } = await import("@/store/useMovieStore");
+                useMovieStore.getState().setUserId(null);
+                useMovieStore.getState().resetFilters();
+            } catch (e) {
+                console.error("Zustand store reset failed:", e);
             }
+
+            // 2. AuthContext에 로그아웃 이벤트 전달 (커스텀 이벤트)
+            window.dispatchEvent(new CustomEvent('auth:logout'));
+
+            // 3. 메인 페이지로 리다이렉트 (로그아웃됨을 알림)
+            window.location.href = "/?expired=true";
 
             return Promise.reject(error);
         }

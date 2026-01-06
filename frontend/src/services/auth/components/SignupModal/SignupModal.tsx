@@ -1,11 +1,12 @@
 import { X, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { SignupModalProps } from "@/services/auth/components/SignupModal/signupModal.types";
 import { useSignupForm } from "@/services/auth/hooks";
 
 export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     const navigate = useNavigate();
+    const modalContentRef = useRef<HTMLDivElement>(null);
 
     // ✅ 모든 로직을 useSignupForm 훅에서 가져옴
     const {
@@ -85,12 +86,40 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
         console.log('🔍 [SignupModal] handleVerifyCodeWrapper 완료 - codeVerified:', codeVerified);
     };
 
+    // 모달 열림 시 배경 스크롤 방지
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
+    // 모달 내부에서 휠 스크롤이 작동하도록 이벤트 전파 중단
+    useEffect(() => {
+        const modalContent = modalContentRef.current;
+        if (!modalContent || !isOpen) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            // 모달 내부 스크롤을 허용하기 위해 이벤트 전파만 중단
+            e.stopPropagation();
+        };
+
+        modalContent.addEventListener('wheel', handleWheel);
+        return () => modalContent.removeEventListener('wheel', handleWheel);
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal sm:p-4">
-            <div className="bg-white dark:bg-gray-800 w-full h-screen sm:h-auto sm:w-[90%] sm:max-w-md sm:max-h-[90vh] sm:rounded-xl p-6 relative space-y-6 overflow-y-auto">
-                {/* CLOSE */}
+            <div
+                ref={modalContentRef}
+                className="bg-white dark:bg-gray-800 w-full h-screen sm:h-[90vh] sm:w-[90%] sm:max-w-md sm:rounded-xl p-6 relative space-y-6 overflow-y-auto"
+            >                {/* CLOSE */}
                 <button
                     onClick={handleClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -505,7 +534,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                                     disabled={true}
                                     className="w-full py-3 rounded-lg font-bold bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                                 >
-                                    🔒 인증 후 회원가입 완료
+                                    인증 후 회원가입 완료
                                 </button>
                             </>
                         )}

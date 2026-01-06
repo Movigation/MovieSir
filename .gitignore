@@ -109,6 +109,12 @@ tmp/
 temp/
 *.tmp
 ai/CHAT_SUMMARY.md
+ai/RECOMMENDATION_ALGORITHM.md
+
+# ------------------------------------------------------------
+# Prompts
+# ------------------------------------------------------------
+prompt/
 
 # Duplicate/Nested
 MovieSir/
