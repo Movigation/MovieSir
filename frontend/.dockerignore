@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs
+
+# Build output (will be rebuilt in container)
+dist
+build
+
+# Testing
+coverage
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Documentation
+*.md
+
+# Other
+.DS_Store
+tmp
+temp

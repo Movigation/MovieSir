@@ -1,0 +1,52 @@
+# MovieSir - App Server (Template)
+# 사용법: cp docker-compose.example.yml docker-compose.yml 후 값 수정
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ""
+        VITE_AUTH_BASE_URL: ""
+    container_name: moviesir-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moviesir-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://USER:PASSWORD@DB_HOST:5432/moviesir
+      - DATABASE_HOST=DB_HOST
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=moviesir
+      - DATABASE_USER=USER
+      - DATABASE_PASSWORD=PASSWORD
+      - JWT_SECRET_KEY=CHANGE_THIS
+      - REDIS_URL=redis://redis:6379
+      - AI_SERVICE_URL=http://AI_SERVER:8001
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: moviesir-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
