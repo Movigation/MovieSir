@@ -107,7 +107,10 @@ def get_recent_recommended_ids_by_genre(
     장르가 같은 최근 N회 추천된 Track A 영화 ID 조회
     """
     if not genres:
+        print(f"[DEBUG Track A] No genres provided, returning empty list")
         return []
+
+    print(f"[DEBUG Track A] Genres: {genres}, User: {user_id[:8]}..., Limit: {limit}")
 
     # 장르가 일치하는 세션에서 track_a_ids 조회
     result = db.execute(
@@ -123,16 +126,20 @@ def get_recent_recommended_ids_by_genre(
         {"uid": user_id, "genres": genres, "lim": limit}
     ).fetchall()
 
+    print(f"[DEBUG Track A] Query returned {len(result)} sessions")
+
     all_ids = set()
     for row in result:
         if row[0]:
             try:
                 import json
                 ids = json.loads(row[0])
+                print(f"[DEBUG Track A] Found {len(ids)} IDs in session: {ids[:5]}..." if len(ids) > 5 else f"[DEBUG Track A] Found {len(ids)} IDs: {ids}")
                 all_ids.update(ids)
             except:
                 pass
 
+    print(f"[DEBUG Track A] Total unique IDs to exclude: {len(all_ids)}")
     return list(all_ids)
 
 
