@@ -51,7 +51,8 @@ class MovieInfo(BaseModel):
 
 class RecommendedMovie(BaseModel):
     """추천된 영화 (AI 응답용)"""
-    tmdb_id: int
+    movie_id: int
+    tmdb_id: Optional[int] = None
     title: str
     runtime: int
     genres: List[str] = []
