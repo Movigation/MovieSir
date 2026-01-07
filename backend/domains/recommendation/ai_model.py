@@ -16,6 +16,13 @@ class AIModelAdapter:
     def __init__(self):
         self.ai_service_url = os.getenv("AI_SERVICE_URL", "http://10.0.35.62:8001")
         self.is_loaded = True
+        
+        # 캐싱 변수
+        self._popular_movies_cache = None  # 인기 영화 목록 (24시간 TTL)
+        self._cache_timestamp = None  # 캐시 생성 시각
+        self._user_profile_cache = {}  # user_id → (movie_ids, timestamp) - 세션 캐싱 (5분 TTL)
+        self._all_ott_names = None  # 전체 OTT 목록 (영구 캐시)
+
 
     def _get_user_watched_movies(self, user_id: str) -> List[int]:
         """사용자의 시청 기록에서 movie_id 리스트 반환"""
@@ -51,6 +58,134 @@ class AIModelAdapter:
 
         return []
 
+    def _get_popular_movies(self, limit: int = 5) -> List[int]:
+        """
+        인기 영화 ID 리스트 반환 (24시간 캐싱 + 랜덤 샘플링)
+        
+        Args:
+            limit: 반환할 영화 개수 (기본값 5개)
+        
+        Returns:
+            인기 영화 movie_id 리스트
+        """
+        import time
+        import random
+        
+        # 캐시 확인 (24시간)
+        if self._popular_movies_cache and self._cache_timestamp:
+            if time.time() - self._cache_timestamp < 86400:  # 24시간
+                # 캐시된 목록에서 랜덤 샘플링
+                if len(self._popular_movies_cache) > limit:
+                    return random.sample(self._popular_movies_cache, limit)
+                return self._popular_movies_cache
+        
+        # DB 조회
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                # 상위 50개 조회 (랜덤 샘플링용)
+                result = db.execute(
+                    text("""
+                        SELECT movie_id 
+                        FROM movies 
+                        WHERE vote_count >= 5000 
+                          AND vote_average >= 7.0 
+                          AND EXTRACT(YEAR FROM release_date) >= 2000
+                          AND adult = false
+                        ORDER BY popularity DESC NULLS LAST
+                        LIMIT 50
+                    """)
+                ).fetchall()
+                
+                if result:
+                    movies = [row[0] for row in result]
+                    # 캐시 저장
+                    self._popular_movies_cache = movies
+                    self._cache_timestamp = time.time()
+                    
+                    # 랜덤 샘플링
+                    if len(movies) > limit:
+                        return random.sample(movies, limit)
+                    return movies
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[AI Model] Error fetching popular movies: {e}")
+            # 에러 시 캐시가 있으면 사용
+            if self._popular_movies_cache:
+                if len(self._popular_movies_cache) > limit:
+                    return random.sample(self._popular_movies_cache, limit)
+                return self._popular_movies_cache
+        
+        return []
+
+    def _get_all_ott_names(self) -> List[str]:
+        """전체 OTT provider_name 목록 조회 (영구 캐싱)"""
+        if self._all_ott_names:
+            return self._all_ott_names
+        
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                result = db.execute(
+                    text("SELECT provider_name FROM ott_providers ORDER BY provider_id")
+                ).fetchall()
+                
+                if result:
+                    self._all_ott_names = [row[0] for row in result]
+                    return self._all_ott_names
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[AI Model] Error fetching all OTTs: {e}")
+        
+        return []
+
+    def _get_user_movie_ids(self, user_id: str, force_refresh: bool = False) -> List[int]:
+        """
+        사용자 영화 ID 조회 (세션 캐싱)
+        
+        Args:
+            user_id: 사용자 ID
+            force_refresh: True면 캐시 무시하고 새로 조회 (전체 추천용)
+                          False면 캐시 사용 (재추천용)
+        
+        Returns:
+            사용자 영화 ID 리스트 (시청 기록 > 온보딩 > 인기 영화)
+        """
+        import time
+        
+        # 1. DB에서 시청 기록 조회
+        user_movie_ids = self._get_user_watched_movies(user_id)
+        
+        if user_movie_ids:
+            # 시청 기록 있으면 캐시 갱신 후 반환
+            self._user_profile_cache[user_id] = (user_movie_ids, time.time())
+            return user_movie_ids
+        
+        # 2. 시청 기록 없음 - 캐시 확인 (force_refresh=False일 때만)
+        if not force_refresh and user_id in self._user_profile_cache:
+            cached_ids, cached_time = self._user_profile_cache[user_id]
+            # 5분 이내 캐시면 재사용
+            if time.time() - cached_time < 300:  # 5분
+                print(f"[AI Model] Using cached profile for {user_id[:8]}...")
+                return cached_ids
+        
+        # 3. 인기 영화 사용 (5개)
+        print(f"[AI Model] No history for {user_id[:8]}... - using 5 popular movies")
+        popular_movies = self._get_popular_movies(limit=5)
+        
+        # 캐시 저장 (5분 TTL)
+        self._user_profile_cache[user_id] = (popular_movies, time.time())
+        return popular_movies
+
+
     def recommend(
         self,
         user_id: str,
@@ -72,12 +207,14 @@ class AIModelAdapter:
             }
         """
         try:
-            # 사용자 시청 기록 조회
-            user_movie_ids = self._get_user_watched_movies(user_id)
-
-            if not user_movie_ids:
-                print(f"[AI Model] No watch history for user {user_id}")
-                user_movie_ids = [550, 27205, 157336]  # 기본값
+            # 사용자 영화 ID 조회 (force_refresh=True → 항상 새 프로필 생성)
+            user_movie_ids = self._get_user_movie_ids(user_id, force_refresh=True)
+            
+            # OTT 구독 정보 없으면 전체 OTT 사용
+            if not preferred_otts:
+                preferred_otts = self._get_all_ott_names()
+                if preferred_otts:
+                    print(f"[AI Model] No OTT subscription - using all OTTs ({len(preferred_otts)})")
 
             payload = {
                 "user_movie_ids": user_movie_ids,
@@ -129,10 +266,14 @@ class AIModelAdapter:
             { 'tmdb_id': int, 'title': str, 'runtime': int, ... } 또는 None
         """
         try:
-            user_movie_ids = self._get_user_watched_movies(user_id)
-
-            if not user_movie_ids:
-                user_movie_ids = [550, 27205, 157336]
+            # 사용자 영화 ID 조회 (force_refresh=False → 캐시 사용, 5분 이내)
+            user_movie_ids = self._get_user_movie_ids(user_id, force_refresh=False)
+            
+            # OTT 구독 정보 없으면 전체 OTT 사용
+            if not preferred_otts:
+                preferred_otts = self._get_all_ott_names()
+                if preferred_otts:
+                    print(f"[AI Model] No OTT subscription - using all OTTs ({len(preferred_otts)})")
 
             payload = {
                 "user_movie_ids": user_movie_ids,
@@ -204,15 +345,15 @@ class AIModelAdapter:
         # Track A에서 영화 추출
         track_a = result.get('track_a', {})
         for movie in track_a.get('movies', []):
-            if isinstance(movie, dict) and 'tmdb_id' in movie:
-                movie_ids.append(movie['tmdb_id'])
+            if isinstance(movie, dict) and 'movie_id' in movie:
+                movie_ids.append(movie['movie_id'])
 
         # Track B에서 영화 추출
         track_b = result.get('track_b', {})
         for movie in track_b.get('movies', []):
-            if isinstance(movie, dict) and 'tmdb_id' in movie:
-                if movie['tmdb_id'] not in movie_ids:
-                    movie_ids.append(movie['tmdb_id'])
+            if isinstance(movie, dict) and 'movie_id' in movie:
+                if movie['movie_id'] not in movie_ids:
+                    movie_ids.append(movie['movie_id'])
 
         return movie_ids[:top_k]
 
