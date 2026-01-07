@@ -23,7 +23,7 @@ def convert_numpy_types(obj: Any) -> Any:
     return obj
 
 
-app = FastAPI(title="MovieSir AI Service v2")
+app = FastAPI(title="MovieSir AI Service v3")
 
 # 모델 로드 (서버 시작 시 한 번만)
 recommender = None
@@ -53,7 +53,7 @@ async def load_model():
                 lightgcn_model_path="training/lightgcn_model/best_model.pt",
                 lightgcn_data_path="training/lightgcn_data"
             )
-            print("✅ AI Model v2 loaded successfully")
+            print("✅ AI Model v3 loaded successfully")
             return
         except Exception as e:
             if attempt < max_retries:
@@ -68,7 +68,7 @@ async def load_model():
 
 @app.get("/")
 def health():
-    return {"message": "ok", "service": "ai", "version": "v2"}
+    return {"message": "ok", "service": "ai", "version": "v3"}
 
 
 @app.get("/health")
@@ -76,7 +76,7 @@ def health_check():
     return {
         "status": "healthy",
         "model_loaded": recommender is not None,
-        "version": "v2"
+        "version": "v3"
     }
 
 
@@ -103,7 +103,8 @@ class RecommendSingleRequest(BaseModel):
 
 
 class MovieInfo(BaseModel):
-    tmdb_id: int
+    movie_id: int
+    tmdb_id: Optional[int] = None
     title: str
     runtime: int
     genres: List[str] = []

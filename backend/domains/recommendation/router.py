@@ -64,8 +64,8 @@ def recommend_movies_v2(
     )
 
     # 추천 결과 저장 (Track A, B 분리)
-    track_a_ids = [m['tmdb_id'] for m in result.get('track_a', {}).get('movies', [])]
-    track_b_ids = [m['tmdb_id'] for m in result.get('track_b', {}).get('movies', [])]
+    track_a_ids = [m['movie_id'] for m in result.get('track_a', {}).get('movies', [])]
+    track_b_ids = [m['movie_id'] for m in result.get('track_b', {}).get('movies', [])]
 
     if track_a_ids or track_b_ids:
         service.save_recommendation_session(
@@ -166,15 +166,15 @@ def mark_watched(
     return {"status": "success"}
 
 
-@router.get("/api/movies/{tmdb_id}", response_model=schema.MovieDetailResponse)
+@router.get("/api/movies/{movie_id}", response_model=schema.MovieDetailResponse)
 def get_movie_detail(
-    tmdb_id: int,
+    movie_id: int,
     db: Session = Depends(get_db),
 ):
-    """영화 상세 정보 조회 (로그인 불필요) - tmdb_id로 조회"""
+    """영화 상세 정보 조회 (로그인 불필요) - movie_id로 조회"""
     from backend.domains.movie.models import Movie
 
-    movie = db.query(Movie).filter(Movie.tmdb_id == tmdb_id).first()
+    movie = db.query(Movie).filter(Movie.movie_id == movie_id).first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
