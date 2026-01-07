@@ -109,6 +109,8 @@ ai/training/original_data/*
 tmp/
 temp/
 *.tmp
+.claude/
+.mcp.json
 ai/CHAT_SUMMARY.md
 ai/RECOMMENDATION_ALGORITHM.md
 

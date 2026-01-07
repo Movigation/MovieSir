@@ -44,7 +44,13 @@ def recommend_movies_v2(
     excluded_a = list(set((req.excluded_ids or []) + recent_a))
     excluded_b = list(set((req.excluded_ids or []) + recent_b))
 
-    print(f"[Recommend] Track A 제외: {len(recent_a)}개, Track B 제외: {len(recent_b)}개")
+    print(f"[Recommend] User: {user_id[:8]}..., Genres: {req.genres}")
+    print(f"[Recommend] Track A 제외: DB={len(recent_a)}개, 요청={len(req.excluded_ids or [])}개, 최종={len(excluded_a)}개")
+    print(f"[Recommend] Track B 제외: DB={len(recent_b)}개, 요청={len(req.excluded_ids or [])}개, 최종={len(excluded_b)}개")
+    if len(excluded_a) > 0:
+        print(f"[Recommend] Track A excluded IDs (first 10): {excluded_a[:10]}")
+    if len(excluded_b) > 0:
+        print(f"[Recommend] Track B excluded IDs (first 10): {excluded_b[:10]}")
 
     # AI 추천 호출 (Track A, B 별도 제외 목록)
     result = ai_model.recommend(
