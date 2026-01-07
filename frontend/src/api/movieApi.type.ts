@@ -108,7 +108,8 @@ export interface UserStatus {
 
 // [용도] AI 추천 영화 (v2 응답용)
 export interface RecommendedMovieV2 {
-    tmdb_id: number;
+    movie_id: number;
+    tmdb_id?: number | null;
     title: string;
     runtime: number;
     genres: string[];

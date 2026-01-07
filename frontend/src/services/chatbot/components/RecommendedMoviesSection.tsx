@@ -72,9 +72,8 @@ const RecommendedList = () => {
                     onCollapse={() => setExpandedCardId(null)}
                     onClick={() => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
-                            // 🎬 TMDB ID만 사용하여 상세 정보 조회 (ID 불일치 방지)
-                            const targetId = movie.tmdb_id ?? movie.id;
-                            setDetailMovieId(targetId);
+                            // 🎬 movie_id로 상세 정보 조회
+                            setDetailMovieId(movie.id);
                         }
                     }}
                     onReRecommend={() => handleReRecommend(movie.id)}
