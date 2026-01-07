@@ -108,6 +108,8 @@ ai/training/original_data/*
 tmp/
 temp/
 *.tmp
+.claude/
+.mcp.json
 ai/CHAT_SUMMARY.md
 ai/RECOMMENDATION_ALGORITHM.md
 
@@ -131,4 +133,6 @@ backend/data/
 *.sql
 # 대용량 DB 덤프 파일은 제외 (GitHub 100MB 제한)
 database/init/movigation.sql
+# 마이그레이션 SQL은 예외
+!database/migrations/**/*.sql
 secrets/
