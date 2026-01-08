@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function Api() {
@@ -55,24 +54,24 @@ export default function Api() {
                   </button>
                   <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                     <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      <Link
-                        to="/docs?section=intro"
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=intro"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         무비서 API란
-                      </Link>
-                      <Link
-                        to="/docs?section=features"
+                      </a>
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=features"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         주요 기능
-                      </Link>
-                      <Link
-                        to="/docs?section=getting-started"
+                      </a>
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=getting-started"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         시작하기
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 </li>
@@ -96,30 +95,30 @@ export default function Api() {
                   </button>
                   <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                     <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      <Link
-                        to="/docs?section=auth"
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=auth"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         인증
-                      </Link>
-                      <Link
-                        to="/docs?section=recommend"
+                      </a>
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=recommend"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         /recommend
-                      </Link>
-                      <Link
-                        to="/docs?section=errors"
+                      </a>
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=errors"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         에러 코드
-                      </Link>
-                      <Link
-                        to="/docs?section=rate-limit"
+                      </a>
+                      <a
+                        href="https://console.moviesir.cloud/docs?section=rate-limit"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                       >
                         Rate Limit
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 </li>
@@ -218,12 +217,12 @@ export default function Api() {
                       />
                     </svg>
                   </a>
-                  <Link
-                    to="/docs"
+                  <a
+                    href="https://console.moviesir.cloud/docs"
                     className="inline-flex items-center gap-2 px-6 py-3 border border-white/30 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
                   >
                     API 문서 보기
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -425,12 +424,12 @@ export default function Api() {
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <p className="text-sm text-white/50">© 2025 Team Movigation</p>
                 <div className="flex items-center gap-6 text-sm text-white/50">
-                  <Link
-                    to="/docs"
+                  <a
+                    href="https://console.moviesir.cloud/docs"
                     className="hover:text-white transition-colors"
                   >
                     API 문서
-                  </Link>
+                  </a>
                   <a href="#" className="hover:text-white transition-colors">
                     서비스 약관
                   </a>
