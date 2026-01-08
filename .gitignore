@@ -136,4 +136,3 @@ backend/data/
 database/init/movigation.sql
 # 마이그레이션 SQL은 예외
 !database/migrations/**/*.sql
-secrets/
