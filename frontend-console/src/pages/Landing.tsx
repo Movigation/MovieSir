@@ -279,12 +279,12 @@ export default function Landing() {
               </a>
             </li>
             <li>
-              <Link
-                to="/api"
+              <a
+                href="https://api.moviesir.cloud"
                 className="text-base font-medium text-gray-600 transition-colors hover:text-accent-600"
               >
                 API
-              </Link>
+              </a>
             </li>
           </ul>
           <div className="flex items-center gap-4">
@@ -304,12 +304,12 @@ export default function Landing() {
                 />
               </svg>
             </button>
-            <Link
-              to="/login"
+            <a
+              href="https://demo.moviesir.cloud"
               className="px-6 py-2.5 bg-accent-600 text-white text-base font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all"
             >
               무비서 이용하기
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -388,12 +388,12 @@ export default function Landing() {
                     />
                   </svg>
                 </a>
-                <Link
-                  to="/api"
+                <a
+                  href="https://api.moviesir.cloud"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold text-gray-700 transition-all bg-white border border-gray-200 rounded-full hover:border-accent-300 hover:text-accent-600"
                 >
                   API 문서 보기
-                </Link>
+                </a>
               </div>
 
               {/* Stats */}
@@ -988,12 +988,12 @@ export default function Landing() {
                   </a>
                 </li>
                 <li>
-                  <Link
-                    to="/api"
+                  <a
+                    href="https://api.moviesir.cloud"
                     className="transition-colors hover:text-white"
                   >
                     API
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>

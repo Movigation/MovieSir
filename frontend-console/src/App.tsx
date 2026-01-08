@@ -26,6 +26,9 @@ function RootPage() {
   if (hostname === 'api.moviesir.cloud') {
     return <Api />
   }
+  if (hostname === 'console.moviesir.cloud') {
+    return <Navigate to="/console" replace />
+  }
   return <Landing />
 }
 
