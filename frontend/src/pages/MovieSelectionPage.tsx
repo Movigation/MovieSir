@@ -76,7 +76,8 @@ export default function MovieSelectionPage() {
         };
 
         loadMovies();
-    }, [storedMovies, setGlobalMovies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
 
     // 영화 선택/해제 토글
