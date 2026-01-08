@@ -5,7 +5,7 @@ from typing import List, Optional, Any, Dict
 import os
 import numpy as np
 
-from inference.db_conn_movie_reco_v2 import HybridRecommenderV2
+from inference.db_conn_movie_reco_v3 import HybridRecommenderV3
 
 
 def convert_numpy_types(obj: Any) -> Any:
@@ -48,7 +48,7 @@ async def load_model():
 
     for attempt in range(1, max_retries + 1):
         try:
-            recommender = HybridRecommenderV2(
+            recommender = HybridRecommenderV3(
                 db_config=db_config,
                 lightgcn_model_path="training/lightgcn_model/best_model.pt",
                 lightgcn_data_path="training/lightgcn_data"
