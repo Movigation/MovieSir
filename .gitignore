@@ -102,6 +102,7 @@ ai/training/original_data/*
 
 *.pem
 *.key
+secrets/
 
 # ------------------------------------------------------------
 # Temp
