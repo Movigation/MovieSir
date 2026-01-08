@@ -136,6 +136,3 @@ backend/data/
 database/init/movigation.sql
 # 마이그레이션 SQL은 예외
 !database/migrations/**/*.sql
-# 단, 대용량 base 테이블은 제외
-database/migrations/b2c/001_base_tables.sql
-secrets/
