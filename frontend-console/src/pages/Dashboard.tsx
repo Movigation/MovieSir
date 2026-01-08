@@ -1,0 +1,450 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { api } from '@/api'
+import { useAuthStore } from '@/stores/authStore'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts'
+
+interface DashboardData {
+  today: number
+  total: number
+  daily_limit: number
+  plan: string
+  chart_data: { date: string; count: number; success: number; error: number }[]
+}
+
+interface ActiveUser {
+  id: string
+  name: string
+  email: string
+  calls: number
+  lastActive: string
+}
+
+interface LogEntry {
+  id: string
+  time: string
+  method: string
+  endpoint: string
+  status: number
+  latency: number
+}
+
+const mockDashboardData: DashboardData = {
+  today: 342,
+  total: 12847,
+  daily_limit: 1000,
+  plan: 'FREE',
+  chart_data: [
+    { date: '01/02', count: 234, success: 220, error: 14 },
+    { date: '01/03', count: 456, success: 440, error: 16 },
+    { date: '01/04', count: 321, success: 310, error: 11 },
+    { date: '01/05', count: 567, success: 545, error: 22 },
+    { date: '01/06', count: 432, success: 420, error: 12 },
+    { date: '01/07', count: 289, success: 280, error: 9 },
+    { date: '01/08', count: 342, success: 330, error: 12 },
+  ],
+}
+
+const mockTopEndpoints = [
+  { endpoint: '/v1/recommend', calls: 11234, avgLatency: 215, successRate: 98.2 },
+  { endpoint: '/v1/movies/:id', calls: 1456, avgLatency: 42, successRate: 99.1 },
+  { endpoint: '/v1/genres', calls: 157, avgLatency: 18, successRate: 100 },
+]
+
+const mockActiveUsers: ActiveUser[] = [
+  { id: '1', name: '김민수', email: 'minsu@example.com', calls: 1247, lastActive: '방금 전' },
+  { id: '2', name: '이수진', email: 'sujin@example.com', calls: 892, lastActive: '5분 전' },
+  { id: '3', name: '박지훈', email: 'jihoon@example.com', calls: 654, lastActive: '12분 전' },
+  { id: '4', name: '최유나', email: 'yuna@example.com', calls: 521, lastActive: '1시간 전' },
+  { id: '5', name: '정현우', email: 'hyunwoo@example.com', calls: 433, lastActive: '2시간 전' },
+]
+
+const mockLogs: LogEntry[] = [
+  { id: '1', time: '14:32:15', method: 'POST', endpoint: '/v1/recommend', status: 200, latency: 234 },
+  { id: '2', time: '14:31:42', method: 'POST', endpoint: '/v1/recommend', status: 200, latency: 198 },
+  { id: '3', time: '14:30:58', method: 'GET', endpoint: '/v1/movies/12345', status: 200, latency: 45 },
+  { id: '4', time: '14:29:33', method: 'POST', endpoint: '/v1/recommend', status: 429, latency: 12 },
+  { id: '5', time: '14:28:11', method: 'POST', endpoint: '/v1/recommend', status: 200, latency: 267 },
+]
+
+// 도넛 차트 데이터
+const usageOverviewData = [
+  { name: '성공', value: 85, color: '#3b82f6' },
+  { name: '에러', value: 10, color: '#ef4444' },
+  { name: '제한', value: 5, color: '#f59e0b' },
+]
+
+export default function Dashboard() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_topEndpoints, _setTopEndpoints] = useState<{ endpoint: string; calls: number; avgLatency: number; successRate: number }[]>([])
+  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([])
+  const [logs, setLogs] = useState<LogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const { token, company } = useAuthStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (token === 'test-token-12345') {
+      setData(mockDashboardData)
+      _setTopEndpoints(mockTopEndpoints)  // TODO: Top Endpoints 섹션 추가 시 사용
+      setActiveUsers(mockActiveUsers)
+      setLogs(mockLogs)
+      setLoading(false)
+      return
+    }
+
+    api
+      .get('/b2b/dashboard')
+      .then((res) => setData(res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [token])
+
+  // Live Logs 5초 폴링
+  useEffect(() => {
+    const fetchLogs = async () => {
+      if (token === 'test-token-12345') {
+        const methods = ['GET', 'POST']
+        const endpoints = ['/v1/recommend', '/v1/movies/12345', '/v1/genres']
+        const statuses = [200, 200, 200, 200, 429, 404]
+        const now = new Date()
+        const newLog: LogEntry = {
+          id: `log-${Date.now()}`,
+          time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
+          method: methods[Math.floor(Math.random() * methods.length)],
+          endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+          latency: Math.floor(Math.random() * 300) + 20,
+        }
+        setLogs((prev) => [newLog, ...prev].slice(0, 100))
+        return
+      }
+
+      try {
+        const { data } = await api.get('/b2b/logs?limit=5')
+        setLogs(data)
+      } catch (err) {
+        console.error('Failed to fetch logs:', err)
+      }
+    }
+
+    const interval = setInterval(fetchLogs, 5000)
+    return () => clearInterval(interval)
+  }, [token])
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-500">
+        데이터를 불러올 수 없습니다
+      </div>
+    )
+  }
+
+  const usagePercent = Math.round((data.today / data.daily_limit) * 100)
+
+  return (
+    <div className="p-4 lg:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="min-w-0">
+          <h1 className="text-lg lg:text-xl font-semibold text-white truncate">Hello, {company?.name || 'User'}</h1>
+          <p className="text-sm text-gray-500">Welcome back</p>
+        </div>
+        <div className="text-xs lg:text-sm text-gray-500 hidden sm:block whitespace-nowrap">
+          Reports: <span className="text-gray-400">{new Date().toLocaleDateString('ko-KR')}</span>
+        </div>
+      </div>
+
+      {/* Stats Cards with Icons */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+        {/* 오늘 호출 */}
+        <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <div className="flex items-center gap-1 text-green-400 text-xs font-medium">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+              12%
+            </div>
+          </div>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{data.today.toLocaleString()}</p>
+          <p className="text-xs lg:text-sm text-gray-500 mt-1">오늘 호출</p>
+        </div>
+
+        {/* 총 호출 */}
+        <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div className="flex items-center gap-1 text-green-400 text-xs font-medium">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+              148%
+            </div>
+          </div>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{(data.total / 1000).toFixed(1)}k</p>
+          <p className="text-xs lg:text-sm text-gray-500 mt-1">총 호출</p>
+        </div>
+
+        {/* 성공률 */}
+        <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex items-center gap-1 text-green-400 text-xs font-medium">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+              0.2%
+            </div>
+          </div>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">98.2%</p>
+          <p className="text-xs lg:text-sm text-gray-500 mt-1">성공률</p>
+        </div>
+
+        {/* 남은 호출 */}
+        <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">{usagePercent}% 사용</span>
+          </div>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{(data.daily_limit - data.today).toLocaleString()}</p>
+          <p className="text-xs lg:text-sm text-gray-500 mt-1">남은 호출</p>
+        </div>
+      </div>
+
+      {/* Middle Section: Profile + Chart + Donut */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 mb-6">
+        {/* Company Profile Card */}
+        <div className="lg:col-span-3 bg-[#16161d] rounded-xl p-4 lg:p-5 order-2 lg:order-1">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-lg lg:text-xl font-bold flex-shrink-0">
+              {company?.name?.charAt(0) || 'M'}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-white text-sm lg:text-base truncate">{company?.name || 'MovieSir'}</p>
+              <p className="text-[10px] lg:text-xs text-blue-400 truncate">{company?.email || 'contact@moviesir.cloud'}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/console/docs')}
+            className="w-full py-2 bg-blue-500 text-white rounded-lg text-xs lg:text-sm font-medium hover:bg-blue-400 transition-colors mb-4"
+          >
+            API 문서 보기
+          </button>
+          <div className="grid grid-cols-2 gap-3 lg:gap-4">
+            <div className="text-center">
+              <p className="text-[10px] lg:text-xs text-gray-500">플랜</p>
+              <p className="font-semibold text-white text-sm lg:text-base">{data.plan}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] lg:text-xs text-gray-500">일일 한도</p>
+              <p className="font-semibold text-white text-sm lg:text-base">{data.daily_limit.toLocaleString()}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] lg:text-xs text-gray-500">API 키</p>
+              <p className="font-semibold text-white text-sm lg:text-base">2개</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] lg:text-xs text-gray-500">사용률</p>
+              <p className="font-semibold text-blue-400 text-sm lg:text-base">{usagePercent}%</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Chart */}
+        <div className="lg:col-span-6 bg-[#16161d] rounded-xl p-4 lg:p-5 order-1 lg:order-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-white">API Calls</h2>
+            <div className="flex gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-gray-500">성공</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="text-gray-500">에러</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data.chart_data}>
+                <defs>
+                  <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="errorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}/>
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" stroke="#374151" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#374151" fontSize={11} tickLine={false} axisLine={false} width={35} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1f1f28', border: 'none', borderRadius: '8px' }}
+                  labelStyle={{ color: '#9ca3af', fontSize: '12px' }}
+                  itemStyle={{ fontSize: '12px' }}
+                />
+                <Area type="monotone" dataKey="success" stroke="#3b82f6" strokeWidth={2} fill="url(#successGradient)" name="성공" />
+                <Area type="monotone" dataKey="error" stroke="#ef4444" strokeWidth={2} fill="url(#errorGradient)" name="에러" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Usage Overview Donut */}
+        <div className="lg:col-span-3 bg-[#16161d] rounded-xl p-4 lg:p-5 order-3">
+          <h2 className="text-sm font-medium text-white mb-4">Usage Overview</h2>
+          <div className="h-36 relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={usageOverviewData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={60}
+                  paddingAngle={3}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  <Cell fill="rgba(59, 130, 246, 0.7)" />
+                  <Cell fill="rgba(239, 68, 68, 0.7)" />
+                  <Cell fill="rgba(245, 158, 11, 0.7)" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-2">
+            {usageOverviewData.map((item) => (
+              <div key={item.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-gray-400">{item.name}</span>
+                </div>
+                <span className="font-medium text-white">{item.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section: Table + Recent */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+        {/* Active Users Table */}
+        <div className="lg:col-span-8 bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-white">Active Users</h2>
+            <button className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-[10px] lg:text-xs text-gray-500 border-b border-white/5">
+                  <th className="pb-3 font-medium hidden sm:table-cell">NO</th>
+                  <th className="pb-3 font-medium">이름</th>
+                  <th className="pb-3 font-medium hidden md:table-cell">이메일</th>
+                  <th className="pb-3 font-medium">호출</th>
+                  <th className="pb-3 font-medium hidden sm:table-cell">마지막 활동</th>
+                  <th className="pb-3 font-medium text-right">상태</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {activeUsers.map((user, i) => (
+                  <tr key={user.id}>
+                    <td className="py-3 text-xs lg:text-sm text-gray-500 hidden sm:table-cell">#{String(i + 1).padStart(2, '0')}</td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[10px] lg:text-xs font-medium flex-shrink-0">
+                          {user.name.charAt(0)}
+                        </div>
+                        <span className="text-xs lg:text-sm font-medium text-white truncate max-w-[80px] lg:max-w-none">{user.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-xs lg:text-sm text-blue-400 hidden md:table-cell truncate max-w-[120px]">{user.email}</td>
+                    <td className="py-3 text-xs lg:text-sm text-gray-400">{user.calls.toLocaleString()}</td>
+                    <td className="py-3 text-xs lg:text-sm text-gray-500 hidden sm:table-cell whitespace-nowrap">{user.lastActive}</td>
+                    <td className="py-3 text-right">
+                      <span className={`inline-flex items-center gap-1 lg:gap-1.5 px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-full text-[10px] lg:text-xs ${
+                        user.lastActive.includes('분') || user.lastActive.includes('방금')
+                          ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'
+                      }`}>
+                        <span className={`w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full ${
+                          user.lastActive.includes('분') || user.lastActive.includes('방금')
+                            ? 'bg-green-400' : 'bg-gray-400'
+                        }`} />
+                        <span className="hidden sm:inline">{user.lastActive.includes('분') || user.lastActive.includes('방금') ? 'Active' : 'Away'}</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Logs */}
+        <div className="lg:col-span-4 bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-medium text-white">Live Logs</h2>
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            </div>
+            <button className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+          </div>
+          <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
+            {logs.map((log) => (
+              <div key={log.id} className="flex items-center gap-1.5 lg:gap-2 text-[10px] lg:text-xs py-1.5 border-b border-white/5 last:border-0">
+                <span className="text-gray-500 w-12 lg:w-14 flex-shrink-0">{log.time}</span>
+                <span className={`w-10 lg:w-12 px-1 lg:px-1.5 py-0.5 rounded text-center font-medium flex-shrink-0 ${
+                  log.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                }`}>{log.method}</span>
+                <span className="flex-1 text-gray-300 font-mono truncate min-w-0">{log.endpoint}</span>
+                <span className={`w-7 lg:w-8 text-right flex-shrink-0 ${
+                  log.status === 200 ? 'text-green-400' : log.status === 429 ? 'text-yellow-400' : 'text-red-400'
+                }`}>{log.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
