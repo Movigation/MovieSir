@@ -2,7 +2,7 @@
 // [사용법] <UserSettings onBack={() => setView('main')} />
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Eye, EyeOff, X } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthContext';
 import { deleteUser } from '@/api/authApi';
 import * as userApi from '@/api/userApi';
@@ -12,10 +12,14 @@ type UserSettingsProps = {
 };
 
 export default function UserSettings({ onBack }: UserSettingsProps) {
-    const { user, logout, refreshUser } = useAuth();
+    const { user, updateUser } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState(user?.nickname || '');
     const [isLoading, setIsLoading] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
 
     useEffect(() => {
         if (user) {
@@ -28,32 +32,37 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
 
         try {
             setIsLoading(true);
-            await userApi.patchUser(user.id, { nickname: tempName } as any);
-            await refreshUser();
+            const response = await userApi.updateNickname(tempName);
+            const newNickname = response.data.nickname;
+
+            // 1. AuthContext 상태 업데이트 (로컬 스토리지 포함)
+            updateUser({ nickname: newNickname });
+
             setIsEditing(false);
-            alert('이름이 변경되었습니다');
-        } catch (error) {
-            console.error('이름 변경 실패:', error);
-            alert('이름 변경에 실패했습니다');
+            alert('닉네임이 변경되었습니다');
+        } catch (error: any) {
+            console.error('닉네임 변경 실패:', error);
+            const msg = error.response?.data?.detail || '닉네임 변경에 실패했습니다';
+            alert(msg);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleDeleteAccount = async () => {
-        if (!user) return;
+        if (!user || !deletePassword) return;
 
-        if (window.confirm('정말로 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-            if (window.confirm('모든 데이터가 삭제됩니다. 정말 진행하시겠습니까?')) {
-                try {
-                    await deleteUser(user.id);
-                    alert('회원 탈퇴가 완료되었습니다');
-                    logout();
-                } catch (error) {
-                    console.error('회원 탈퇴 실패:', error);
-                    alert('회원 탈퇴에 실패했습니다');
-                }
-            }
+        try {
+            setIsLoading(true);
+            setDeleteError('');
+            await deleteUser(deletePassword);
+            alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
+            // deleteUser 함수 내에서 이미 logout()을 호출하고 있음
+        } catch (error: any) {
+            console.error('회원 탈퇴 실패:', error);
+            setDeleteError(error.message || '회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -72,9 +81,9 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
 
             {/* 설정 내용 */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-                {/* 이름 변경 */}
+                {/* 닉네임 변경 */}
                 <div className="p-4 bg-gray-700 rounded-lg">
-                    <h3 className="text-white font-medium mb-3">이름</h3>
+                    <h3 className="text-white font-medium mb-3">닉네임</h3>
                     {isEditing ? (
                         <div className="flex gap-2">
                             <input
@@ -131,7 +140,7 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
                         회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
                     </p>
                     <button
-                        onClick={handleDeleteAccount}
+                        onClick={() => setShowDeleteModal(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                     >
                         <Trash2 size={18} />
@@ -139,6 +148,70 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
                     </button>
                 </div>
             </div>
+
+            {/* 회원 탈퇴 확인 모달 */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-gray-800 w-full max-w-sm rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold text-white">회원 탈퇴 확인</h3>
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="text-gray-400 hover:text-white"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                                보안을 위해 비밀번호를 입력해주세요.<br />
+                                탈퇴 시 모든 데이터가 즉시 삭제됩니다.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={deletePassword}
+                                        onChange={(e) => setDeletePassword(e.target.value)}
+                                        placeholder="비밀번호"
+                                        className="w-full px-4 py-2.5 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-red-500 pr-10"
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+
+                                {deleteError && (
+                                    <p className="text-red-400 text-xs">{deleteError}</p>
+                                )}
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setShowDeleteModal(false)}
+                                        className="flex-1 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
+                                    >
+                                        취소
+                                    </button>
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        disabled={!deletePassword || isLoading}
+                                        className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-lg transition-colors"
+                                    >
+                                        {isLoading ? '처리 중...' : '탈퇴하기'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

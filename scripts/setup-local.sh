@@ -22,18 +22,18 @@ cd "$(dirname "$0")/.."
 PROJECT_ROOT=$(pwd)
 
 echo -e "\n${YELLOW}[1/5] SQL 파일 확인${NC}"
-SQL_FILE="$PROJECT_ROOT/database/init/movigation_full_backup.sql"
+SQL_FILE="$PROJECT_ROOT/database/init/movigation_2.sql"
 
 if [ ! -f "$SQL_FILE" ]; then
     echo -e "${RED}❌ SQL 파일이 없습니다: $SQL_FILE${NC}"
     echo ""
     echo "SQL 파일을 다운로드해주세요:"
     echo ""
-    echo "  1. 아래 링크에서 movigation_full_backup.sql 다운로드"
+    echo "  1. 아래 링크에서 movigation_2.sql 다운로드"
     echo "     https://drive.google.com/drive/folders/1mPbfGbdbMoxBIR7w0HuMHFaFjkM9zbYa"
     echo ""
     echo "  2. 다운로드한 파일을 database/init/ 폴더에 저장"
-    echo "     mv ~/Downloads/movigation_full_backup.sql ./database/init/"
+    echo "     mv ~/Downloads/movigation_2.sql ./database/init/"
     echo ""
     exit 1
 fi
