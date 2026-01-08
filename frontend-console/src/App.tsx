@@ -56,6 +56,7 @@ function ApiApp() {
   return (
     <Routes>
       <Route path="/" element={<Api />} />
+      <Route path="/docs" element={<Docs />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
