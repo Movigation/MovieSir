@@ -5,6 +5,10 @@ export default function Api() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    document.title = "무비서 API";
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
