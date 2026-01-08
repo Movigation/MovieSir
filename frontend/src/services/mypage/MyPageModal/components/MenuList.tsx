@@ -1,7 +1,7 @@
 // [용도] 마이페이지 메뉴 리스트
 // [사용법] <MenuList onMenuClick={handleMenuClick} />
 
-import { Film, Tv, Settings } from 'lucide-react';
+import { Tv, Settings } from 'lucide-react';
 import MenuItem from '@/services/mypage/MyPageModal/components/MenuItem';
 import type { MyPageView } from '@/services/mypage/MyPageModal/myPage.types';
 
