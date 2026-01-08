@@ -114,10 +114,10 @@ class HybridRecommenderV3:
 
         self.metadata_map = {}
         for row in rows:
-            tmdb_id = row['tmdb_id']
-            self.metadata_map[tmdb_id] = {
-                'movie_id': row['movie_id'],
-                'tmdb_id': tmdb_id,
+            movie_id = row['movie_id']
+            self.metadata_map[movie_id] = {
+                'movie_id': movie_id,
+                'tmdb_id': row['tmdb_id'],
                 'title': row['title'],
                 'runtime': row['runtime'] or 0,
                 'genres': row['genres'] or [],
@@ -137,9 +137,8 @@ class HybridRecommenderV3:
         print("Loading SBERT embeddings from database...")
 
         query = """
-            SELECT mv.movie_id, m.tmdb_id, mv.embedding
+            SELECT mv.movie_id, mv.embedding
             FROM movie_vectors mv
-            JOIN movies m ON mv.movie_id = m.movie_id
             ORDER BY mv.movie_id
         """
         rows = self.db.execute_query(query)
@@ -148,7 +147,7 @@ class HybridRecommenderV3:
         embeddings = []
 
         for row in rows:
-            tmdb_id = row['tmdb_id']
+            movie_id = row['movie_id']
             embedding = row['embedding']
             if isinstance(embedding, str):
                 embedding = np.fromstring(embedding.strip('[]'), sep=',', dtype='float32')
@@ -157,7 +156,7 @@ class HybridRecommenderV3:
             else:
                 embedding = np.array(embedding, dtype='float32')
 
-            self.sbert_movie_ids.append(tmdb_id)
+            self.sbert_movie_ids.append(movie_id)
             embeddings.append(embedding)
 
         self.sbert_embeddings = np.array(embeddings, dtype='float32')
@@ -170,30 +169,44 @@ class HybridRecommenderV3:
         print("Loading OTT data from database...")
 
         map_query = """
-            SELECT m.tmdb_id, op.provider_name
+            SELECT mom.movie_id, op.provider_name
             FROM movie_ott_map mom
-            JOIN movies m ON mom.movie_id = m.movie_id
             JOIN ott_providers op ON mom.provider_id = op.provider_id
         """
         map_rows = self.db.execute_query(map_query)
 
         self.movie_ott_map = {}
         for row in map_rows:
-            tmdb_id = row['tmdb_id']
+            movie_id = row['movie_id']
             provider_name = row['provider_name']
-            if tmdb_id not in self.movie_ott_map:
-                self.movie_ott_map[tmdb_id] = []
-            self.movie_ott_map[tmdb_id].append(provider_name)
+            if movie_id not in self.movie_ott_map:
+                self.movie_ott_map[movie_id] = []
+            self.movie_ott_map[movie_id].append(provider_name)
 
         print(f"  OTT data loaded: {len(self.movie_ott_map):,} movies")
 
     def _load_lightgcn_data(self, data_path: str):
-        """LightGCN 매핑 데이터 로드"""
+        """LightGCN 매핑 데이터 로드 (tmdb_id → movie_id 변환)"""
         data_path = Path(data_path)
         with open(data_path / 'id_mappings.pkl', 'rb') as f:
             mappings = pickle.load(f)
 
-        self.lightgcn_movie_to_idx = mappings['tmdb2id']
+        # LightGCN은 tmdb_id → index 매핑을 사용
+        lightgcn_tmdb_to_idx = mappings['tmdb2id']
+
+        # tmdb_id → movie_id 매핑 생성 (metadata_map 역방향)
+        tmdb_to_movie_id = {}
+        for movie_id, meta in self.metadata_map.items():
+            tmdb_id = meta.get('tmdb_id')
+            if tmdb_id is not None:
+                tmdb_to_movie_id[tmdb_id] = movie_id
+
+        # movie_id → LightGCN index 매핑으로 변환
+        self.lightgcn_movie_to_idx = {}
+        for tmdb_id, lgcn_idx in lightgcn_tmdb_to_idx.items():
+            movie_id = tmdb_to_movie_id.get(tmdb_id)
+            if movie_id is not None:
+                self.lightgcn_movie_to_idx[movie_id] = lgcn_idx
 
         print(f"  LightGCN movies: {len(self.lightgcn_movie_to_idx):,}")
 
@@ -211,24 +224,36 @@ class HybridRecommenderV3:
                 self.lightgcn_item_embeddings = checkpoint['item_embedding.weight'].cpu().numpy()
 
     def _align_models(self):
-        """SBERT와 LightGCN 모델 정렬"""
-        common_ids = set(self.sbert_movie_to_idx.keys()) & set(self.lightgcn_movie_to_idx.keys())
-        self.common_movie_ids = sorted(list(common_ids))
+        """SBERT와 LightGCN 모델 정렬 (SBERT 전체 사용)"""
+        # SBERT 임베딩이 있는 모든 영화 포함 (LightGCN 없어도 OK)
+        self.common_movie_ids = sorted(list(self.sbert_movie_to_idx.keys()))
+
+        # LightGCN 있는 영화 ID 집합
+        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
 
         # 역매핑 딕셔너리 생성 (O(1) 인덱스 조회용)
         self.movie_id_to_idx = {}
         self.target_sbert_matrix = []
         self.target_lightgcn_matrix = []
 
+        # LightGCN 차원 확인
+        lightgcn_dim = self.lightgcn_item_embeddings.shape[1]
+        zero_lightgcn = np.zeros(lightgcn_dim)
+
         for idx, mid in enumerate(self.common_movie_ids):
             # 역매핑 저장
             self.movie_id_to_idx[mid] = idx
 
+            # SBERT 임베딩 (필수)
             s_idx = self.sbert_movie_to_idx[mid]
             self.target_sbert_matrix.append(self.sbert_embeddings[s_idx])
 
-            l_idx = self.lightgcn_movie_to_idx[mid]
-            self.target_lightgcn_matrix.append(self.lightgcn_item_embeddings[l_idx])
+            # LightGCN 임베딩 (선택: 없으면 0 벡터)
+            if mid in lightgcn_ids:
+                l_idx = self.lightgcn_movie_to_idx[mid]
+                self.target_lightgcn_matrix.append(self.lightgcn_item_embeddings[l_idx])
+            else:
+                self.target_lightgcn_matrix.append(zero_lightgcn)
 
         self.target_sbert_matrix = np.array(self.target_sbert_matrix)
         self.target_lightgcn_matrix = np.array(self.target_lightgcn_matrix)
@@ -237,7 +262,11 @@ class HybridRecommenderV3:
             np.linalg.norm(self.target_sbert_matrix, axis=1, keepdims=True) + 1e-10
         )
 
+        # LightGCN 없는 영화 개수 확인
+        sbert_only = len(self.common_movie_ids) - len(set(self.common_movie_ids) & lightgcn_ids)
         print(f"Created reverse mapping dictionary for {len(self.movie_id_to_idx):,} movies")
+        if sbert_only > 0:
+            print(f"  ⚠️  {sbert_only} movies have SBERT only (will use SBERT weight 1.0)")
 
         # 평점 점수 사전 계산 (Phase 1 최적화)
         print("Pre-calculating rating scores...")
@@ -318,8 +347,8 @@ class HybridRecommenderV3:
         print(f"  OTT index: {len(self.movies_by_ott)} providers")
 
     def _get_user_profile(self, user_movie_ids: List[int]):
-        """사용자 프로필 벡터 생성"""
-        # SBERT 프로필
+        """사용자 프로필 벡터 생성 - 개별 임베딩 행렬 반환 (최대 유사도 계산용)"""
+        # SBERT 프로필 (개별 임베딩 유지)
         user_sbert_vecs = []
         for mid in user_movie_ids:
             if mid in self.sbert_movie_to_idx:
@@ -330,10 +359,13 @@ class HybridRecommenderV3:
             for mid in random_ids:
                 user_sbert_vecs.append(self.sbert_embeddings[self.sbert_movie_to_idx[mid]])
 
-        user_sbert_profile = np.mean(user_sbert_vecs, axis=0)
-        user_sbert_profile = user_sbert_profile / (np.linalg.norm(user_sbert_profile) + 1e-10)
+        # 배열로 변환 및 정규화 (N, SBERT_dim)
+        user_sbert_matrix = np.array(user_sbert_vecs)
+        user_sbert_matrix = user_sbert_matrix / (
+            np.linalg.norm(user_sbert_matrix, axis=1, keepdims=True) + 1e-10
+        )
 
-        # LightGCN 프로필
+        # LightGCN 프로필 (개별 임베딩 유지)
         user_gcn_vecs = []
         for mid in user_movie_ids:
             if mid in self.lightgcn_movie_to_idx:
@@ -344,9 +376,10 @@ class HybridRecommenderV3:
             for mid in random_ids:
                 user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
 
-        user_gcn_profile = np.mean(user_gcn_vecs, axis=0)
+        # 배열로 변환 (N, LightGCN_dim)
+        user_gcn_matrix = np.array(user_gcn_vecs)
 
-        return user_sbert_profile, user_gcn_profile
+        return user_sbert_matrix, user_gcn_matrix
 
     def _apply_filters(
         self,
@@ -404,28 +437,38 @@ class HybridRecommenderV3:
         if not filtered_indices:
             return []
 
-        # 모델 점수 계산
-        sbert_scores = self.target_sbert_norm @ user_sbert_profile
-        lightgcn_scores = self.target_lightgcn_matrix @ user_gcn_profile
+        # 벡터화 유사도 계산 (평균 유사도 방식)
+        indices = [idx for _, idx in filtered_indices]
+        
+        # SBERT 유사도: (M, SBERT_dim) @ (SBERT_dim, N) = (M, N)
+        # M: 필터된 영화 수, N: 사용자 프로필 영화 수
+        sbert_similarities = self.target_sbert_norm[indices] @ user_sbert_profile.T
+        
+        # LightGCN 유사도: (M, LightGCN_dim) @ (LightGCN_dim, N) = (M, N)
+        lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T
+        
+        # 각 후보 영화의 평균 유사도 계산 (모든 사용자 영화와의 평균)
+        sbert_scores = np.mean(sbert_similarities, axis=1)  # (M,)
+        lightgcn_scores = np.mean(lightgcn_similarities, axis=1)  # (M,)
 
         # MinMax 정규화
         scaler = MinMaxScaler()
 
-        filtered_sbert = np.array([sbert_scores[idx] for _, idx in filtered_indices])
-        filtered_lightgcn = np.array([lightgcn_scores[idx] for _, idx in filtered_indices])
-
         # 평점 점수 조회 (Phase 1 최적화: 사전 계산된 값 사용)
         filtered_rating = np.array([self.rating_scores.get(mid, 0.0) for mid, _ in filtered_indices])
 
-        if len(filtered_sbert) > 1:
-            norm_sbert = scaler.fit_transform(filtered_sbert.reshape(-1, 1)).squeeze()
-            norm_lightgcn = scaler.fit_transform(filtered_lightgcn.reshape(-1, 1)).squeeze()
+        if len(sbert_scores) > 1:
+            norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
+            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
             # 평점 점수도 0~1 정규화 (블록버스터 편향 제거)
             norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
         else:
-            norm_sbert = filtered_sbert
-            norm_lightgcn = filtered_lightgcn
+            norm_sbert = sbert_scores
+            norm_lightgcn = lightgcn_scores
             norm_rating = filtered_rating
+
+        # LightGCN 있는 영화 ID 집합 (가중치 재조정용)
+        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
 
         # 최종 점수 계산
         movie_scores = []
@@ -433,8 +476,15 @@ class HybridRecommenderV3:
             if mid in exclude_ids:
                 continue
 
-            # 모델 점수 (가중 합)
-            model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+            # 가중치 재조정: LightGCN 없으면 SBERT만 사용
+            if mid in lightgcn_ids:
+                # 하이브리드: SBERT + LightGCN
+                model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+                rec_type = "hybrid"
+            else:
+                # SBERT만: 가중치 1.0
+                model_score = norm_sbert[i]
+                rec_type = "sbert_only"
 
             # 정규화된 평점 점수 (0~1 범위)
             rating_score = norm_rating[i] if isinstance(norm_rating, np.ndarray) else norm_rating
@@ -444,7 +494,8 @@ class HybridRecommenderV3:
 
             meta = self.metadata_map.get(mid, {})
             movie_scores.append({
-                'tmdb_id': mid,
+                'movie_id': mid,
+                'tmdb_id': meta.get('tmdb_id'),
                 'title': meta.get('title', 'Unknown'),
                 'runtime': meta.get('runtime', 0),
                 'genres': meta.get('genres', []),
@@ -453,7 +504,8 @@ class HybridRecommenderV3:
                 'overview': meta.get('overview', ''),
                 'release_date': meta.get('release_date', ''),
                 'poster_path': meta.get('poster_path', ''),
-                'score': final_score
+                'score': final_score,
+                'recommendation_type': rec_type  # 추가: 추천 타입
             })
 
         # 점수순 정렬 후 상위 top_k
@@ -543,7 +595,7 @@ class HybridRecommenderV3:
         for movie in movies:
             if len(combo) >= max_movies:
                 break
-            movie_id = movie.get('tmdb_id')
+            movie_id = movie.get('movie_id')
             if movie_id in used_ids:
                 continue
             if runtime + movie['runtime'] <= max_time:
@@ -595,6 +647,17 @@ class HybridRecommenderV3:
 
         # 사용자 프로필 생성
         user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
+        
+        # 사용자 프로필 구성 영화 출력 (영화 제목 포함)
+        print(f"\n📊 User Profile Composition ({len(user_movie_ids)} movies):")
+        for i, mid in enumerate(user_movie_ids[:10], 1):  # 최대 10개만 출력
+            meta = self.metadata_map.get(mid, {})
+            title = meta.get('title', 'Unknown')
+            year = meta.get('release_date', '')[:4] if meta.get('release_date') else '?'
+            print(f"  {i}. [{mid}] {title} ({year})")
+        if len(user_movie_ids) > 10:
+            print(f"  ... and {len(user_movie_ids) - 10} more movies")
+
 
         # Track A 제외할 ID (사용자 시청 기록 + 같은 장르 이전 추천)
         exclude_a = list(set(user_movie_ids + excluded_ids_a))
@@ -654,6 +717,14 @@ class HybridRecommenderV3:
             'total_runtime': combo_a['total_runtime'] if combo_a else 0
         }
 
+        # Track A 결과 출력 (recommendation_type 포함)
+        if combo_a:
+            print(f"\n📋 Track A 결과 ({len(combo_a['movies'])}편):")
+            for i, movie in enumerate(combo_a['movies'], 1):
+                rec_type = movie.get('recommendation_type', 'unknown')
+                rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+                print(f"  {i}. [{rec_type_label}] {movie['title']} ({movie['runtime']}분, score={movie.get('score', 0):.3f})")
+
         # ===== Track B: 2000년 이상 + OTT 필터 (장르만 무시) =====
         filtered_b = self._apply_filters(
             preferred_genres=None,
@@ -666,7 +737,7 @@ class HybridRecommenderV3:
         exclude_b = list(set(
             user_movie_ids +
             excluded_ids_b +
-            [m['tmdb_id'] for m in track_a_result['movies']]
+            [m['movie_id'] for m in track_a_result['movies']]
         ))
 
         top_100_b = self._get_top_movies(
@@ -685,6 +756,14 @@ class HybridRecommenderV3:
             'movies': combo_b['movies'] if combo_b else [],
             'total_runtime': combo_b['total_runtime'] if combo_b else 0
         }
+
+        # Track B 결과 출력 (recommendation_type 포함)
+        if combo_b:
+            print(f"\n📋 Track B 결과 ({len(combo_b['movies'])}편):")
+            for i, movie in enumerate(combo_b['movies'], 1):
+                rec_type = movie.get('recommendation_type', 'unknown')
+                rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+                print(f"  {i}. [{rec_type_label}] {movie['title']} ({movie['runtime']}분, score={movie.get('score', 0):.3f})")
 
         elapsed = time.time() - start_time
         print(f"Elapsed: {elapsed:.2f}s")
@@ -730,6 +809,17 @@ class HybridRecommenderV3:
 
         # 사용자 프로필
         user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
+        
+        # 사용자 프로필 구성 영화 출력 (영화 제목 포함)
+        print(f"\n📊 User Profile Composition ({len(user_movie_ids)} movies):")
+        for i, mid in enumerate(user_movie_ids[:10], 1):  # 최대 10개만 출력
+            meta = self.metadata_map.get(mid, {})
+            title = meta.get('title', 'Unknown')
+            year = meta.get('release_date', '')[:4] if meta.get('release_date') else '?'
+            print(f"  {i}. [{mid}] {title} ({year})")
+        if len(user_movie_ids) > 10:
+            print(f"  ... and {len(user_movie_ids) - 10} more movies")
+
 
         # 필터링
         if track.lower() == 'a':
@@ -769,94 +859,23 @@ class HybridRecommenderV3:
         if candidates:
             # 랜덤 선택
             selected = random.choice(candidates)
+            rec_type = selected.get('recommendation_type', 'unknown')
+            rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+            print(f"✅ [{rec_type_label}] {selected['title']} ({selected['runtime']}분, score={selected.get('score', 0):.3f})")
             return selected
 
         # 조건에 맞는 영화 없으면 런타임 이하 중 가장 가까운 영화
         under_time = [m for m in top_100 if 0 < m['runtime'] <= max_runtime]
         if under_time:
             closest = max(under_time, key=lambda m: m['runtime'])
+            rec_type = closest.get('recommendation_type', 'unknown')
+            rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+            print(f"✅ (fallback) [{rec_type_label}] {closest['title']} ({closest['runtime']}분, score={closest.get('score', 0):.3f})")
             return closest
 
+        print("❌ 조건에 맞는 영화 없음")
         return None
 
     def close(self):
         """리소스 정리"""
         self.db.close()
-
-
-# ============================================================
-# 테스트 실행
-# ============================================================
-if __name__ == "__main__":
-    load_dotenv()
-
-    DB_CONFIG = {
-        'host': os.getenv("DATABASE_HOST", "localhost"),
-        'port': int(os.getenv("DATABASE_PORT", 5432)),
-        'database': os.getenv("DATABASE_NAME", "moviesir"),
-        'user': os.getenv("DATABASE_USER", "postgres"),
-        'password': os.getenv("DATABASE_PASSWORD", "")
-    }
-
-    LIGHTGCN_MODEL_PATH = "ai/training/lightgcn_model/best_model.pt"
-    LIGHTGCN_DATA_PATH = "ai/training/lightgcn_data"
-
-    print("\n" + "="*60)
-    print("HYBRID RECOMMENDER V3 TEST (Dead Code Removed)")
-    print("="*60)
-
-    try:
-        recommender = HybridRecommenderV3(
-            db_config=DB_CONFIG,
-            lightgcn_model_path=LIGHTGCN_MODEL_PATH,
-            lightgcn_data_path=LIGHTGCN_DATA_PATH
-        )
-
-        # 테스트 사용자
-        user_movies = [75656, 9502, 955]
-
-        # 초기 추천 테스트
-        print("\n--- Initial Recommendation ---")
-        result = recommender.recommend(
-            user_movie_ids=user_movies,
-            available_time=180,
-            preferred_genres=['액션', 'SF'],
-            preferred_otts=['Netflix'],
-            allow_adult=False
-        )
-
-        print(f"\nTrack A: {result['track_a']['label']}")
-        print(f"  Total runtime: {result['track_a']['total_runtime']} min")
-        for m in result['track_a']['movies']:
-            print(f"  - {m['title']} ({m['runtime']}min) - {m['genres']}")
-
-        print(f"\nTrack B: {result['track_b']['label']}")
-        print(f"  Total runtime: {result['track_b']['total_runtime']} min")
-        for m in result['track_b']['movies']:
-            print(f"  - {m['title']} ({m['runtime']}min) - {m['genres']}")
-
-        # 개별 재추천 테스트
-        print("\n--- Single Re-recommendation ---")
-        if result['track_a']['movies']:
-            first_movie = result['track_a']['movies'][0]
-            excluded = [m['tmdb_id'] for m in result['track_a']['movies']]
-
-            single = recommender.recommend_single(
-                user_movie_ids=user_movies,
-                target_runtime=first_movie['runtime'],
-                excluded_ids=excluded,
-                track='a',
-                preferred_genres=['액션', 'SF'],
-                preferred_otts=['Netflix']
-            )
-
-            if single:
-                print(f"Replacement for {first_movie['title']} ({first_movie['runtime']}min):")
-                print(f"  → {single['title']} ({single['runtime']}min)")
-
-        recommender.close()
-
-    except Exception as e:
-        print(f"\nError: {e}")
-        import traceback
-        traceback.print_exc()
