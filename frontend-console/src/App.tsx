@@ -15,27 +15,57 @@ import Playground from '@/pages/Playground'
 import Settings from '@/pages/Settings'
 import { useAuthStore } from '@/stores/authStore'
 
+const hostname = window.location.hostname
+const isConsole = hostname === 'console.moviesir.cloud'
+const isApi = hostname === 'api.moviesir.cloud'
+
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore()
   return token ? <>{children}</> : <Navigate to="/login" replace />
 }
 
-// 도메인별 루트 페이지 결정
-function RootPage() {
-  const hostname = window.location.hostname
-  if (hostname === 'api.moviesir.cloud') {
-    return <Api />
-  }
-  if (hostname === 'console.moviesir.cloud') {
-    return <Navigate to="/console" replace />
-  }
-  return <Landing />
-}
-
-function App() {
+// console.moviesir.cloud 전용 라우트
+function ConsoleApp() {
   return (
     <Routes>
-      <Route path="/" element={<RootPage />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        element={
+          <PrivateRoute>
+            <Layout basePath="" />
+          </PrivateRoute>
+        }
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/api-keys" element={<ApiKeys />} />
+        <Route path="/usage" element={<Usage />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/logs" element={<Logs />} />
+        <Route path="/docs" element={<ApiDocs />} />
+        <Route path="/playground" element={<Playground />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+    </Routes>
+  )
+}
+
+// api.moviesir.cloud 전용 라우트
+function ApiApp() {
+  return (
+    <Routes>
+      <Route path="/" element={<Api />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+// moviesir.cloud 메인 라우트
+function MainApp() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/api" element={<Api />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
@@ -45,7 +75,7 @@ function App() {
         path="/console"
         element={
           <PrivateRoute>
-            <Layout />
+            <Layout basePath="/console" />
           </PrivateRoute>
         }
       >
@@ -61,6 +91,12 @@ function App() {
       </Route>
     </Routes>
   )
+}
+
+function App() {
+  if (isApi) return <ApiApp />
+  if (isConsole) return <ConsoleApp />
+  return <MainApp />
 }
 
 export default App

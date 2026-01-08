@@ -14,6 +14,9 @@ import {
   Cell,
 } from 'recharts'
 
+const isConsole = window.location.hostname === 'console.moviesir.cloud'
+const basePath = isConsole ? '' : '/console'
+
 interface DashboardData {
   today: number
   total: number
@@ -262,7 +265,7 @@ export default function Dashboard() {
             </div>
           </div>
           <button
-            onClick={() => navigate('/console/docs')}
+            onClick={() => navigate(`${basePath}/docs`)}
             className="w-full py-2 bg-blue-500 text-white rounded-lg text-xs lg:text-sm font-medium hover:bg-blue-400 transition-colors mb-4"
           >
             API 문서 보기

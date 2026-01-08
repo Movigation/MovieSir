@@ -27,13 +27,13 @@ export default function Api() {
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-10">
-              <Link to="/api" className="flex items-center gap-2">
+              <a href="https://api.moviesir.cloud" className="flex items-center gap-2">
                 <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
                 <span className="text-xl font-semibold text-white">무비서</span>
                 <span className="text-xs font-semibold text-white border border-white/30 bg-white/10 px-1.5 py-0.5 rounded">
                   API
                 </span>
-              </Link>
+              </a>
               <ul className="hidden md:flex items-center gap-1">
                 {/* 소개 드롭다운 */}
                 <li className="relative group">
