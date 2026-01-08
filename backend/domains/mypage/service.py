@@ -10,6 +10,26 @@ from backend.domains.movie.models import Movie
 from backend.utils.password import verify_password
 
 # ======================================================
+# MP-01-01: 내가 본 영화 조회
+# ======================================================
+def get_watched_movies(db: Session, user: User) -> dict:
+    """
+    사용자가 온보딩에서 선택한 영화 목록 조회
+    """
+    watched = (
+        db.query(Movie)
+        .join(UserOnboardingAnswer, Movie.movie_id == UserOnboardingAnswer.movie_id)
+        .filter(UserOnboardingAnswer.user_id == user.user_id)
+        .all()
+    )
+    
+    return {
+        "watched_movies": watched,
+        "total_count": len(watched)
+    }
+
+
+# ======================================================
 # MP-02-00: 현재 구독 OTT 조회
 # ======================================================
 def get_current_ott(db: Session, user: User) -> List[int]:
