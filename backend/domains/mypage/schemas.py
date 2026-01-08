@@ -16,6 +16,7 @@ class WatchedMovieItem(BaseModel):
     poster_path: Optional[str] = None
     release_date: Optional[str] = None
     vote_average: Optional[float] = None
+    genres: Optional[List[str]] = None
     
     class Config:
         from_attributes = True  # SQLAlchemy 모델과 호환
