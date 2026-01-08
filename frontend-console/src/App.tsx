@@ -20,10 +20,19 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return token ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+// 도메인별 루트 페이지 결정
+function RootPage() {
+  const hostname = window.location.hostname
+  if (hostname === 'api.moviesir.cloud') {
+    return <Api />
+  }
+  return <Landing />
+}
+
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<RootPage />} />
       <Route path="/api" element={<Api />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
