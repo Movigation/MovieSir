@@ -347,8 +347,8 @@ class HybridRecommenderV3:
         print(f"  OTT index: {len(self.movies_by_ott)} providers")
 
     def _get_user_profile(self, user_movie_ids: List[int]):
-        """사용자 프로필 벡터 생성"""
-        # SBERT 프로필
+        """사용자 프로필 벡터 생성 - 개별 임베딩 행렬 반환 (최대 유사도 계산용)"""
+        # SBERT 프로필 (개별 임베딩 유지)
         user_sbert_vecs = []
         for mid in user_movie_ids:
             if mid in self.sbert_movie_to_idx:
@@ -359,10 +359,13 @@ class HybridRecommenderV3:
             for mid in random_ids:
                 user_sbert_vecs.append(self.sbert_embeddings[self.sbert_movie_to_idx[mid]])
 
-        user_sbert_profile = np.mean(user_sbert_vecs, axis=0)
-        user_sbert_profile = user_sbert_profile / (np.linalg.norm(user_sbert_profile) + 1e-10)
+        # 배열로 변환 및 정규화 (N, SBERT_dim)
+        user_sbert_matrix = np.array(user_sbert_vecs)
+        user_sbert_matrix = user_sbert_matrix / (
+            np.linalg.norm(user_sbert_matrix, axis=1, keepdims=True) + 1e-10
+        )
 
-        # LightGCN 프로필
+        # LightGCN 프로필 (개별 임베딩 유지)
         user_gcn_vecs = []
         for mid in user_movie_ids:
             if mid in self.lightgcn_movie_to_idx:
@@ -373,9 +376,10 @@ class HybridRecommenderV3:
             for mid in random_ids:
                 user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
 
-        user_gcn_profile = np.mean(user_gcn_vecs, axis=0)
+        # 배열로 변환 (N, LightGCN_dim)
+        user_gcn_matrix = np.array(user_gcn_vecs)
 
-        return user_sbert_profile, user_gcn_profile
+        return user_sbert_matrix, user_gcn_matrix
 
     def _apply_filters(
         self,
@@ -433,27 +437,34 @@ class HybridRecommenderV3:
         if not filtered_indices:
             return []
 
-        # 모델 점수 계산
-        sbert_scores = self.target_sbert_norm @ user_sbert_profile
-        lightgcn_scores = self.target_lightgcn_matrix @ user_gcn_profile
+        # 벡터화 유사도 계산 (평균 유사도 방식)
+        indices = [idx for _, idx in filtered_indices]
+        
+        # SBERT 유사도: (M, SBERT_dim) @ (SBERT_dim, N) = (M, N)
+        # M: 필터된 영화 수, N: 사용자 프로필 영화 수
+        sbert_similarities = self.target_sbert_norm[indices] @ user_sbert_profile.T
+        
+        # LightGCN 유사도: (M, LightGCN_dim) @ (LightGCN_dim, N) = (M, N)
+        lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T
+        
+        # 각 후보 영화의 평균 유사도 계산 (모든 사용자 영화와의 평균)
+        sbert_scores = np.mean(sbert_similarities, axis=1)  # (M,)
+        lightgcn_scores = np.mean(lightgcn_similarities, axis=1)  # (M,)
 
         # MinMax 정규화
         scaler = MinMaxScaler()
 
-        filtered_sbert = np.array([sbert_scores[idx] for _, idx in filtered_indices])
-        filtered_lightgcn = np.array([lightgcn_scores[idx] for _, idx in filtered_indices])
-
         # 평점 점수 조회 (Phase 1 최적화: 사전 계산된 값 사용)
         filtered_rating = np.array([self.rating_scores.get(mid, 0.0) for mid, _ in filtered_indices])
 
-        if len(filtered_sbert) > 1:
-            norm_sbert = scaler.fit_transform(filtered_sbert.reshape(-1, 1)).squeeze()
-            norm_lightgcn = scaler.fit_transform(filtered_lightgcn.reshape(-1, 1)).squeeze()
+        if len(sbert_scores) > 1:
+            norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
+            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
             # 평점 점수도 0~1 정규화 (블록버스터 편향 제거)
             norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
         else:
-            norm_sbert = filtered_sbert
-            norm_lightgcn = filtered_lightgcn
+            norm_sbert = sbert_scores
+            norm_lightgcn = lightgcn_scores
             norm_rating = filtered_rating
 
         # LightGCN 있는 영화 ID 집합 (가중치 재조정용)
