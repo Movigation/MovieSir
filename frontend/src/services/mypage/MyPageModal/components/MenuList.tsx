@@ -25,11 +25,11 @@ export default function MenuList({ onMenuClick }: MenuListProps) {
                 icon={<BarChart3 size={20} />}
                 onClick={() => onMenuClick('stats')}
             /> */}
-            <MenuItem
+            {/* <MenuItem
                 label="내가 본 영화 조회"
                 icon={<Film size={20} />}
                 onClick={() => onMenuClick('watched')}
-            />
+            /> */}
             <MenuItem
                 label="구독 OTT 변경"
                 icon={<Tv size={20} />}
