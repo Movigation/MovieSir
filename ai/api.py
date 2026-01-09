@@ -24,7 +24,7 @@ def convert_numpy_types(obj: Any) -> Any:
     return obj
 
 
-app = FastAPI(title="MovieSir AI Service v3")
+app = FastAPI(title="MovieSir AI Service v4")
 
 # 모델 로드 (서버 시작 시 한 번만)
 recommender = None
@@ -71,7 +71,7 @@ async def load_model():
 
 @app.get("/")
 def health():
-    return {"message": "ok", "service": "ai", "version": "v3"}
+    return {"message": "ok", "service": "ai", "version": "v4"}
 
 
 @app.get("/health")
@@ -79,7 +79,7 @@ def health_check():
     return {
         "status": "healthy",
         "model_loaded": recommender is not None,
-        "version": "v3"
+        "version": "v4"
     }
 
 
