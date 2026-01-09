@@ -239,7 +239,8 @@ export const useMovieStore = create<MovieState>((set, get) => {
 
         const trackAMovies = result.track_a.movies.map(convertV2MovieToMovie);
         const trackBMovies = result.track_b.movies.map(convertV2MovieToMovie);
-        const allMovieIds = [...trackAMovies, ...trackBMovies].map(m => m.tmdb_id!);
+        // AI 서비스는 movie_id(=id)를 기준으로 제외 처리하므로 id 사용
+        const allMovieIds = [...trackAMovies, ...trackBMovies].map(m => m.id);
 
         set({
           trackAMovies,
