@@ -38,6 +38,7 @@ def recommend_movies_v2(
 
     # Track A: 같은 장르일 때만 이전 기록 제외 (최근 20개 세션)
     recent_a = service.get_recent_recommended_ids_by_genre(db, user_id, req.genres, limit=20)
+    
     # Track B: 장르 상관없이 이전 기록 제외 (최근 20개 세션)
     recent_b = service.get_recent_recommended_ids_all(db, user_id, limit=20)
 
@@ -116,23 +117,8 @@ def recommend_single_movie(
             "message": "조건에 맞는 영화를 찾지 못했습니다"
         }
 
-
-# ==================== 기존 API (하위 호환) ====================
-
-@router.post("/api/recommend", response_model=schema.RecommendationResponse)
-def recommend_movies(
-    req: schema.RecommendationRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    영화 추천 (Legacy) - 하위 호환용
-    """
-    results = service.get_hybrid_recommendations(db, str(current_user.user_id), req, ai_model)
-    return {"results": results}
-
-
 # ==================== 공통 API ====================
+
 
 @router.post("/api/movies/{movie_id}/play")
 def click_ott(
@@ -153,18 +139,6 @@ def click_ott(
         raise HTTPException(status_code=404, detail="Link not found")
 
     return {"redirect_url": url_row[0]}
-
-
-@router.post("/api/movies/{movie_id}/watched")
-def mark_watched(
-    movie_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """영화 시청 완료 표시"""
-    service.mark_watched(db, str(current_user.user_id), movie_id)
-    return {"status": "success"}
-
 
 @router.get("/api/movies/{movie_id}", response_model=schema.MovieDetailResponse)
 def get_movie_detail(
