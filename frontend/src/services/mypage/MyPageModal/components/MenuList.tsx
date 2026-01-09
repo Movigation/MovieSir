@@ -1,7 +1,7 @@
 // [용도] 마이페이지 메뉴 리스트
 // [사용법] <MenuList onMenuClick={handleMenuClick} />
 
-import { Film, Tv, Settings } from 'lucide-react';
+import { Tv, Settings } from 'lucide-react';
 import MenuItem from '@/services/mypage/MyPageModal/components/MenuItem';
 import type { MyPageView } from '@/services/mypage/MyPageModal/myPage.types';
 
@@ -25,11 +25,11 @@ export default function MenuList({ onMenuClick }: MenuListProps) {
                 icon={<BarChart3 size={20} />}
                 onClick={() => onMenuClick('stats')}
             /> */}
-            <MenuItem
+            {/* <MenuItem
                 label="내가 본 영화 조회"
                 icon={<Film size={20} />}
                 onClick={() => onMenuClick('watched')}
-            />
+            /> */}
             <MenuItem
                 label="구독 OTT 변경"
                 icon={<Tv size={20} />}

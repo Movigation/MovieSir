@@ -36,6 +36,8 @@ export default function MainPage() {
     const [isChatbotOpen, setIsChatbotOpen] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showOnboardingReminder, setShowOnboardingReminder] = useState(false);
+    const [isTutorialActive, setIsTutorialActive] = useState(false);
+    const [tutorialStep, setTutorialStep] = useState(0);
 
     // 온보딩 리마인더 체크 (DB: completed_at, localStorage: 24시간 체크)
     useEffect(() => {
@@ -87,6 +89,27 @@ export default function MainPage() {
         console.log('🎉 모달 표시! (온보딩 미완료 + 24시간 경과)');
         setShowOnboardingReminder(true);
     }, [isAuthenticated, user]);
+
+    // 튜토리얼 체크 및 자동 종료 (온보딩 리마인더가 안 나올 때만 자동 시작/종료)
+    useEffect(() => {
+        if (!isAuthenticated || !user || showOnboardingReminder) return;
+
+        const userId = user.id || (user as any).user_id;
+        const tutorialKey = `tutorial_completed_user_${userId}`;
+        const isTutorialCompleted = localStorage.getItem(tutorialKey) === 'true';
+
+        // 튜토리얼 미완료 시 즉시 0단계 시작 (온보딩 여부와 무관)
+        if (!isTutorialCompleted && !isChatbotOpen) {
+            setIsTutorialActive(true);
+            setTutorialStep(0);
+        }
+
+        // 튜토리얼 진행 중 챗봇이 열리면 해당 유저의 튜토리얼 완료 처리
+        if (isTutorialActive && isChatbotOpen) {
+            localStorage.setItem(tutorialKey, 'true');
+            setIsTutorialActive(false);
+        }
+    }, [isAuthenticated, user, showOnboardingReminder, isChatbotOpen, isTutorialActive]);
 
     // 로그아웃 시 챗봇 자동 닫기
     useEffect(() => {
@@ -176,32 +199,36 @@ export default function MainPage() {
                 </FloatingBubble>
                 <FloatingBubble
                     position="right"
-                    className="
+                    className={`
                             !min-w-[220px] right-1/2 sm:right-[-30px]
                             translate-y-[60px] translate-x-1/2
                             sm:-translate-y-[-30px] sm:-translate-x-1/2 
                             bottom-[0px] sm:bottom-[-40px] 
                             font-bold text-blue-400 z-floating cursor-pointer
                             sm:scale-75
-                            "
+                            `}
                     visible={!isChatbotOpen}
                     float
-                    onClick={handleOpenChatbot}
+                    onClick={() => {
+                        if (isTutorialActive) {
+                            if (tutorialStep === 0) {
+                                handleOpenChatbot();
+                            }
+                        } else {
+                            handleOpenChatbot();
+                        }
+                    }}
                 >
                     {isAuthenticated
                         ?
                         <div className="text-center">
                             {/* 모바일: 두 문구 합침 */}
                             <div className="sm:hidden">
-                                당신에게 꼭 맞는<br />
-                                영화를 추천드리겠습니다,<br />
-                                저를 클릭해서<br />
-                                영화 추천을 시작해주세요.
+                                당신에게 꼭 맞는<br />영화를 추천드리겠습니다,<br />저를 클릭해서<br />영화 추천을 시작해주세요.
                             </div>
                             {/* 데스크탑: 기존 문구 */}
                             <div className="hidden sm:block">
-                                저를 클릭해서 <br />
-                                영화 추천을 시작해주세요.
+                                저를 클릭해서 <br />영화 추천을 시작해주세요.
                             </div>
                         </div>
                         :
@@ -214,8 +241,28 @@ export default function MainPage() {
                     isOpen={isChatbotOpen}
                     setIsOpen={setIsChatbotOpen}
                     onLoginRequired={() => setShowLoginModal(true)}
+                    isTutorialActive={isTutorialActive}
+                    tutorialStep={tutorialStep}
                 />
             </div>
+
+            {/* 튜토리얼 배경 오버레이 (캐릭터 강조용) */}
+            {isTutorialActive && tutorialStep === 0 && (
+                <div
+                    className="tutorial-overlay"
+                    onClick={handleOpenChatbot}
+                />
+            )}
+
+            {/* 하단 전용 가이드바 (Tutorial Step 0용) */}
+            {isTutorialActive && tutorialStep === 0 && (
+                <div className="tutorial-guide-bar">
+                    <p className="text-lg font-bold">
+                        반가워요! 당신의 여행길을 즐겁게 해드릴 무비서입니다. <br />
+                        저를 클릭해서 영화추천을 시작해볼까요?
+                    </p>
+                </div>
+            )}
 
             {/* 로그인 모달 */}
             <LoginModal
