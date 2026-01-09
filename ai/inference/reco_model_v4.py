@@ -14,10 +14,18 @@ from dotenv import load_dotenv
 import os
 
 """
-Hybrid Recommender v3 with PostgreSQL Database - Dead Code Removed
-- SBERT + LightGCN 하이브리드 추천
-- vote_average * log(votes_per_day) 정규화 (최신 영화 공정 평가)
-- 시간 조건: 90% ~ 100% (초과 금지, 10% 미만까지 허용)
+Hybrid Recommender v4 with MMR-based Diversity
+
+Phase 1 최적화: 평점 점수 사전 계산
+Phase 2 최적화: 인덱스 기반 필터링
+Phase 3 최적화: 벡터화 유사도 계산
+
+시간 조건: 90% ~ 100% (초과 금지, 10% 미만까지 허용)
+
+Changes from V3:
+- Replaced random noise diversity with MMR (Maximal Marginal Relevance)
+- MMR balances relevance and diversity using lambda parameter
+- Default lambda=0.7 (70% relevance, 30% diversity)
 
 Track A: 장르 + OTT + 2000년 이상 필터, SBERT 0.7 + LightGCN 0.3
 Track B: 2000년 이상만 필터, SBERT 0.4 + LightGCN 0.6
@@ -62,7 +70,7 @@ class DatabaseConnection:
             return cursor.fetchall()
 
 
-class HybridRecommenderV3:
+class HybridRecommenderV4:
     def __init__(
         self,
         db_config: dict,
@@ -82,7 +90,7 @@ class HybridRecommenderV3:
         # DB 연결
         self.db = DatabaseConnection(**db_config)
 
-        print("Initializing Hybrid Recommender V3 (Dead Code Removed)...")
+        print("Initializing Hybrid Recommender V4 (MMR-based Diversity)...")
 
         # 1. 데이터 로드 (DB에서)
         self._load_metadata_from_db()
@@ -422,7 +430,8 @@ class HybridRecommenderV3:
         sbert_weight: float,
         lightgcn_weight: float,
         top_k: int = 300,
-        exclude_ids: Optional[List[int]] = None
+        exclude_ids: Optional[List[int]] = None,
+        preferred_genres: Optional[List[str]] = None  # ← 추가
     ) -> List[Dict[str, Any]]:
         """상위 영화 선정 (모델 점수 + 평점 점수)"""
         exclude_ids = exclude_ids or []
@@ -492,7 +501,18 @@ class HybridRecommenderV3:
             # 최종 점수: 모델 70% + 평점 30%
             final_score = model_score * 0.7 + rating_score * 0.3
 
+            # 메타데이터 조회 (장르 부스트 계산에 필요)
             meta = self.metadata_map.get(mid, {})
+
+            # 장르 가중치 부스트 (Track A만)
+            if preferred_genres and len(preferred_genres) > 1:
+                movie_genres = set(meta.get('genres', []))
+                overlap = len(movie_genres & set(preferred_genres))
+                if overlap > 0:
+                    genre_weight = overlap / len(preferred_genres)
+                    genre_boost = genre_weight * 0.15  # 최대 15% 부스트
+                    final_score = final_score * (1 + genre_boost)
+
             movie_scores.append({
                 'movie_id': mid,
                 'tmdb_id': meta.get('tmdb_id'),
@@ -508,6 +528,7 @@ class HybridRecommenderV3:
                 'recommendation_type': rec_type  # 추가: 추천 타입
             })
 
+
         # 점수순 정렬 후 상위 top_k
         movie_scores.sort(key=lambda x: x['score'], reverse=True)
         return movie_scores[:top_k]
@@ -516,12 +537,25 @@ class HybridRecommenderV3:
         self,
         candidates: List[Dict[str, Any]],
         available_time: int,
-        max_movies: int = None
+        max_movies: int = None,
+        lambda_param: float = 0.7
     ) -> Optional[Dict[str, Any]]:
         """
-        시간에 맞는 영화 조합 찾기
-        - 총 런타임 <= available_time (초과 금지)
-        - 총 런타임 >= available_time * 0.9 (10% 미만까지 허용)
+        MMR (Maximal Marginal Relevance) 방식으로 영화 조합 찾기
+
+        MMR(m) = λ * relevance(m) - (1-λ) * max_similarity(m, selected)
+
+        Args:
+            candidates: 후보 영화 리스트
+            available_time: 가용 시간 (분)
+            max_movies: 최대 영화 수
+            lambda_param: 관련성 가중치 (0~1)
+                - 1.0: 관련성만 고려 (품질 우선)
+                - 0.0: 다양성만 고려
+                - 0.7: 기본값 (70% 관련성, 30% 다양성)
+
+        Returns:
+            {'movies': [...], 'total_runtime': int} or None
         """
         min_time = int(available_time * 0.9)
         max_time = available_time
@@ -537,73 +571,86 @@ class HybridRecommenderV3:
             max_movies = max(5, (available_time // 90) + 2)
         max_movies = min(max_movies, 15)  # 최대 15편으로 제한
 
-        print(f"  Finding combination: {available_time}min, max_movies={max_movies}, candidates={len(valid_movies)}")
+        print(f"  Finding combination (MMR λ={lambda_param}): {available_time}min, max_movies={max_movies}, candidates={len(valid_movies)}")
 
-        best_combo = None
-        best_runtime = 0
+        # 🚀 최적화 1: 임베딩 사전 캐싱 (한 번만 조회)
+        candidate_embeddings = {}
+        for movie in valid_movies:
+            mid = movie['movie_id']
+            if mid in self.sbert_movie_to_idx:
+                idx = self.sbert_movie_to_idx[mid]
+                # 한 번만 조회해서 메모리에 저장
+                candidate_embeddings[mid] = self.sbert_embeddings[idx].copy()
 
-        # 여러 번 랜덤 시도하여 최적의 조합 찾기
-        for attempt in range(30):
-            # 점수에 랜덤 노이즈 추가하여 순위 자체를 변동시킴 (다양성 확보)
-            # 노이즈 범위: 0.4~1.6 배율 (±60% 변동으로 다양성 극대화)
-            noisy_movies = []
-            for m in valid_movies:
-                noisy_score = m.get('score', 0) * (0.4 + random.random() * 1.2)  # 0.4~1.6 배율
-                noisy_movies.append((noisy_score, m))
+        print(f"  Cached {len(candidate_embeddings)} embeddings")
 
-            # 노이즈가 적용된 점수로 정렬
-            noisy_movies.sort(key=lambda x: x[0], reverse=True)
-            candidates = [m for _, m in noisy_movies]
+        # MMR 선택
+        selected = []
+        selected_embeddings = []
+        remaining = valid_movies.copy()
+        total_runtime = 0
 
-            combo, runtime = self._greedy_fill(candidates, max_time, max_movies)
+        while len(selected) < max_movies and remaining:
+            mmr_scores = []
 
-            # 갭 채우기 시도
-            if runtime < max_time and len(combo) < max_movies:
-                gap = max_time - runtime
-                # 갭에 맞는 영화 찾기
-                gap_fillers = [m for m in valid_movies if m not in combo and m['runtime'] <= gap]
-                if gap_fillers:
-                    # 갭에 가장 가까운 영화 선택
-                    filler = min(gap_fillers, key=lambda m: abs(m['runtime'] - gap))
-                    combo.append(filler)
-                    runtime += filler['runtime']
+            for movie in remaining:
+                # 시간 제약 체크
+                if total_runtime + movie['runtime'] > max_time:
+                    continue
 
-            if min_time <= runtime <= max_time:
-                print(f"  Found (noisy score): {len(combo)} movies, {runtime}min, attempt={attempt+1}")
-                return {'movies': combo, 'total_runtime': runtime}
-            if runtime > best_runtime and runtime <= max_time:
-                best_combo, best_runtime = list(combo), runtime
+                # 관련성 점수 (원본 추천 점수 사용)
+                relevance = movie.get('score', 0)
 
-        # 90% 미만이라도 최선의 조합 반환
-        if best_combo and best_runtime > 0:
-            print(f"  Best effort: {len(best_combo)} movies, {best_runtime}min ({best_runtime*100//available_time}%)")
-            return {'movies': best_combo, 'total_runtime': best_runtime}
+                # 다양성 점수 (이미 선택된 영화와의 최대 유사도)
+                if selected_embeddings:
+                    movie_id = movie['movie_id']
+                    movie_embedding = candidate_embeddings.get(movie_id)
+
+                    if movie_embedding is not None:
+                        # 🚀 최적화 2: 벡터화 유사도 계산 (행렬 연산)
+                        selected_matrix = np.vstack(selected_embeddings)  # (i, SBERT_dim)
+                        similarities = selected_matrix @ movie_embedding  # (i,) 한 번에 계산
+                        max_sim = np.max(similarities)
+                    else:
+                        # SBERT 임베딩 없는 영화는 다양성 0으로 간주
+                        max_sim = 0
+                else:
+                    max_sim = 0  # 첫 번째 영화
+
+                # MMR 점수 계산
+                mmr = lambda_param * relevance - (1 - lambda_param) * max_sim
+                mmr_scores.append((mmr, movie))
+
+            if not mmr_scores:
+                # 시간 제약으로 더 이상 추가 불가
+                break
+
+            # MMR이 가장 높은 영화 선택
+            mmr_scores.sort(key=lambda x: x[0], reverse=True)
+            _, best_movie = mmr_scores[0]
+
+            selected.append(best_movie)
+            total_runtime += best_movie['runtime']
+
+            # 임베딩 저장 (다음 반복에서 다양성 계산용)
+            movie_id = best_movie['movie_id']
+            if movie_id in candidate_embeddings:
+                selected_embeddings.append(candidate_embeddings[movie_id])
+
+            remaining.remove(best_movie)
+
+        # 결과 체크
+        if min_time <= total_runtime <= max_time:
+            print(f"  Found (MMR): {len(selected)} movies, {total_runtime}min ({total_runtime*100//available_time}%)")
+            return {'movies': selected, 'total_runtime': total_runtime}
+
+        # 90% 미만이라도 반환
+        if selected and total_runtime > 0:
+            print(f"  Best effort (MMR): {len(selected)} movies, {total_runtime}min ({total_runtime*100//available_time}%)")
+            return {'movies': selected, 'total_runtime': total_runtime}
 
         return None
 
-    def _greedy_fill(
-        self,
-        movies: List[Dict[str, Any]],
-        max_time: int,
-        max_movies: int
-    ) -> tuple:
-        """Greedy 방식으로 영화 채우기"""
-        combo = []
-        runtime = 0
-        used_ids = set()
-
-        for movie in movies:
-            if len(combo) >= max_movies:
-                break
-            movie_id = movie.get('movie_id')
-            if movie_id in used_ids:
-                continue
-            if runtime + movie['runtime'] <= max_time:
-                combo.append(movie)
-                runtime += movie['runtime']
-                used_ids.add(movie_id)
-
-        return combo, runtime
 
     def recommend(
         self,
@@ -677,7 +724,8 @@ class HybridRecommenderV3:
             sbert_weight=0.7,
             lightgcn_weight=0.3,
             top_k=300,
-            exclude_ids=exclude_a
+            exclude_ids=exclude_a,
+            preferred_genres=preferred_genres  # ← Track A는 장르 가중치 적용
         )
         print(f"Track A top candidates: {len(top_candidates_a)} movies")
 
@@ -700,7 +748,8 @@ class HybridRecommenderV3:
                 sbert_weight=0.7,
                 lightgcn_weight=0.3,
                 top_k=300,
-                exclude_ids=exclude_a
+                exclude_ids=exclude_a,
+                preferred_genres=preferred_genres  # ← Track A는 장르 가중치 적용
             )
 
             combo_a_relaxed = self._find_combination(top_candidates_a_relaxed, available_time)
@@ -746,7 +795,8 @@ class HybridRecommenderV3:
             sbert_weight=0.4,
             lightgcn_weight=0.6,
             top_k=300,
-            exclude_ids=exclude_b
+            exclude_ids=exclude_b,
+            preferred_genres=None  # ← Track B는 장르 가중치 없음
         )
 
         combo_b = self._find_combination(top_candidates_b, available_time)
@@ -832,6 +882,7 @@ class HybridRecommenderV3:
                 allow_adult=allow_adult
             )
             sbert_w, lgcn_w = 0.7, 0.3
+            use_genre_weight = preferred_genres  # ← Track A는 장르 가중치 사용
         else:
             filtered = self._apply_filters(
                 preferred_genres=None,
@@ -840,6 +891,7 @@ class HybridRecommenderV3:
                 allow_adult=allow_adult
             )
             sbert_w, lgcn_w = 0.4, 0.6
+            use_genre_weight = None  # ← Track B는 장르 가중치 없음
 
         # 🚀 최적화: 3단계 런타임 Fallback (90-100 → 70-100 → 0-100)
         runtime_filtered = []
@@ -884,7 +936,7 @@ class HybridRecommenderV3:
             print(f"❌ No valid movies found even with full range")
             return None
 
-        # 상위 300개 후보 (런타임 필터링된 영화들만)
+        # 상위 후보 계산 (런타임 필터링된 영화들만)
         all_exclude = list(set(user_movie_ids + excluded_ids))
         top_candidates = self._get_top_movies(
             user_sbert_profile, user_gcn_profile,
@@ -892,28 +944,68 @@ class HybridRecommenderV3:
             sbert_weight=sbert_w,
             lightgcn_weight=lgcn_w,
             top_k=300,
-            exclude_ids=all_exclude
+            exclude_ids=all_exclude,
+            preferred_genres=use_genre_weight  # ← Track A일 때만 장르 가중치
         )
 
-        # 후보가 있으면 랜덤 선택
+        # MMR 기반 다양성 선택 (이미 추천된 영화들과 다양성 고려)
         if top_candidates:
-            selected = random.choice(top_candidates)
+            # 이미 추천된 영화들의 임베딩 수집
+            excluded_embeddings = []
+            for exc_id in excluded_ids:
+                if exc_id in self.sbert_movie_to_idx:
+                    idx = self.sbert_movie_to_idx[exc_id]
+                    excluded_embeddings.append(self.sbert_embeddings[idx])
 
-            # Fallback 레벨 메타데이터 추가
-            selected['fallback_level'] = fallback_level
-            selected['fallback_info'] = {
-                0: 'perfect (90-100%)',
-                1: 'good (70-100%)',
-                2: 'acceptable (0-100%)'
-            }.get(fallback_level, 'unknown')
+            # 🚀 최적화: excluded_matrix를 한 번만 생성
+            excluded_matrix = np.vstack(excluded_embeddings) if excluded_embeddings else None
 
-            rec_type = selected.get('recommendation_type', 'unknown')
-            rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
-            fallback_label = ['✅', '⚠️', '⚠️⚠️'][fallback_level]
-            elapsed = time.time() - start_time
-            print(f"{fallback_label} [{rec_type_label}] {selected['title']} ({selected['runtime']}분, score={selected.get('score', 0):.3f}) [Fallback Level: {fallback_level}]")
-            print(f"Elapsed: {elapsed:.2f}s")
-            return selected
+            # MMR 계산
+            best_movie = None
+            best_mmr = -float('inf')
+
+            for movie in top_candidates:
+                movie_id = movie['movie_id']
+                relevance = movie.get('score', 0)
+
+                # 다양성 점수 (이미 추천된 영화들과의 최대 유사도)
+                if excluded_matrix is not None and movie_id in self.sbert_movie_to_idx:
+                    # 임베딩 직접 조회 (1번만 사용하므로 캐싱 불필요)
+                    idx = self.sbert_movie_to_idx[movie_id]
+                    movie_embedding = self.sbert_embeddings[idx]
+
+                    # 🚀 벡터화 유사도 계산 (excluded_matrix는 이미 생성됨)
+                    similarities = excluded_matrix @ movie_embedding  # (N,) 한 번에 계산
+                    max_sim = np.max(similarities)
+                else:
+                    max_sim = 0
+
+                # MMR 점수 (λ=0.7: 70% 관련성, 30% 다양성)
+                mmr = 0.7 * relevance - 0.3 * max_sim
+
+                if mmr > best_mmr:
+                    best_mmr = mmr
+                    best_movie = movie
+
+            if best_movie:
+                selected = best_movie
+                
+                # Fallback 레벨 메타데이터 추가
+                selected['fallback_level'] = fallback_level
+                selected['fallback_info'] = {
+                    0: 'perfect (90-100%)',
+                    1: 'good (70-100%)',
+                    2: 'acceptable (0-100%)'
+                }.get(fallback_level, 'unknown')
+                
+                rec_type = selected.get('recommendation_type', 'unknown')
+                rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+                fallback_label = ['✅', '⚠️', '⚠️⚠️'][fallback_level]
+                elapsed = time.time() - start_time
+                print(f"{fallback_label} [{rec_type_label}] {selected['title']} ({selected['runtime']}분, score={selected.get('score', 0):.3f}, MMR={best_mmr:.3f}) [Fallback Level: {fallback_level}]")
+                print(f"Elapsed: {elapsed:.2f}s")
+                return selected
+
         else:
             elapsed = time.time() - start_time
             print("❌ 조건에 맞는 영화 없음")

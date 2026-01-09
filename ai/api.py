@@ -5,7 +5,8 @@ from typing import List, Optional, Any, Dict
 import os
 import numpy as np
 
-from inference.db_conn_movie_reco_v3 import HybridRecommenderV3
+# from inference.db_conn_movie_reco_v3 import HybridRecommenderV3  # V3 (평균 유사도 + 노이즈)
+from inference.reco_model_v4 import HybridRecommenderV4  # V4 (MMR + 최적화)
 
 
 def convert_numpy_types(obj: Any) -> Any:
@@ -48,12 +49,14 @@ async def load_model():
 
     for attempt in range(1, max_retries + 1):
         try:
-            recommender = HybridRecommenderV3(
+            # recommender = HybridRecommenderV3(
+            recommender = HybridRecommenderV4(
                 db_config=db_config,
                 lightgcn_model_path="training/lightgcn_model/best_model.pt",
                 lightgcn_data_path="training/lightgcn_data"
             )
-            print("✅ AI Model v3 loaded successfully")
+            # print("✅ AI Model v3 (Noise) loaded successfully")
+            print("✅ AI Model v4 (MMR + Optimizations) loaded successfully")
             return
         except Exception as e:
             if attempt < max_retries:
