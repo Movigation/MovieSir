@@ -166,6 +166,19 @@ def confirm_signup(
             detail="이미 가입된 이메일입니다.",
         )
 
+    # 탈퇴한 유저가 재가입하는 경우: 기존 레코드 삭제
+    deleted_user = db.query(User).filter(
+        User.email == payload.email,
+        User.deleted_at.isnot(None)
+    ).first()
+    if deleted_user:
+        # 연관 데이터도 함께 삭제 (CASCADE가 설정되어 있지 않은 경우 대비)
+        db.execute(delete(UserOnboardingAnswer).where(UserOnboardingAnswer.user_id == deleted_user.user_id))
+        db.execute(delete(UserOttMap).where(UserOttMap.user_id == deleted_user.user_id))
+        db.delete(deleted_user)
+        db.commit()
+        print(f"[INFO] Deleted soft-deleted user for re-registration: {payload.email}")
+
     # 실제 유저 생성
     user = User(
         email=data["email"],
