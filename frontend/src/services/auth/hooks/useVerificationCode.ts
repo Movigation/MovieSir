@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { sendVerificationCode, verifyCode } from '@/api/authApi';
 
 export function useVerificationCode() {
@@ -7,40 +7,6 @@ export function useVerificationCode() {
     const [codeVerified, setCodeVerified] = useState(false);
     const [codeError, setCodeError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(0); // 초 단위 남은 시간
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-    // 타이머 로직
-    useEffect(() => {
-        if (codeSent && !codeVerified && timeLeft > 0) {
-            timerRef.current = setInterval(() => {
-                setTimeLeft((prev) => prev - 1);
-            }, 1000);
-        } else {
-            if (timerRef.current) clearInterval(timerRef.current);
-        }
-
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
-    }, [codeSent, codeVerified, timeLeft]);
-
-    // 인증번호 전송 상태가 true가 될 때 타이머 시작
-    useEffect(() => {
-        if (codeSent && timeLeft === 0 && !codeVerified) {
-            setTimeLeft(600);
-        }
-    }, [codeSent, codeVerified]);
-
-    // 시간 포맷팅 (MM:SS)
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const timeLeftFormatted = formatTime(timeLeft);
-    const isExpired = codeSent && timeLeft === 0;
-
 
     // 인증번호 전송
     const sendCode = useCallback(async (email: string) => {
@@ -49,7 +15,6 @@ export function useVerificationCode() {
             setCodeError('');
             await sendVerificationCode(email);
             setCodeSent(true);
-            setTimeLeft(600); // 10분 설정
             return { success: true };
         } catch (err: any) {
             const errorMsg = err.message || '인증번호 전송 실패';
@@ -104,8 +69,6 @@ export function useVerificationCode() {
         setCodeSent(false);
         setCodeVerified(false);
         setCodeError('');
-        setTimeLeft(0);
-        if (timerRef.current) clearInterval(timerRef.current);
     }, []);
 
     // 이메일 변경 시 호출 (코드 상태 리셋)
@@ -131,9 +94,5 @@ export function useVerificationCode() {
         verifyCode: verifyCodeValue,
         resetCode,
         handleEmailChange,
-        timeLeft,
-        timeLeftFormatted,
-        isExpired,
-        setTimeLeft
     };
 }

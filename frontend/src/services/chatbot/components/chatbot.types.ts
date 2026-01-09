@@ -4,8 +4,6 @@ export type ChatbotProps = {
     resetSignal?: number;  // 숫자로 주면 변경될 때 감지됨
     isOpen?: boolean;
     setIsOpen?: (value: boolean) => void;
-    isTutorialActive?: boolean;
-    tutorialStep?: number;
 };
 
 // [용도] 챗봇 패널 Props

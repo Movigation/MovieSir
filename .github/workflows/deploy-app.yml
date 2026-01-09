@@ -1,16 +1,7 @@
 name: Deploy App Server
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: '배포할 브랜치'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - main
-          - dev
+  workflow_dispatch:  # 수동 실행만 (Actions 탭에서 Run workflow 클릭)
 
 jobs:
   deploy:
@@ -36,7 +27,7 @@ jobs:
             echo "📌 Fetch latest code"
             cd ~/MovieSir
             git fetch --all
-            git reset --hard origin/${{ github.event.inputs.branch }}
+            git reset --hard origin/main
 
             echo "📌 Create .env.production"
             cat > .env.production << 'ENVEOF'

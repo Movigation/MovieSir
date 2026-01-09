@@ -134,7 +134,8 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
           <>
             <button
               onClick={() => {
-                navigate('/mypage');
+                // navigate('/mypage'); // 개발 중
+                alert('마이페이지는 개발중인 기능입니다.');
               }}
               className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
             >

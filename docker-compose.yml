@@ -1,8 +1,31 @@
 # MovieSir - App Server (Production)
 # Usage: docker compose --env-file .env.production up -d --build
-# Frontend: nginx 정적 파일 서빙 (/var/www/demo, /var/www/console)
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: "${VITE_API_BASE_URL:-}"
+        VITE_AUTH_BASE_URL: "${VITE_AUTH_BASE_URL:-}"
+    container_name: moviesir-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   backend:
     build:
       context: .

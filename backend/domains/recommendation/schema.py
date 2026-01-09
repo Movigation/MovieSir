@@ -100,7 +100,6 @@ class OttInfo(BaseModel):
     provider_id: int
     provider_name: str
     url: Optional[str] = None
-    payment_type: str
 
 
 class MovieDetailResponse(BaseModel):

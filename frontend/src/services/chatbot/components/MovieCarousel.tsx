@@ -142,8 +142,8 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                                     absolute w-[280px] sm:w-[320px] lg:w-[380px] h-[100px] sm:h-[100px] lg:h-[100px]
                                     transition-all duration-700 ease-out
                                     ${position === 'center' ? 'z-10 opacity-100' : ''}
-                                    ${position === 'left-1' ? 'z-5 opacity-100 pointer-events-none' : ''}
-                                    ${position === 'right-1' ? 'z-5 opacity-100 pointer-events-none' : ''}
+                                    ${position === 'left-1' ? 'z-5 opacity-100 grayscale-[80%] pointer-events-none' : ''}
+                                    ${position === 'right-1' ? 'z-5 opacity-100 grayscale-[80%] pointer-events-none' : ''}
                                     ${position === 'hidden' ? 'opacity-0 pointer-events-none' : ''}
                                 `}
                                 style={{

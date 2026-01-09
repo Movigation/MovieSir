@@ -15,34 +15,6 @@
   }
 }
 
-/* 스켈레톤 Shimmer 효과 */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton-shimmer {
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.05) 25%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-}
-
-.dark .skeleton-shimmer {
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.03) 25%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.03) 75%);
-  background-size: 200% 100%;
-}
-
 @keyframes slide-in-left {
   from {
     opacity: 0;
@@ -169,71 +141,4 @@
     overscroll-behavior-y: none;
     overscroll-behavior-x: auto;
   }
-}
-
-/* [최신안] 튜토리얼 전용 스타일 - 레이아웃 보존형 */
-.tutorial-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 9998;
-  /* 일반 UI보다 높음 */
-  pointer-events: auto;
-  /* 외부 클릭 차단 */
-  transition: opacity 0.3s ease;
-}
-
-/* 하이라이트 대상에 부여되는 클래스 (레이아웃 보존형) */
-.tutorial-highlight-target {
-  /* position: relative !important; <- 기존 배치를 방해하므로 제거 */
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-  transition: all 0.3s ease;
-}
-
-/* 하단 전용 가이드바 스타일 */
-.tutorial-guide-bar {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 600px;
-  background: rgba(30, 41, 59, 0.95);
-  /* 어두운 네이비 톤 */
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 0.5rem;
-  padding: 1.25rem 2rem;
-  color: white;
-  text-align: center;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-  z-index: 10001;
-  /* 오버레이보다 위 */
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translate(-50%, 100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translate(-50%, 0);
-    opacity: 1;
-  }
-}
-
-/* 스크롤바 숨기기 유틸리티 */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari, Opera */
 }

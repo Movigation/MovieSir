@@ -421,7 +421,7 @@ class HybridRecommenderV3:
         filtered_ids: List[int],
         sbert_weight: float,
         lightgcn_weight: float,
-        top_k: int = 300,
+        top_k: int = 100,
         exclude_ids: Optional[List[int]] = None
     ) -> List[Dict[str, Any]]:
         """상위 영화 선정 (모델 점수 + 평점 점수)"""
@@ -671,7 +671,7 @@ class HybridRecommenderV3:
         )
         print(f"Track A filtered: {len(filtered_a)} movies")
 
-        top_candidates_a = self._get_top_movies(
+        top_100_a = self._get_top_movies(
             user_sbert_profile, user_gcn_profile,
             filtered_a,
             sbert_weight=0.7,
@@ -679,9 +679,9 @@ class HybridRecommenderV3:
             top_k=300,
             exclude_ids=exclude_a
         )
-        print(f"Track A top candidates: {len(top_candidates_a)} movies")
+        print(f"Track A top candidates: {len(top_100_a)} movies")
 
-        combo_a = self._find_combination(top_candidates_a, available_time)
+        combo_a = self._find_combination(top_100_a, available_time)
 
         # 조합이 부족하면 필터 완화해서 재시도
         if not combo_a or (combo_a and combo_a['total_runtime'] < available_time * 0.7):
@@ -694,7 +694,7 @@ class HybridRecommenderV3:
             )
             print(f"Track A relaxed: {len(filtered_a_relaxed)} movies")
 
-            top_candidates_a_relaxed = self._get_top_movies(
+            top_100_a_relaxed = self._get_top_movies(
                 user_sbert_profile, user_gcn_profile,
                 filtered_a_relaxed,
                 sbert_weight=0.7,
@@ -703,7 +703,7 @@ class HybridRecommenderV3:
                 exclude_ids=exclude_a
             )
 
-            combo_a_relaxed = self._find_combination(top_candidates_a_relaxed, available_time)
+            combo_a_relaxed = self._find_combination(top_100_a_relaxed, available_time)
 
             # 완화된 결과가 더 나으면 사용
             if combo_a_relaxed:
@@ -740,7 +740,7 @@ class HybridRecommenderV3:
             [m['movie_id'] for m in track_a_result['movies']]
         ))
 
-        top_candidates_b = self._get_top_movies(
+        top_100_b = self._get_top_movies(
             user_sbert_profile, user_gcn_profile,
             filtered_b,
             sbert_weight=0.4,
@@ -749,7 +749,7 @@ class HybridRecommenderV3:
             exclude_ids=exclude_b
         )
 
-        combo_b = self._find_combination(top_candidates_b, available_time)
+        combo_b = self._find_combination(top_100_b, available_time)
 
         track_b_result = {
             'label': '장르 확장 추천',
@@ -803,15 +803,9 @@ class HybridRecommenderV3:
         print(f"Target runtime: {target_runtime} min")
         print(f"Track: {track}")
         print(f"Excluded: {len(excluded_ids)} movies")
-        if excluded_ids:
-            print(f"  First 5 excluded IDs: {excluded_ids[:5]}")
 
-        start_time = time.time()
-
-        # 런타임 범위: 대체할 영화와 비슷한 길이
-        # target_runtime의 100%를 초과하지 않으면 전체 시간도 초과 안 됨
-        min_runtime = int(target_runtime * 0.9)  # 90% 이상
-        max_runtime = target_runtime  # 100% (초과 불가)
+        min_runtime = int(target_runtime * 0.9)
+        max_runtime = target_runtime
 
         # 사용자 프로필
         user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
@@ -845,116 +839,42 @@ class HybridRecommenderV3:
             )
             sbert_w, lgcn_w = 0.4, 0.6
 
-        # 🚀 최적화: 3단계 런타임 Fallback (90-100 → 70-100 → 0-100)
-        # max_runtime = 100% 이하로 제한되어 있어 시간 초과 절대 방지
-        runtime_filtered = []
-        fallback_level = 0
-
-        # 1단계: 90~100% 시도
-        for mid in filtered:
-            meta = self.metadata_map.get(mid)
-            if meta:
-                runtime = meta.get('runtime', 0)
-                if min_runtime <= runtime <= max_runtime:
-                    runtime_filtered.append(mid)
-
-        print(f"[Level 0] 90-100% range: {len(runtime_filtered)} movies (target: {min_runtime}-{max_runtime}min)")
-
-        # 2단계: 70~100% 시도
-        if not runtime_filtered:
-            fallback_level = 1
-            fallback_min_70 = int(target_runtime * 0.7)
-            print(f"[Level 1] Expanding to 70-100% range ({fallback_min_70}-{max_runtime}min)...")
-            for mid in filtered:
-                meta = self.metadata_map.get(mid)
-                if meta:
-                    runtime = meta.get('runtime', 0)
-                    if fallback_min_70 <= runtime <= max_runtime:
-                        runtime_filtered.append(mid)
-            print(f"[Level 1] 70-100% range: {len(runtime_filtered)} movies")
-
-        # 3단계: 0~100% 시도 (최종)
-        if not runtime_filtered:
-            fallback_level = 2
-            print(f"[Level 2] Expanding to 0-100% range (0-{max_runtime}min)...")
-            for mid in filtered:
-                meta = self.metadata_map.get(mid)
-                if meta:
-                    runtime = meta.get('runtime', 0)
-                    if 0 < runtime <= max_runtime:
-                        runtime_filtered.append(mid)
-            print(f"[Level 2] 0-100% range: {len(runtime_filtered)} movies")
-
-        if not runtime_filtered:
-            print(f"❌ No valid movies found even with full range")
-            return None
-
-        # 상위 300개 후보 (런타임 필터링된 영화들만)
+        # 상위 100개
         all_exclude = list(set(user_movie_ids + excluded_ids))
-        print(f"Excluding {len(all_exclude)} movies (user movies + already recommended)")
-
-        top_candidates = self._get_top_movies(
+        top_100 = self._get_top_movies(
             user_sbert_profile, user_gcn_profile,
-            runtime_filtered,  # 런타임 필터링된 영화만
+            filtered,
             sbert_weight=sbert_w,
             lightgcn_weight=lgcn_w,
             top_k=300,
             exclude_ids=all_exclude
         )
-        print(f"Top candidates after scoring: {len(top_candidates)} movies")
 
-        # 후보가 있으면 랜덤 선택
-        if top_candidates:
-            # 🔒 중복 방지: excluded_ids에 없는 영화만 선택
-            excluded_set = set(excluded_ids)
-            valid_candidates = [m for m in top_candidates if m['movie_id'] not in excluded_set]
+        # 런타임 조건에 맞는 영화 찾기
+        candidates = [
+            m for m in top_100
+            if min_runtime <= m['runtime'] <= max_runtime
+        ]
 
-            if valid_candidates:
-                selected = random.choice(valid_candidates)
+        if candidates:
+            # 랜덤 선택
+            selected = random.choice(candidates)
+            rec_type = selected.get('recommendation_type', 'unknown')
+            rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+            print(f"✅ [{rec_type_label}] {selected['title']} ({selected['runtime']}분, score={selected.get('score', 0):.3f})")
+            return selected
 
-                # 🔍 최종 중복 체크 (디버깅)
-                if selected['movie_id'] in excluded_set:
-                    print(f"⚠️ WARNING: Selected movie {selected['movie_id']} is in excluded_ids!")
-                    print(f"   This should not happen - check filtering logic")
+        # 조건에 맞는 영화 없으면 런타임 이하 중 가장 가까운 영화
+        under_time = [m for m in top_100 if 0 < m['runtime'] <= max_runtime]
+        if under_time:
+            closest = max(under_time, key=lambda m: m['runtime'])
+            rec_type = closest.get('recommendation_type', 'unknown')
+            rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
+            print(f"✅ (fallback) [{rec_type_label}] {closest['title']} ({closest['runtime']}분, score={closest.get('score', 0):.3f})")
+            return closest
 
-                # Fallback 레벨 메타데이터 추가
-                selected['fallback_level'] = fallback_level
-                selected['fallback_info'] = {
-                    0: 'perfect (90-100%)',
-                    1: 'good (70-100%)',
-                    2: 'acceptable (0-100%)'
-                }.get(fallback_level, 'unknown')
-
-                rec_type = selected.get('recommendation_type', 'unknown')
-                rec_type_label = '🔀 하이브리드' if rec_type == 'hybrid' else '📖 SBERT만'
-                fallback_label = ['✅', '⚠️', '⚠️⚠️'][fallback_level]
-                elapsed = time.time() - start_time
-
-                # 🔍 시간 초과 검증
-                if selected['runtime'] > target_runtime:
-                    print(f"⚠️ WARNING: Selected runtime {selected['runtime']}분 > target {target_runtime}분!")
-                    print(f"   This violates max_runtime constraint!")
-
-                print(f"{fallback_label} [{rec_type_label}] {selected['title']} (ID:{selected['movie_id']}, {selected['runtime']}분, score={selected.get('score', 0):.3f}) [Fallback Level: {fallback_level}]")
-                print(f"  Runtime check: {selected['runtime']} vs target {target_runtime} (max_runtime={max_runtime})")
-                print(f"Elapsed: {elapsed:.2f}s")
-                return selected
-            else:
-                # 모든 후보가 excluded에 있음
-                elapsed = time.time() - start_time
-                print(f"❌ All candidates are already excluded (duplicates)")
-                print(f"   - Top candidates: {len(top_candidates)}")
-                print(f"   - Valid candidates: 0")
-                print(f"Elapsed: {elapsed:.2f}s")
-                return None
-        else:
-            elapsed = time.time() - start_time
-            print(f"❌ No candidates after scoring")
-            print(f"   - Runtime filtered: {len(runtime_filtered)}")
-            print(f"   - Excluded: {len(all_exclude)}")
-            print(f"   - Hint: All runtime-matching movies might be excluded already")
-            print(f"Elapsed: {elapsed:.2f}s")
-            return None
+        print("❌ 조건에 맞는 영화 없음")
+        return None
 
     def close(self):
         """리소스 정리"""

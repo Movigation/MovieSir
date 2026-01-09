@@ -3,9 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
 
-const isConsole = window.location.hostname === 'console.moviesir.cloud'
-const basePath = isConsole ? '' : '/console'
-
 export default function Register() {
   const navigate = useNavigate()
   const { login } = useAuthStore()
@@ -42,7 +39,7 @@ export default function Register() {
         password: form.password,
       })
       login(data.company, data.access_token)
-      navigate(`${basePath}/dashboard`)
+      navigate('/console/dashboard')
     } catch (err: any) {
       const message = err.response?.data?.detail || '회원가입 중 오류가 발생했습니다'
       setError(message)
@@ -64,13 +61,13 @@ export default function Register() {
       <main className="relative flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[400px]">
           {/* Logo */}
-          <a href="https://moviesir.cloud" className="flex items-center justify-center gap-2 mb-10">
+          <Link to="/api" className="flex items-center justify-center gap-2 mb-10">
             <img src="/favicon.svg" alt="무비서" className="w-12 h-12" />
             <span className="text-2xl font-bold text-white">무비서</span>
             <span className="text-sm font-semibold text-blue-400 border border-blue-400/50 px-2 py-0.5 rounded">
-              Console
+              API
             </span>
-          </a>
+          </Link>
 
           {/* Form Card - Glass Effect */}
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden">

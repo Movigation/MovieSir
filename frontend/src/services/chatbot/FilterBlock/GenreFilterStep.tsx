@@ -83,13 +83,13 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
             <div className="flex items-center gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-700">
                 <input
                     type="checkbox"
-                    id="exclude_adult"
-                    checked={filters.exclude_adult}
+                    id="excludeAdult"
+                    checked={filters.excludeAdult}
                     onChange={toggleExcludeAdult}
                     className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
                 />
                 <label
-                    htmlFor="exclude_adult"
+                    htmlFor="excludeAdult"
                     className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium cursor-pointer select-none"
                 >
                     성인 콘텐츠 제외

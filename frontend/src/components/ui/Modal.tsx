@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -23,7 +22,7 @@ export default function Modal({ isOpen, onClose, children, allowScroll = false }
 
     if (!isOpen) return null;
 
-    return createPortal(
+    return (
         <div
             className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-0 md:p-4"
             onClick={onClose}
@@ -41,7 +40,6 @@ export default function Modal({ isOpen, onClose, children, allowScroll = false }
                 </button>
                 {children}
             </div>
-        </div>,
-        document.body
+        </div>
     );
 }

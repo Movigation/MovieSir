@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { authAxiosInstance } from '@/api/axiosInstance';
+// import { authAxiosInstance } from '@/api/axiosInstance'; 주석 해제 요망
 
 // OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
@@ -34,12 +34,13 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
         setIsLoading(true);
         try {
             // TODO: 백엔드 API 연동 시 주석 해제
-            const response = await authAxiosInstance.get("/mypage/ott");
-            // 백엔드 명세(CurrentOTTResponse)에 맞춰 current_ott_ids 사용
-            const ottIds = response.data.current_ott_ids || [];
-            setSelectedProviderIds(ottIds);
+            // const response = await authAxiosInstance.get("/user/ott");
+            // setSelectedProviderIds(response.data.provider_ids);
 
-            console.log('🎬 OTT 데이터 로드:', ottIds);
+            // 임시 데이터: 개발용 (Netflix, Disney+, TVING 선택된 상태)
+            const mockSelectedProviders = [8, 337, 1883];
+            setSelectedProviderIds(mockSelectedProviders);
+            console.log('🎬 임시 OTT 데이터 로드:', mockSelectedProviders);
         } catch (error) {
             console.error('OTT 불러오기 실패:', error);
         } finally {
@@ -48,25 +49,25 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     };
 
     const handleToggleOTT = (providerId: number) => {
-        setSelectedProviderIds(prev => {
-            const current = Array.isArray(prev) ? prev : [];
-            return current.includes(providerId)
-                ? current.filter(id => id !== providerId)
-                : [...current, providerId];
-        });
+        setSelectedProviderIds(prev =>
+            prev.includes(providerId)
+                ? prev.filter(id => id !== providerId)
+                : [...prev, providerId]
+        );
     };
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // 백엔드 명세(UpdateOTTRequest)에 맞춰 PUT 메서드와 ott_ids 필드 사용
-            await authAxiosInstance.put("/mypage/ott", {
-                ott_ids: selectedProviderIds
-            });
+            // TODO: 백엔드 API 연동 시 주석 해제
+            // await authAxiosInstance.post("/onboarding/ott", {
+            //     provider_ids: selectedProviderIds
+            // });
 
-            console.log('OTT 저장:', selectedProviderIds);
+            // 임시: 로컬 상태만 업데이트
+            console.log('💾 OTT 저장 (임시):', selectedProviderIds);
 
-            alert('OTT 선택이 저장되었습니다.');
+            alert('OTT 선택이 저장되었습니다! (개발 모드)');
             onBack();
         } catch (error: any) {
             console.error('OTT 저장 실패:', error);
@@ -78,7 +79,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     };
 
     const selectedPlatforms = OTT_PLATFORMS.filter(p =>
-        (selectedProviderIds || []).includes(p.provider_id)
+        selectedProviderIds.includes(p.provider_id)
     );
 
     return (
@@ -122,7 +123,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                             >
                                 <input
                                     type="checkbox"
-                                    checked={(selectedProviderIds || []).includes(platform.provider_id)}
+                                    checked={selectedProviderIds.includes(platform.provider_id)}
                                     onChange={() => handleToggleOTT(platform.provider_id)}
                                     className="w-5 h-5 rounded border-gray-400 text-blue-500 focus:ring-blue-500"
                                 />

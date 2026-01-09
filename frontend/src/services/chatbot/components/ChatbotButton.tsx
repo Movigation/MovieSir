@@ -137,7 +137,7 @@ export default function ChatbotButton({
   return (
     <div
       ref={containerRef}
-      className="inline-block w-fit z-floating select-none overscroll-none"
+      className="inline-block w-fit z-float select-none overscroll-none"
     >
 
       {/* 캐릭터 전체 (몸통) */}
