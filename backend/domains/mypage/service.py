@@ -9,6 +9,48 @@ from backend.domains.user.models import User, UserOttMap, UserOnboardingAnswer
 from backend.domains.movie.models import Movie
 from backend.utils.password import verify_password
 
+
+# ======================================================
+# MP-01-01: 내가 본 영화 조회
+# ======================================================
+def get_watched_movies(db: Session, user: User) -> dict:
+    """
+    사용자가 온보딩에서 선택한 영화 목록 조회
+
+    Args:
+        db: 데이터베이스 세션
+        user: 현재 사용자 객체
+
+    Returns:
+        dict: {
+            "watched_movies": List[Movie] - 사용자가 본 영화 목록,
+            "total_count": int - 총 영화 개수
+        }
+
+    Raises:
+        HTTPException 404: 온보딩을 완료하지 않은 사용자인 경우
+    """
+    # 온보딩 완료 여부 확인
+    if not user.onboarding_completed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="온보딩을 완료하지 않은 사용자입니다"
+        )
+
+    # 사용자가 온보딩에서 선택한 영화 조회
+    watched_movies = (
+        db.query(Movie)
+        .join(UserOnboardingAnswer, Movie.movie_id == UserOnboardingAnswer.movie_id)
+        .filter(UserOnboardingAnswer.user_id == user.user_id)
+        .all()
+    )
+
+    return {
+        "watched_movies": watched_movies,
+        "total_count": len(watched_movies)
+    }
+
+
 # ======================================================
 # MP-02-00: 현재 구독 OTT 조회
 # ======================================================

@@ -49,6 +49,7 @@ interface MovieState {
 
   setDetailMovieId: (movieId: number | null) => void; // 영화 ID만 설정
   resetFilters: () => void;
+  reset: () => void; // 전체 스토어 초기화 (로그아웃 시 사용)
 }
 
 export const useMovieStore = create<MovieState>((set, get) => ({
@@ -403,5 +404,28 @@ export const useMovieStore = create<MovieState>((set, get) => ({
       // 하위 호환
       recommendedMovies: [],
       popularMovies: [],
+    }),
+
+  // 전체 스토어 초기화 (로그아웃 시 사용)
+  reset: () =>
+    set({
+      filters: {
+        time: "00:00",
+        genres: [],
+        excludeAdult: false,
+      },
+      userId: null,
+      trackAMovies: [],
+      trackATotalRuntime: 0,
+      trackALabel: "맞춤 추천",
+      trackBMovies: [],
+      trackBTotalRuntime: 0,
+      trackBLabel: "다양성 추천",
+      excludedIds: [],
+      recommendedMovies: [],
+      popularMovies: [],
+      detailMovieId: null,
+      isLoading: false,
+      error: null,
     }),
 }));

@@ -20,6 +20,7 @@ import * as authApi from '@/api/authApi';
 import * as userApi from '@/api/userApi';
 import type { User } from '@/api/authApi.type';
 import { useMovieStore } from '@/store/useMovieStore';
+import { useOnboardingStore } from '@/store/useOnboardingStore';
 
 interface AuthContextType {
     user: Omit<User, 'password'> | null;
@@ -30,6 +31,7 @@ interface AuthContextType {
     logout: () => void;
     refreshUser: () => Promise<void>;
     loadUserFromStorage: () => Promise<void>;
+    updateUser: (newData: Partial<Omit<User, 'password'>>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,8 +44,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // MovieStore의 setUserId 가져오기
+    // Store의 함수들 가져오기
     const setMovieStoreUserId = useMovieStore((state) => state.setUserId);
+    const resetMovieStore = useMovieStore((state) => state.reset);
+    const resetOnboardingStore = useOnboardingStore((state) => state.reset);
 
     // 컴포넌트 마운트 시 localStorage에서 사용자 정보 복원
     useEffect(() => {
@@ -65,12 +69,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(null);
             localStorage.removeItem('user');
             sessionStorage.removeItem('user');
-            setMovieStoreUserId(null);
+            resetMovieStore();
+            resetOnboardingStore();
         };
 
         window.addEventListener('auth:logout', handleAuthLogout);
         return () => window.removeEventListener('auth:logout', handleAuthLogout);
-    }, [setMovieStoreUserId]);
+    }, [resetMovieStore, resetOnboardingStore]);
 
     // user 상태가 변경될 때마다 MovieStore에 userId 동기화
     useEffect(() => {
@@ -131,7 +136,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } finally {
             // 백엔드 성공/실패 여부와 관계없이 로컬 상태는 정리
             setUser(null);
-            console.log('✅ 로컬 상태 정리 완료');
+
+            // 스토어 초기화
+            resetMovieStore();
+            resetOnboardingStore();
+            console.log('✅ 로컬 상태 및 스토어 정리 완료');
         }
     };
 
@@ -163,6 +172,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     };
 
+    // 사용자 정보 부분 업데이트 (닉네임 변경 등)
+    const updateUser = (newData: Partial<Omit<User, 'password'>>) => {
+        if (!user) return;
+        const updatedUser = { ...user, ...newData };
+        setUser(updatedUser);
+
+        // 스토리지 종류 확인 후 저장
+        const rememberMe = localStorage.getItem('rememberMe') === 'true';
+        authApi.saveUser(updatedUser as any, rememberMe);
+    };
+
     const value: AuthContextType = {
         user,
         isAuthenticated: !!user,
@@ -171,7 +191,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         signup,
         logout,
         refreshUser,
-        loadUserFromStorage
+        loadUserFromStorage,
+        updateUser
     };
 
     return (

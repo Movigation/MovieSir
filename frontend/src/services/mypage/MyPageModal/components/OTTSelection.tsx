@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
-// import { authAxiosInstance } from '@/api/axiosInstance'; 주석 해제 요망
+import { authAxiosInstance } from '@/api/axiosInstance';
 
 // OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
@@ -33,16 +33,14 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const loadUserOTT = async () => {
         setIsLoading(true);
         try {
-            // TODO: 백엔드 API 연동 시 주석 해제
-            // const response = await authAxiosInstance.get("/user/ott");
-            // setSelectedProviderIds(response.data.provider_ids);
-
-            // 임시 데이터: 개발용 (Netflix, Disney+, TVING 선택된 상태)
-            const mockSelectedProviders = [8, 337, 1883];
-            setSelectedProviderIds(mockSelectedProviders);
-            console.log('🎬 임시 OTT 데이터 로드:', mockSelectedProviders);
+            const response = await authAxiosInstance.get("/mypage/ott");
+            const providerIds = response.data.ott_providers?.map((ott: any) => ott.provider_id) || [];
+            setSelectedProviderIds(providerIds);
+            console.log('🎬 OTT 데이터 로드:', providerIds);
         } catch (error) {
             console.error('OTT 불러오기 실패:', error);
+            // 에러 시 빈 배열로 초기화
+            setSelectedProviderIds([]);
         } finally {
             setIsLoading(false);
         }
@@ -59,15 +57,12 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // TODO: 백엔드 API 연동 시 주석 해제
-            // await authAxiosInstance.post("/onboarding/ott", {
-            //     provider_ids: selectedProviderIds
-            // });
+            await authAxiosInstance.put("/mypage/ott", {
+                provider_ids: selectedProviderIds
+            });
 
-            // 임시: 로컬 상태만 업데이트
-            console.log('💾 OTT 저장 (임시):', selectedProviderIds);
-
-            alert('OTT 선택이 저장되었습니다! (개발 모드)');
+            console.log('💾 OTT 저장 완료:', selectedProviderIds);
+            alert('OTT 선택이 저장되었습니다!');
             onBack();
         } catch (error: any) {
             console.error('OTT 저장 실패:', error);

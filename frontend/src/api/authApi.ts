@@ -195,14 +195,16 @@ export const getCurrentUser = async () => {
 };
 
 // ------------------------------
-// 🗑️ 회원 탈퇴 (백엔드 API 필요 시 연결)
+// 🗑️ 회원 탈퇴
 // ------------------------------
-export const deleteUser = async (userId: string): Promise<void> => {
+export const deleteUser = async (password: string): Promise<void> => {
     try {
-        await axiosInstance.delete(`/users/${userId}`);
-        logout();
+        await axiosInstance.delete(`/mypage/account`, {
+            data: { password }
+        });
+        await logout();
     } catch (error) {
-        throw new Error("회원 탈퇴 중 오류가 발생했습니다");
+        throw new Error("회원 탈퇴 중 오류가 발생했습니다. 비밀번호를 다시 확인해주세요.");
     }
 };
 

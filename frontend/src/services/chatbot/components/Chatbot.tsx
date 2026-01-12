@@ -4,7 +4,13 @@ import ChatbotPanel from "@/services/chatbot/components/ChatbotPanel";
 import type { ChatbotProps } from "@/services/chatbot/components/chatbot.types";
 import { useAuth } from '@/app/providers/AuthContext';
 
-export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: ChatbotProps & { onLoginRequired?: () => void }) {
+export default function Chatbot({
+  isOpen = false,
+  setIsOpen,
+  onLoginRequired,
+  isTutorialActive,
+  tutorialStep
+}: ChatbotProps & { onLoginRequired?: () => void; isTutorialActive?: boolean; tutorialStep?: number }) {
   const { isAuthenticated } = useAuth();
   const isDark = document.documentElement.classList.contains("dark");
 
@@ -68,6 +74,7 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
           className={`
             inline-block w-28 h-28
             transition-all duration-500 ease-out
+            ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
             ${!isOpen
               ? "relative translate-y-[200px] sm:translate-y-[150px]"
               : isRecommended

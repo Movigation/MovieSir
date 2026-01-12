@@ -34,7 +34,8 @@ export const getMovie = async (movieId: number): Promise<Movie> => {
         poster: movie.poster_url,
         description: movie.overview,
         popular: false,
-        watched: false
+        watched: false,
+        adult: movie.adult
     };
 };
 
@@ -58,6 +59,7 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
             vote_average: movie.vote_average || 0,
             vote_count: movie.vote_count || 0,
             popularity: movie.popularity || 0,
+            adult: movie.adult,
             poster_url: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "",  // ✅ URL 조합
             backdrop_url: movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : "",
             director: movie.director,
@@ -67,7 +69,8 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
                 ott_id: ott.provider_id,
                 ott_name: ott.provider_name,
                 ott_logo: "",  // 백엔드에서 제공 안 함
-                watch_url: ott.url
+                watch_url: ott.url,
+                payment_type: ott.payment_type || 'SUBSCRIPTION'
             })),
             user_status: movie.user_status || {
                 liked: false,
@@ -150,7 +153,8 @@ export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
     description: v2Movie.overview,
     runtime: v2Movie.runtime,
     popular: false,
-    watched: false
+    watched: false,
+    adult: v2Movie.adult
 });
 
 

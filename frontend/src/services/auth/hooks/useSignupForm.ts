@@ -75,6 +75,12 @@ export function useSignupForm() {
                 password: passwordValidation.password,
             });
 
+            // 인증코드 훅의 타이머 수동 시작 (signup API 성공 시)
+            // signup API 내부에서 메일을 발송하므로 여기서 타이머를 시작해준다.
+            // useVerificationCode.sendCode를 직접 쓰지 않는 경우를 위해.
+            codeValidation.setCodeSent(true);
+            codeValidation.setTimeLeft(600);
+
         } catch (err: any) {
             // 에러 발생 시 입력창 다시 숨김
             codeValidation.setCodeSent(false);
@@ -225,6 +231,8 @@ export function useSignupForm() {
         codeVerified: codeValidation.codeVerified,
         codeError: codeValidation.codeError,
         setCode: codeValidation.setCode,
+        timeLeftFormatted: codeValidation.timeLeftFormatted,
+        isExpired: codeValidation.isExpired,
         handleSendCode,
         handleVerifyCode,
 

@@ -5,7 +5,7 @@
 
 import { Eye, RefreshCw } from 'lucide-react';
 import type { Movie } from '@/api/movieApi.type';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface MovieCardProps {
     movie: Movie;
@@ -31,6 +31,40 @@ export default function MovieCard({
     const [isRemoving, setIsRemoving] = useState(false);
     const [isWatched] = useState(movie.watched || false);
     const [isHovered, setIsHovered] = useState(false);
+    const [loadingPhase, setLoadingPhase] = useState<0 | 1 | 2>(0);
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    // 애니메이션 상태 리셋 (영화 데이터 변경 시)
+    useEffect(() => {
+        if (movie && !movie.isEmpty) {
+            setLoadingPhase(0);
+            const timer1 = setTimeout(() => setLoadingPhase(1), 100);
+            const timer2 = setTimeout(() => setLoadingPhase(2), 300);
+            return () => {
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+            };
+        }
+    }, [movie]);
+
+    // 외부 클릭 감지 (모바일에서 카드 접기)
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+                if (window.innerWidth < 1024 && isExpanded) {
+                    onCollapse();
+                }
+            }
+        };
+
+        if (isExpanded) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isExpanded, onCollapse]);
 
     // 재추천받기 버튼 클릭
     const handleReRecommend = (e: React.MouseEvent) => {
@@ -88,6 +122,7 @@ export default function MovieCard({
 
     return (
         <div
+            ref={cardRef}
             className={`
                 relative flex-shrink-0 cursor-pointer overflow-hidden rounded-lg shadow-xl
                 w-full aspect-[2/3]
@@ -95,6 +130,7 @@ export default function MovieCard({
                 group
                 ${isExpanded ? 'z-30 ring-2 ring-blue-500 shadow-2xl' : 'z-10'}
                 ${isRemoving ? 'animate-slide-down-fade' : shouldAnimate ? 'animate-slide-up' : ''}
+                ${loadingPhase < 2 ? 'opacity-0' : 'opacity-100'}
             `}
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}

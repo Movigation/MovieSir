@@ -1,12 +1,14 @@
-import { X, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
+import { X, CheckCircle2, XCircle, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { SignupModalProps } from "@/services/auth/components/SignupModal/signupModal.types";
 import { useSignupForm } from "@/services/auth/hooks";
 
 export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     const navigate = useNavigate();
     const modalContentRef = useRef<HTMLDivElement>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
     // ✅ 모든 로직을 useSignupForm 훅에서 가져옴
     const {
@@ -46,6 +48,8 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
         setCode,
         handleSendCode,
         handleVerifyCode,
+        timeLeftFormatted,
+        isExpired,
 
         // 공통
         generalError,
@@ -397,18 +401,27 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 비밀번호 *
                             </label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => handlePasswordChange(e.target.value)}
-                                className={`w-full px-4 py-3 rounded-lg border ${passwordError
-                                    ? "border-red-500"
-                                    : password && isPasswordValid
-                                        ? "border-green-500"
-                                        : "border-gray-300 dark:border-gray-600"
-                                    } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
-                                placeholder="영문, 숫자 포함 8자 이상"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => handlePasswordChange(e.target.value)}
+                                    className={`w-full px-4 py-3 pr-10 rounded-lg border ${passwordError
+                                        ? "border-red-500"
+                                        : password && isPasswordValid
+                                            ? "border-green-500"
+                                            : "border-gray-300 dark:border-gray-600"
+                                        } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
+                                    placeholder="영문, 숫자 포함 8자 이상"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                             {passwordError && (
                                 <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                                     <AlertCircle size={14} />
@@ -428,18 +441,27 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 비밀번호 확인 *
                             </label>
-                            <input
-                                type="password"
-                                value={passwordConfirm}
-                                onChange={(e) => handlePasswordConfirmChange(e.target.value)}
-                                className={`w-full px-4 py-3 rounded-lg border ${!isPasswordMatch && passwordConfirm
-                                    ? "border-red-500"
-                                    : isPasswordMatch && passwordConfirm
-                                        ? "border-green-500"
-                                        : "border-gray-300 dark:border-gray-600"
-                                    } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
-                                placeholder="비밀번호를 다시 입력하세요"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPasswordConfirm ? "text" : "password"}
+                                    value={passwordConfirm}
+                                    onChange={(e) => handlePasswordConfirmChange(e.target.value)}
+                                    className={`w-full px-4 py-3 pr-10 rounded-lg border ${!isPasswordMatch && passwordConfirm
+                                        ? "border-red-500"
+                                        : isPasswordMatch && passwordConfirm
+                                            ? "border-green-500"
+                                            : "border-gray-300 dark:border-gray-600"
+                                        } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
+                                    placeholder="비밀번호를 다시 입력하세요"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                             {passwordConfirmError && (
                                 <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                                     <AlertCircle size={14} />
@@ -486,6 +508,10 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                                 <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-lg">
                                     <p className="text-blue-700 dark:text-blue-300 text-sm text-center">
                                         이메일로 6자리 인증번호가 전송되었습니다
+                                    </p>
+                                    {/* 타이머 표시 */}
+                                    <p className={`text-center text-sm mt-1 font-mono ${isExpired ? 'text-red-500' : 'text-blue-600 dark:text-blue-400'}`}>
+                                        {isExpired ? '인증 시간이 만료되었습니다' : `남은 시간: ${timeLeftFormatted}`}
                                     </p>
                                 </div>
 

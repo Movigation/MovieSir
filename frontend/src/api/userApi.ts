@@ -29,6 +29,11 @@ export const patchUser = (id: User['id'], data: User['data']) => {
     return axiosInstance.patch(`/users/${id}`, data);
 };
 
+// 닉네임 변경하기 (PUT /mypage/nickname)
+export const updateNickname = (nickname: string) => {
+    return axiosInstance.put("/mypage/nickname", { nickname });
+};
+
 // 유저 삭제하기 (DELETE)
 export const deleteUser = (id: User['id']) => {
     return axiosInstance.delete(`/users/${id}`);
