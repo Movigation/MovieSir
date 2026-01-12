@@ -90,6 +90,7 @@ export interface OTTPlatform {
     ott_name: string;
     ott_logo: string;
     watch_url: string;
+    payment_type?: 'SUBSCRIPTION' | 'RENT' | 'BUY';
 }
 
 // [용도] 사용자의 영화 상태 정보
