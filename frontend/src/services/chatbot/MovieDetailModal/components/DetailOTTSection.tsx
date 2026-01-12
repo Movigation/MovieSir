@@ -1,18 +1,35 @@
 import { useState } from 'react';
 import { type OTTPlatform } from '@/api/movieApi.type';
 import { getOttLogoWithFallback } from '@/utils/ottLogoMapper';
+import { useMovieStore } from '@/store/useMovieStore';
 
 interface DetailOTTSectionProps {
+    movieId: number;
+    movieTitle: string;
+    posterUrl: string;
     ottProviders: OTTPlatform[];
 }
 
-export default function DetailOTTSection({ ottProviders }: DetailOTTSectionProps) {
+export default function DetailOTTSection({ movieId, movieTitle, posterUrl, ottProviders }: DetailOTTSectionProps) {
     const [activeTab, setActiveTab] = useState<'SUBSCRIPTION' | 'OTHERS'>('SUBSCRIPTION');
+    const { userId, filters } = useMovieStore();
+
+    // 헬퍼: "HH:MM" -> 분 변환
+    const parseMinutes = (time: string) => {
+        const [h, m] = time.split(':').map(Number);
+        return (h || 0) * 60 + (m || 0);
+    };
 
     if (!ottProviders || ottProviders.length === 0) return null;
 
-    const subscriptions = ottProviders.filter(ott => ott.payment_type === 'SUBSCRIPTION');
-    const others = ottProviders.filter(ott => ott.payment_type !== 'SUBSCRIPTION');
+    const subscriptions = ottProviders.filter(ott => {
+        const type = ott.payment_type?.toUpperCase();
+        return type === 'SUBSCRIPTION' || type === 'FLATRATE';
+    });
+    const others = ottProviders.filter(ott => {
+        const type = ott.payment_type?.toUpperCase();
+        return type !== 'SUBSCRIPTION' && type !== 'FLATRATE';
+    });
 
     // 탭 정보 구성
     const tabs = [
@@ -54,7 +71,39 @@ export default function DetailOTTSection({ ottProviders }: DetailOTTSectionProps
                 {activeData.length > 0 ? (
                     <div className="flex flex-wrap gap-2.5 sm:gap-4">
                         {activeData.map((ott) => (
-                            <OTTLink key={ott.ott_id} ott={ott} />
+                            <OTTLink
+                                key={ott.ott_id}
+                                ott={ott}
+                                onClick={() => {
+                                    // 클릭 정보 저장 (최대 20개 제한)
+                                    const logKey = userId ? `movie_click_logs_${userId}` : 'movie_click_logs';
+                                    const existingLogsRaw = localStorage.getItem(logKey);
+                                    let logs = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
+
+                                    const now = Date.now();
+                                    const filterMinutes = parseMinutes(filters.time);
+                                    // 타임 필터가 0이면 최소 1분으로 설정 (방어 로직)
+                                    const waitMinutes = filterMinutes > 0 ? filterMinutes : 1;
+                                    const targetShowTime = now + (waitMinutes * 60 * 1000);
+
+                                    const newEntry = {
+                                        movieId,
+                                        title: movieTitle,
+                                        posterUrl,
+                                        clickedAt: now,
+                                        targetShowTime
+                                    };
+
+                                    // 중복 제거 및 최신화
+                                    logs = [newEntry, ...logs.filter((l: any) => l.movieId !== movieId)];
+
+                                    // 최대 20개 유지
+                                    if (logs.length > 20) logs = logs.slice(0, 20);
+
+                                    localStorage.setItem(logKey, JSON.stringify(logs));
+                                    console.log(`🎬 [User ${userId || 'Guest'}] OTT 클릭 로그 업데이트:`, newEntry);
+                                }}
+                            />
                         ))}
                     </div>
                 ) : (
@@ -67,12 +116,13 @@ export default function DetailOTTSection({ ottProviders }: DetailOTTSectionProps
     );
 }
 
-function OTTLink({ ott }: { ott: OTTPlatform }) {
+function OTTLink({ ott, onClick }: { ott: OTTPlatform; onClick: () => void }) {
     return (
         <a
             href={ott.watch_url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={onClick}
             className="flex items-center justify-center p-1.5 sm:p-2 w-[90px] sm:w-[120px] h-[35px] sm:h-[45px] bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors border border-black/5 dark:border-white/5"
         >
             <div className="w-12 sm:w-16 h-6 sm:h-8 flex items-center justify-center">

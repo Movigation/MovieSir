@@ -79,21 +79,25 @@ export default function Chatbot({
               ? "relative translate-y-[200px] sm:translate-y-[150px]"
               : isRecommended
                 // 추천 상태일 때는 버튼이 화면 중앙 아래에 고정 (모바일)
-                ? "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-[60] sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-43%] xl:ml-[-40%] 2xl:ml-[-17%]"
-                : "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-[60] sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-30%] xl:ml-[-23%] 2xl:ml-[-12%]"
+                ? "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-43%] xl:ml-[-40%] 2xl:ml-[-17%]"
+                : "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-30%] xl:ml-[-23%] 2xl:ml-[-12%]"
             }
           `}
         >
           {/* 챗봇 버튼 내부 컨테이너 (scale만 담당) */}
-          <div className={`
-            inline-block w-28
-            ${!isOpen
-              ? ""
-              : isRecommended
-                ? "scale-[0.35] sm:scale-100"
-                : "scale-[0.35] sm:scale-100"
-            }
-          `}>
+          <div
+            className={`
+              inline-block w-28
+              ${!isOpen
+                ? ""
+                : isRecommended
+                  ? "scale-[0.35] sm:scale-100"
+                  : "scale-[0.35] sm:scale-100"
+              }
+            `}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <ChatbotButton
               isDark={isDark}
               onClick={handleChatbotButtonClick}

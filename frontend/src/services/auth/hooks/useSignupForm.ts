@@ -79,7 +79,7 @@ export function useSignupForm() {
             // signup API 내부에서 메일을 발송하므로 여기서 타이머를 시작해준다.
             // useVerificationCode.sendCode를 직접 쓰지 않는 경우를 위해.
             codeValidation.setCodeSent(true);
-            (codeValidation as any).setTimeLeft?.(600); // setTimeLeft가 export 안되어있을 수 있으니 타입 체크 주의
+            codeValidation.setTimeLeft(600);
 
         } catch (err: any) {
             // 에러 발생 시 입력창 다시 숨김
@@ -231,8 +231,8 @@ export function useSignupForm() {
         codeVerified: codeValidation.codeVerified,
         codeError: codeValidation.codeError,
         setCode: codeValidation.setCode,
-        timeLeftFormatted: (codeValidation as any).timeLeftFormatted,
-        isExpired: (codeValidation as any).isExpired,
+        timeLeftFormatted: codeValidation.timeLeftFormatted,
+        isExpired: codeValidation.isExpired,
         handleSendCode,
         handleVerifyCode,
 

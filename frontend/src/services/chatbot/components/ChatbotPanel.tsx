@@ -48,7 +48,6 @@ export interface Message {
 
 export default function ChatbotPanel({
   isOpen,
-  onClose,
   onRecommended
 }: ChatbotPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -219,10 +218,11 @@ export default function ChatbotPanel({
         className={`
           fixed
           top-[70px] left-0 right-0 bottom-0
-          z-panel
+          z-chatbot-backdrop
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
-        onClick={onClose}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       />
 
       {/* 챗봇 패널 */}
@@ -248,15 +248,17 @@ export default function ChatbotPanel({
           top-0 sm:top-[70px]
           left-0
           right-0
-          h-dvh sm:h-[calc(100vh-70px)]
+          h-[calc(100dvh-65px)] sm:h-[calc(100vh-70px)]
           bg-transparent
-          z-panel
+          z-chatbot-panel
           flex flex-col
           transition-opacity duration-200
           max-w-screen-lg mx-auto
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
         style={{ transition: 'opacity 0.2s ease-in-out' }}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         {/* <div className="flex justify-between items-center p-1">
@@ -288,7 +290,7 @@ export default function ChatbotPanel({
                     rounded-[15px] p-3 border shadow-sm
                     w-full sm:w-auto
                     ${msg.type === 'bot'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700] sm:mr-[105px]'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700 sm:mr-[105px]'
                       : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700 max-w-[75%] sm:max-w-[80%]'
                     }
                   `}

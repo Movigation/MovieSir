@@ -33,13 +33,17 @@ export default function MovieCard({
     const [isHovered, setIsHovered] = useState(false);
     const [loadingPhase, setLoadingPhase] = useState<0 | 1 | 2>(0); // 0: Skeleton, 1: Pop-in, 2: Final
     const cardRef = useRef<HTMLDivElement>(null);
-
     // 데이터 로드 완료 또는 복구 시 제거 애니메이션 상태 리셋
     useEffect(() => {
         if (!movie.isSkeleton) {
             setIsRemoving(false);
         }
     }, [movie.isSkeleton, movie.id]);
+
+    // 새로운 영화 데이터가 로드될 때(ID 변경 시) 페이즈 리셋
+    useEffect(() => {
+        setLoadingPhase(0);
+    }, [movie.id]);
 
     // 외부 클릭 감지 (모바일에서 카드 바깥 클릭 시 닫기)
     useEffect(() => {

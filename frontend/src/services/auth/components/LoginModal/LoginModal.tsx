@@ -206,7 +206,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 className={`w-full px-4 py-2 pr-10 rounded-lg border transition-colors
-                                    bg-white dark:bg-gray-700 
+                                    bg-white dark:bg-gray-700
                                     text-gray-900 dark:text-white
                                     placeholder-gray-400 dark:placeholder-gray-500
                                     focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -220,10 +220,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                                disabled={isLoading}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                             >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
                         {touched.password && errors.password && (

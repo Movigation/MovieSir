@@ -59,7 +59,7 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
             vote_average: movie.vote_average || 0,
             vote_count: movie.vote_count || 0,
             popularity: movie.popularity || 0,
-            adult: movie.adult || false,
+            adult: movie.adult,
             poster_url: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "",  // ✅ URL 조합
             backdrop_url: movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : "",
             director: movie.director,
@@ -68,9 +68,9 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
             ott_providers: otts.map((ott: any) => ({  // ✅ otts → ott_providers 변환
                 ott_id: ott.provider_id,
                 ott_name: ott.provider_name,
-                ott_logo: '', // logo_path는 이제 utils/ottLogoMapper에서 처리
-                watch_url: ott.url || '',
-                payment_type: ott.payment_type
+                ott_logo: "",  // 백엔드에서 제공 안 함
+                watch_url: ott.url,
+                payment_type: ott.payment_type || 'SUBSCRIPTION'
             })),
             user_status: movie.user_status || {
                 liked: false,
@@ -96,7 +96,7 @@ export const postRecommendationsV2 = async (filters: {
     genres: string[];  // 장르 이름 배열
     exclude_adult?: boolean;
 }): Promise<RecommendResponseV2> => {
-    console.log('🚀 [V2 API] postRecommendationsV2 호출!', filters);
+    console.log('🚀 [V4 API] postRecommendationsV2 호출!', filters);
 
     try {
         // 시간 변환: "02:30" -> 150분
@@ -152,9 +152,9 @@ export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
     poster: v2Movie.poster_path ? `https://image.tmdb.org/t/p/w500${v2Movie.poster_path}` : '',
     description: v2Movie.overview,
     runtime: v2Movie.runtime,
-    adult: v2Movie.adult,
     popular: false,
-    watched: false
+    watched: false,
+    adult: v2Movie.adult
 });
 
 
@@ -175,34 +175,30 @@ export const addRecommendation = async (
     return response.data;
 };
 
-// 사용자별 시청 기록 조회 (온보딩 선용 영화 포함)
-export const getWatchHistory = async (_userId: string): Promise<WatchHistoryWithMovie[]> => {
+// 사용자별 시청 기록 조회 (영화 정보 포함)
+export const getWatchHistory = async (userId: string): Promise<WatchHistoryWithMovie[]> => {
     try {
-        // 백엔드 마이페이지 API 호출 (MP-01-01)
-        const response = await axiosInstance.get("/mypage/watched");
-        const { watched_movies } = response.data;
+        const response = await axiosInstance.get<WatchHistory[]>(`/watchHistory?userId=${userId}`);
+        const watchHistory = response.data;
 
-        // 백엔드 응답을 WatchHistoryWithMovie 형식으로 변환 (UI 호환용)
-        return watched_movies.map((item: any) => ({
-            id: item.movie_id,
-            userId: 0, // 프론트에서 현재 사용하지 않음
-            movieId: item.movie_id,
-            watchedAt: new Date().toISOString(), // 온보딩 시점 정보가 없으므로 현재 시간 사용
-            rating: item.vote_average ? Math.round(item.vote_average / 2) : 0, // vote_average(10점)를 5점 만점으로 변환
-            movie: {
-                id: item.movie_id,
-                title: item.title,
-                poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "",
-                genres: item.genres || [],
-                year: item.release_date ? new Date(item.release_date).getFullYear() : undefined,
-                description: "",
-                popular: false,
-                watched: true
-            }
-        }));
+        // 각 시청 기록에 영화 정보 추가
+        const historyWithMovies = await Promise.all(
+            watchHistory.map(async (history) => {
+                const movie = await getMovie(history.movieId);
+                return {
+                    ...history,
+                    movie
+                };
+            })
+        );
+
+        // 최신순으로 정렬
+        return historyWithMovies.sort((a, b) =>
+            new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime()
+        );
     } catch (error) {
         console.error("시청 기록 조회 중 오류:", error);
-        return []; // 에러 시 빈 배열 반환하여 크래시 방지
+        throw new Error("시청 기록을 가져오는 중 오류가 발생했습니다");
     }
 };
 

@@ -18,8 +18,8 @@ export default function MovieSelectionPage() {
         movies: storedMovies, // localStorage에서 가져온 영화 목록
     } = useOnboardingStore();
 
-    const [movies, setMovies] = useState<OnboardingMovie[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [movies, setMovies] = useState<OnboardingMovie[]>(storedMovies || []);
+    const [isLoading, setIsLoading] = useState(!storedMovies || storedMovies.length === 0);
     const [isSubmitting, setIsSubmitting] = useState(false); // 제출 중 상태
     const [error, setError] = useState("");
     const [isSkipModalOpen, setIsSkipModalOpen] = useState(false); // 건너뛰기 확인 모달
@@ -76,7 +76,8 @@ export default function MovieSelectionPage() {
         };
 
         loadMovies();
-    }, [storedMovies, setGlobalMovies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
 
     // 영화 선택/해제 토글

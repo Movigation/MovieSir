@@ -1,12 +1,8 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 export default function Api() {
   const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    document.title = "무비서 API";
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,13 +23,13 @@ export default function Api() {
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-10">
-              <a href="https://api.moviesir.cloud" className="flex items-center gap-2">
+              <Link to="/api" className="flex items-center gap-2">
                 <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
                 <span className="text-xl font-semibold text-white">무비서</span>
                 <span className="text-xs font-semibold text-white border border-white/30 bg-white/10 px-1.5 py-0.5 rounded">
                   API
                 </span>
-              </a>
+              </Link>
               <ul className="hidden md:flex items-center gap-1">
                 {/* 소개 드롭다운 */}
                 <li className="relative group">
@@ -143,19 +139,19 @@ export default function Api() {
                 무비서 이용하기
               </a>
               <span className="text-white/30">|</span>
-              <a
-                href="https://console.moviesir.cloud/login"
+              <Link
+                to="/login"
                 className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
               >
                 콘솔
-              </a>
+              </Link>
               <span className="text-white/30">|</span>
-              <a
-                href="https://console.moviesir.cloud/register"
+              <Link
+                to="/register"
                 className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
               >
                 회원가입
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -199,8 +195,8 @@ export default function Api() {
                   시간 맞춤 추천부터 OTT 필터링까지, 한 번의 호출로 해결합니다
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <a
-                    href="https://console.moviesir.cloud/login"
+                  <Link
+                    to="/login"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition-colors shadow-lg shadow-blue-500/25"
                   >
                     시작하기
@@ -217,7 +213,7 @@ export default function Api() {
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </a>
+                  </Link>
                   <Link
                     to="/docs"
                     className="inline-flex items-center gap-2 px-6 py-3 border border-white/30 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"

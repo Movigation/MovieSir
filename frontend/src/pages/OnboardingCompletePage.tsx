@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/app/providers/AuthContext";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { skipOnboarding } from "@/api/onboardingApi";
 import { authAxiosInstance } from "@/api/axiosInstance";
@@ -23,7 +22,6 @@ const OTT_PLATFORMS_MAP: Record<number, { name: string; logo: string; bg: string
 
 export default function OnboardingCompletePage() {
     const navigate = useNavigate();
-    const { loadUserFromStorage } = useAuth();
     const { provider_ids, movie_ids, reset, movies } = useOnboardingStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -52,9 +50,8 @@ export default function OnboardingCompletePage() {
                     storage.setItem("user", JSON.stringify(userData));
                     console.log("✅ 로컬 온보딩 완료 상태 저장 완료:", userData);
 
-                    // AuthContext 최신화
-                    await loadUserFromStorage();
-                    console.log("✅ AuthContext 동기화 완료");
+                    // AuthContext 등에 동기화 알림
+                    window.dispatchEvent(new Event('storage'));
                 } catch (e) {
                     console.error("user 데이터 업데이트 실패:", e);
                 }

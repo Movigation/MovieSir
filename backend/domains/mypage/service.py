@@ -9,23 +9,45 @@ from backend.domains.user.models import User, UserOttMap, UserOnboardingAnswer
 from backend.domains.movie.models import Movie
 from backend.utils.password import verify_password
 
+
 # ======================================================
 # MP-01-01: 내가 본 영화 조회
 # ======================================================
 def get_watched_movies(db: Session, user: User) -> dict:
     """
     사용자가 온보딩에서 선택한 영화 목록 조회
+
+    Args:
+        db: 데이터베이스 세션
+        user: 현재 사용자 객체
+
+    Returns:
+        dict: {
+            "watched_movies": List[Movie] - 사용자가 본 영화 목록,
+            "total_count": int - 총 영화 개수
+        }
+
+    Raises:
+        HTTPException 404: 온보딩을 완료하지 않은 사용자인 경우
     """
-    watched = (
+    # 온보딩 완료 여부 확인
+    if not user.onboarding_completed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="온보딩을 완료하지 않은 사용자입니다"
+        )
+
+    # 사용자가 온보딩에서 선택한 영화 조회
+    watched_movies = (
         db.query(Movie)
         .join(UserOnboardingAnswer, Movie.movie_id == UserOnboardingAnswer.movie_id)
         .filter(UserOnboardingAnswer.user_id == user.user_id)
         .all()
     )
-    
+
     return {
-        "watched_movies": watched,
-        "total_count": len(watched)
+        "watched_movies": watched_movies,
+        "total_count": len(watched_movies)
     }
 
 
@@ -136,11 +158,11 @@ def update_user_nickname(db: Session, user: User, new_nickname: str) -> str:
 
 
 # ======================================================
-# MP-03-02: 회원 탈퇴 (Soft Delete)
+# MP-03-02: 회원 탈퇴 (Hard Delete)
 # ======================================================
 def delete_user_account(db: Session, user: User, password: str) -> None:
     """
-    회원 탈퇴 처리 (Soft Delete)
+    회원 탈퇴 처리 (Hard Delete)
     
     Args:
         db: 데이터베이스 세션
@@ -149,34 +171,39 @@ def delete_user_account(db: Session, user: User, password: str) -> None:
     
     Raises:
         HTTPException 401: 비밀번호가 일치하지 않는 경우
-        HTTPException 400: 이미 탈퇴한 회원인 경우
     
     Process:
         1. 비밀번호 검증
-        2. deleted_at 타임스탬프 설정 (Soft Delete)
-        3. refresh_token 삭제
-    """
-    # 1. 이미 탈퇴한 회원인지 확인
-    if user.deleted_at:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 탈퇴한 회원입니다"
-        )
+        2. DB에서 사용자 데이터 완전 삭제
+        3. 관련 데이터(OTT 매핑, 온보딩 응답, 사용자 벡터 등)는 CASCADE로 자동 삭제
     
-    # 2. 비밀번호 검증
+    Note:
+        - 같은 이메일로 재가입 가능
+        - 관련 외래 키는 모두 CASCADE 설정되어 있어 자동 삭제됨
+    """
+    # 1. 비밀번호 검증
     if not verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="비밀번호가 일치하지 않습니다"
         )
     
-    # 3. Soft Delete 처리
-    user.deleted_at = datetime.utcnow()
-    user.refresh_token = None  # 토큰 무효화
-    
-    # 4. 커밋
-    db.add(user)
+    # 2. Hard Delete 처리
+    # CASCADE 설정으로 인해 다음 데이터들이 자동 삭제됨:
+    # - UserOttMap (OTT 구독 정보)
+    # - UserOnboardingAnswer (온보딩 응답)
+    # - UserVector (사용자 임베딩 벡터)
+    db.delete(user)
     db.commit()
+    
+    # ※ Soft Delete 버전 (참고용)
+    # # Soft Delete 처리
+    # user.deleted_at = datetime.utcnow()
+    # user.refresh_token = None  # 토큰 무효화
+    # 
+    # # 커밋
+    # db.add(user)
+    # db.commit()
 
 
 # ======================================================

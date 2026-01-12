@@ -14,9 +14,9 @@ export interface Movie {
     popular: boolean;
     watched?: boolean;
     runtime?: number;  // 러닝타임 (분 단위)
-    adult?: boolean;    // 성인 영화 여부
     isEmpty?: boolean;  // 빈 카드 플래그 (추천 결과 없을 때 사용)
-    isSkeleton?: boolean; // API 로딩 중 스켈레톤 노출 플래그
+    adult?: boolean;    // 성인 영화 여부
+    isSkeleton?: boolean;  // 로딩 스켈레톤 플래그
 }
 
 export interface WatchHistory {
@@ -92,7 +92,7 @@ export interface OTTPlatform {
     ott_name: string;
     ott_logo: string;
     watch_url: string;
-    payment_type: string;
+    payment_type: 'SUBSCRIPTION' | 'RENT' | 'BUY';  // 결제 타입 필수
 }
 
 // [용도] 사용자의 영화 상태 정보
@@ -121,8 +121,8 @@ export interface RecommendedMovieV2 {
     overview: string;
     release_date: string;
     poster_path: string | null;
-    adult: boolean;
     score?: number;
+    adult?: boolean;  // 성인 영화 여부
 }
 
 // [용도] 트랙별 추천 결과
@@ -168,7 +168,7 @@ export interface MovieDetail {
     vote_average: number;  // 평균 평점 (기존 rating → vote_average로 통일)
     vote_count: number;
     popularity: number;     // 인기도
-    adult: boolean;         // 성인 영화 여부
+    adult?: boolean;        // 성인 영화 여부
     director?: string;      // 감독 (optional: 백엔드에서 제공하지 않을 수 있음)
     cast?: Cast[];          // 출연진 (optional)
     tagline?: string;       // 태그라인 (optional)

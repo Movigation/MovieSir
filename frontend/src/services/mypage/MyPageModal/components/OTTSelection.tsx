@@ -33,40 +33,37 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const loadUserOTT = async () => {
         setIsLoading(true);
         try {
-            // TODO: 백엔드 API 연동 시 주석 해제
             const response = await authAxiosInstance.get("/mypage/ott");
-            // 백엔드 명세(CurrentOTTResponse)에 맞춰 current_ott_ids 사용
-            const ottIds = response.data.current_ott_ids || [];
-            setSelectedProviderIds(ottIds);
-
-            console.log('🎬 OTT 데이터 로드:', ottIds);
+            // 백엔드 응답: { current_ott_ids: number[] }
+            const providerIds = response.data.current_ott_ids || [];
+            setSelectedProviderIds(providerIds);
+            console.log('🎬 OTT 데이터 로드:', providerIds);
         } catch (error) {
             console.error('OTT 불러오기 실패:', error);
+            // 에러 시 빈 배열로 초기화
+            setSelectedProviderIds([]);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleToggleOTT = (providerId: number) => {
-        setSelectedProviderIds(prev => {
-            const current = Array.isArray(prev) ? prev : [];
-            return current.includes(providerId)
-                ? current.filter(id => id !== providerId)
-                : [...current, providerId];
-        });
+        setSelectedProviderIds(prev =>
+            prev.includes(providerId)
+                ? prev.filter(id => id !== providerId)
+                : [...prev, providerId]
+        );
     };
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // 백엔드 명세(UpdateOTTRequest)에 맞춰 PUT 메서드와 ott_ids 필드 사용
             await authAxiosInstance.put("/mypage/ott", {
-                ott_ids: selectedProviderIds
+                ott_ids: selectedProviderIds  // 백엔드 스키마: ott_ids
             });
 
-            console.log('OTT 저장:', selectedProviderIds);
-
-            alert('OTT 선택이 저장되었습니다.');
+            console.log('💾 OTT 저장 완료:', selectedProviderIds);
+            alert('OTT 선택이 저장되었습니다!');
             onBack();
         } catch (error: any) {
             console.error('OTT 저장 실패:', error);
@@ -78,7 +75,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     };
 
     const selectedPlatforms = OTT_PLATFORMS.filter(p =>
-        (selectedProviderIds || []).includes(p.provider_id)
+        selectedProviderIds.includes(p.provider_id)
     );
 
     return (
@@ -122,7 +119,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                             >
                                 <input
                                     type="checkbox"
-                                    checked={(selectedProviderIds || []).includes(platform.provider_id)}
+                                    checked={selectedProviderIds.includes(platform.provider_id)}
                                     onChange={() => handleToggleOTT(platform.provider_id)}
                                     className="w-5 h-5 rounded border-gray-400 text-blue-500 focus:ring-blue-500"
                                 />
