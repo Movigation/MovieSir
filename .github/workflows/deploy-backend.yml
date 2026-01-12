@@ -1,0 +1,53 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy Backend via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            set -e
+
+            echo "📌 Fetch latest code"
+            cd ~/MovieSir
+            git fetch --all
+            git reset --hard origin/${{ github.ref_name }}
+
+            echo "📌 Create .env.production"
+            cat > .env.production << 'ENVEOF'
+            ${{ secrets.ENV_PRODUCTION_APP }}
+            ENVEOF
+
+            echo "📌 Stop old containers"
+            docker compose --env-file .env.production down || true
+
+            echo "📌 Build & start backend containers (without frontend)"
+            docker compose --env-file .env.production up -d --build backend redis dozzle
+
+            echo "📌 Cleanup old images"
+            docker image prune -f || true
+
+            echo "📌 Check backend health"
+            sleep 3
+            curl -s http://localhost:8000/ || echo "⚠️ Health check pending"
+
+            echo "✅ Backend deployment complete"
