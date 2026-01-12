@@ -42,3 +42,4 @@ app.include_router(mypage_router)
 @app.get("/")
 def root():
     return {"message": "ok"}
+# deploy test
