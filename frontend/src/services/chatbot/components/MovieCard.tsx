@@ -31,21 +31,33 @@ export default function MovieCard({
     const [isRemoving, setIsRemoving] = useState(false);
     const [isWatched] = useState(movie.watched || false);
     const [isHovered, setIsHovered] = useState(false);
-    const [loadingPhase, setLoadingPhase] = useState<0 | 1 | 2>(0);
+    const [loadingPhase, setLoadingPhase] = useState<0 | 1 | 2>(2); // 기본값 2로 설정 (애니메이션 완료 상태)
     const cardRef = useRef<HTMLDivElement>(null);
+    const prevMovieIdRef = useRef<number | null>(null);
 
-    // 애니메이션 상태 리셋 (영화 데이터 변경 시)
+    // 애니메이션 상태 리셋 (영화 ID가 실제로 변경될 때만)
     useEffect(() => {
         if (movie && !movie.isEmpty) {
-            setLoadingPhase(0);
-            const timer1 = setTimeout(() => setLoadingPhase(1), 100);
-            const timer2 = setTimeout(() => setLoadingPhase(2), 300);
-            return () => {
-                clearTimeout(timer1);
-                clearTimeout(timer2);
-            };
+            // 이전 movie ID와 비교하여 실제로 변경된 경우에만 애니메이션
+            const movieIdChanged = prevMovieIdRef.current !== null && prevMovieIdRef.current !== movie.id;
+
+            if (movieIdChanged) {
+                // 영화가 실제로 바뀐 경우에만 애니메이션 실행
+                setLoadingPhase(0);
+                const timer1 = setTimeout(() => setLoadingPhase(1), 100);
+                const timer2 = setTimeout(() => setLoadingPhase(2), 300);
+                prevMovieIdRef.current = movie.id;
+                return () => {
+                    clearTimeout(timer1);
+                    clearTimeout(timer2);
+                };
+            } else if (prevMovieIdRef.current === null) {
+                // 최초 마운트 시 애니메이션 없이 바로 표시
+                prevMovieIdRef.current = movie.id;
+                setLoadingPhase(2);
+            }
         }
-    }, [movie]);
+    }, [movie.id]);
 
     // 외부 클릭 감지 (모바일에서 카드 접기)
     useEffect(() => {

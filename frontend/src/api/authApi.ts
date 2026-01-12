@@ -199,11 +199,18 @@ export const getCurrentUser = async () => {
 // ------------------------------
 export const deleteUser = async (password: string): Promise<void> => {
     try {
-        await axiosInstance.delete(`/mypage/account`, {
-            data: { password }
-        });
+        await authAxiosInstance.delete(`/mypage/account`, {
+            data: { password },
+            skipAuth: true,  // 👈 비밀번호 오류 401을 세션 만료로 오해하지 않도록
+            skipErrorRedirect: true,
+        } as any);
         await logout();
-    } catch (error) {
+    } catch (error: any) {
+        // 백엔드 에러 메시지 추출
+        const detail = error.response?.data?.detail;
+        if (detail) {
+            throw new Error(detail);
+        }
         throw new Error("회원 탈퇴 중 오류가 발생했습니다. 비밀번호를 다시 확인해주세요.");
     }
 };

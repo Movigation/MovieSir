@@ -34,7 +34,8 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
         setIsLoading(true);
         try {
             const response = await authAxiosInstance.get("/mypage/ott");
-            const providerIds = response.data.ott_providers?.map((ott: any) => ott.provider_id) || [];
+            // 백엔드 응답: { current_ott_ids: number[] }
+            const providerIds = response.data.current_ott_ids || [];
             setSelectedProviderIds(providerIds);
             console.log('🎬 OTT 데이터 로드:', providerIds);
         } catch (error) {
@@ -58,7 +59,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
         setIsSaving(true);
         try {
             await authAxiosInstance.put("/mypage/ott", {
-                provider_ids: selectedProviderIds
+                ott_ids: selectedProviderIds  // 백엔드 스키마: ott_ids
             });
 
             console.log('💾 OTT 저장 완료:', selectedProviderIds);
