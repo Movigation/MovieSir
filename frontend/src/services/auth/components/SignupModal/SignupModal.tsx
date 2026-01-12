@@ -134,7 +134,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                 {/* HEADER */}
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        회원가입 🎬
+                        회원가입
                     </h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                         무비서와 함께 영화 추천을 시작하세요
@@ -533,13 +533,22 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                                     />
                                     <button
                                         onClick={handleVerifyCodeWrapper}
-                                        disabled={isLoading || code.length !== 6}
-                                        className={`px-6 py-3 rounded-b-lg sm:rounded-lg font-bold transition-colors ${isLoading || code.length !== 6
+                                        disabled={isLoading || code.length !== 6 || isExpired}
+                                        className={`px-6 py-3 rounded-b-lg sm:rounded-lg font-bold min-w-[100px] transition-colors ${isLoading || code.length !== 6 || isExpired
                                             ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                                             : "bg-blue-500 hover:bg-blue-600 text-white"
                                             }`}
                                     >
-                                        {isLoading ? "확인 중" : "확인"}
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Loader2 size={16} className="animate-spin" />
+                                                <span>{timeLeftFormatted}</span>
+                                            </div>
+                                        ) : isExpired ? (
+                                            "만료됨"
+                                        ) : (
+                                            `확인 ${timeLeftFormatted}`
+                                        )}
                                     </button>
                                 </div>
 

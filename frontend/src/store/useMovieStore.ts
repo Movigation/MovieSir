@@ -4,36 +4,38 @@ import {
   postRecommendationsV2,
   postReRecommendSingle,
   convertV2MovieToMovie,
+  getMovieDetail,
 } from "@/api/movieApi";
+import type { MovieDetail } from "@/api/movieApi.type";
 
 interface Filters {
   time: string;
   genres: string[];
-  excludeAdult: boolean; // 성인 콘텐츠 제외
+  exclude_adult: boolean; // 성인 콘텐츠 제외 (snake_case 통일)
 }
 
 interface MovieState {
   filters: Filters;
-  userId: number | null; // 현재 로그인한 사용자 ID
+  userId: number | null;
 
-  // Track A: 맞춤 추천 (장르 + OTT 필터)
-  trackAMovies: Movie[]; // 현재 표시 중인 Track A 영화
-  trackATotalRuntime: number; // Track A 총 러닝타임
-  trackALabel: string; // Track A 라벨
+  // Track A: 맞춤 추천
+  trackAMovies: Movie[];
+  trackATotalRuntime: number;
+  trackALabel: string;
 
-  // Track B: 다양성 추천 (장르 확장)
-  trackBMovies: Movie[]; // 현재 표시 중인 Track B 영화
-  trackBTotalRuntime: number; // Track B 총 러닝타임
-  trackBLabel: string; // Track B 라벨
+  // Track B: 다양성/인기 추천
+  trackBMovies: Movie[];
+  trackBTotalRuntime: number;
+  trackBLabel: string;
 
-  // 재추천용 상태
-  excludedIds: number[]; // 이미 추천된 영화 ID (재추천 시 제외)
+  // 세션 내 중복 방지용 ID 목록 (모델 필터링용)
+  excludedIds: number[];
 
-  // 하위 호환용 (기존 UI 지원)
+  // 하위 호환 변수 (기존 UI 지원용 별칭)
   recommendedMovies: Movie[];
   popularMovies: Movie[];
 
-  detailMovieId: number | null; // 상세 보기 영화 ID (Modal이 직접 API 호출)
+  detailMovieId: number | null;
   isLoading: boolean;
   error: string | null;
 
@@ -41,39 +43,69 @@ interface MovieState {
   setUserId: (userId: number | null) => void;
   setTime: (time: string) => void;
   toggleGenre: (genre: string) => void;
-  toggleExcludeAdult: () => void; // 성인 제외 토글
+  toggleExcludeAdult: () => void;
 
   loadRecommended: () => Promise<void>;
-  removeRecommendedMovie: (movieId: number) => Promise<void>;
-  removePopularMovie: (movieId: number) => Promise<void>; // Track B 영화 제거
+  handleReRecommend: (trackType: 'a' | 'b', movieId: number) => Promise<void>;
 
-  setDetailMovieId: (movieId: number | null) => void; // 영화 ID만 설정
+  // 기존 컴포넌트 호출용 래퍼
+  removeRecommendedMovie: (movieId: number) => Promise<void>;
+  removePopularMovie: (movieId: number) => Promise<void>;
+
+  setDetailMovieId: (movieId: number | null) => void;
   resetFilters: () => void;
-  reset: () => void; // 전체 스토어 초기화 (로그아웃 시 사용)
+  reset: () => void;
+
+  // 헬퍼: 상세 정보 프리페치 (필요 시 확장용)
+  prefetchMovieDetails: (movies: Movie[]) => Promise<void>;
 }
+
+// 헬퍼: 마지막 추천 결과 로컬 스토리지 저장 (UI 영구 보관용)
+const saveLastRecommendations = (trackA: Movie[], trackB: Movie[], filters: Filters, userId: number | string | null) => {
+  if (!userId) {
+    console.warn("⚠️ [Storage] 비로그인 상태이거나 유저 ID가 없어 저장을 건너띕니다.");
+    return;
+  }
+
+  try {
+    const data = {
+      trackA,
+      trackB,
+      filters,
+      timestamp: Date.now()
+    };
+    const key = `last_recommendations_${userId}`;
+    localStorage.setItem(key, JSON.stringify(data));
+    console.log(`💾 [Storage] [User ${userId}] 추천 결과 저장 완료 (Key: ${key})`, data);
+  } catch (e) {
+    console.error('❌ [Storage] localStorage 저장 실패:', e);
+  }
+};
+
+// 헬퍼: "HH:MM" -> 분 변환
+const parseMinutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
 
 export const useMovieStore = create<MovieState>((set, get) => ({
   filters: {
     time: "00:00",
     genres: [],
-    excludeAdult: false, // 기본값: 성인 콘텐츠 포함
+    exclude_adult: true, // 기본값: 성인 제외
   },
   userId: null,
 
-  // Track A: 맞춤 추천
   trackAMovies: [],
   trackATotalRuntime: 0,
   trackALabel: "맞춤 추천",
 
-  // Track B: 다양성 추천
   trackBMovies: [],
   trackBTotalRuntime: 0,
   trackBLabel: "다양성 추천",
 
-  // 재추천용
   excludedIds: [],
 
-  // 하위 호환
   recommendedMovies: [],
   popularMovies: [],
 
@@ -83,349 +115,204 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
   setUserId: (userId) => set({ userId }),
 
-  setTime: (time) =>
-    set((state) => ({
-      filters: { ...state.filters, time },
-      excludedIds: [], // 시간 변경 시 중복 제외 목록 초기화
-    })),
+  setTime: (time) => set((s) => ({
+    filters: { ...s.filters, time },
+    excludedIds: [] // 조건 변경 시 중복 제외 목록 초기화
+  })),
 
-  toggleGenre: (genre) =>
-    set((state) => ({
-      filters: {
-        ...state.filters,
-        genres: state.filters.genres.includes(genre)
-          ? state.filters.genres.filter((g) => g !== genre)
-          : [...state.filters.genres, genre],
-      },
-      excludedIds: [], // 장르 변경 시 중복 제외 목록 초기화
-    })),
+  toggleGenre: (genre) => set((s) => ({
+    filters: {
+      ...s.filters,
+      genres: s.filters.genres.includes(genre)
+        ? s.filters.genres.filter(g => g !== genre)
+        : [...s.filters.genres, genre]
+    },
+    excludedIds: [] // 조건 변경 시 중복 제외 목록 초기화
+  })),
 
-  toggleExcludeAdult: () =>
-    set((state) => ({
-      filters: {
-        ...state.filters,
-        excludeAdult: !state.filters.excludeAdult,
-      },
-      excludedIds: [], // 성인 제외 변경 시 중복 제외 목록 초기화
-    })),
+  toggleExcludeAdult: () => set((s) => ({
+    filters: { ...s.filters, exclude_adult: !s.filters.exclude_adult },
+    excludedIds: []
+  })),
 
-  // [함수] 백엔드 API로 추천 영화 로드 (V2 API)
+  // [액션] 전체 추천 로드
   loadRecommended: async () => {
     const { filters } = get();
-
-    console.log("=== loadRecommended V2 호출 ===");
-    console.log("filters:", filters);
-
     set({ isLoading: true, error: null });
+
     try {
-      console.log("V2 API 호출 시작...");
       const result = await postRecommendationsV2({
         time: filters.time,
         genres: filters.genres,
-        excludeAdult: filters.excludeAdult,
+        exclude_adult: filters.exclude_adult
       });
 
-      console.log("V2 API 응답:", result);
-
-      // V2 응답을 Movie 타입으로 변환
       const trackAMovies = result.track_a.movies.map(convertV2MovieToMovie);
       const trackBMovies = result.track_b.movies.map(convertV2MovieToMovie);
 
-      // 모든 영화 ID를 excludedIds에 추가 (재추천 시 제외용)
-      const allMovieIds = [
-        ...result.track_a.movies.map((m) => m.movie_id),
-        ...result.track_b.movies.map((m) => m.movie_id),
-      ];
-
-      console.log("📦 V2 API 응답 데이터:");
-      console.log(
-        "  - Track A:",
-        result.track_a.label,
-        "-",
-        trackAMovies.length,
-        "편,",
-        result.track_a.total_runtime,
-        "분"
-      );
-      console.log(
-        "  - Track B:",
-        result.track_b.label,
-        "-",
-        trackBMovies.length,
-        "편,",
-        result.track_b.total_runtime,
-        "분"
-      );
+      // 세션 중복 방지용 ID 집계
+      const allMovieIds = [...trackAMovies, ...trackBMovies].map(m => m.id);
 
       set({
-        // Track A
         trackAMovies,
         trackATotalRuntime: result.track_a.total_runtime,
         trackALabel: result.track_a.label,
-
-        // Track B
         trackBMovies,
         trackBTotalRuntime: result.track_b.total_runtime,
         trackBLabel: result.track_b.label,
 
-        // 재추천용
         excludedIds: allMovieIds,
-
-        // 하위 호환 (기존 UI 지원)
         recommendedMovies: trackAMovies,
         popularMovies: trackBMovies,
 
-        isLoading: false,
-        error: null,
+        isLoading: false
       });
-      console.log("✅ V2 추천 영화 로드 완료");
-    } catch (error: any) {
-      console.error("V2 영화 추천 로드 중 오류:", error);
 
-      // 에러 타입별 메시지 설정
-      let errorMessage = "영화 추천을 가져오는 중 오류가 발생했습니다";
+      // UI용 로컬 스토리지 저장
+      saveLastRecommendations(trackAMovies, trackBMovies, filters, get().userId);
 
-      if (error.code === "ERR_NETWORK") {
-        errorMessage = "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
-      } else if (error.response?.status === 401) {
-        errorMessage = "로그인이 필요합니다. 다시 로그인해주세요.";
-      } else if (error.response?.status === 500) {
-        errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-      }
+      // 상세 정보 프리페치 (성인 여부 업데이트 등)
+      get().prefetchMovieDetails([...trackAMovies, ...trackBMovies]);
 
+      console.log("✅ [Store] 추천 로드 및 저장 프로세스 완료");
+    } catch (err: any) {
+      console.error("❌ 추천 로드 실패:", err);
       set({
-        error: errorMessage,
         isLoading: false,
-        // 에러 발생 시 빈 배열로 설정하여 무한 로딩 방지
-        trackAMovies: [],
-        trackBMovies: [],
-        recommendedMovies: [],
-        popularMovies: [],
+        error: "영화 추천을 가져오는 중 오류가 발생했습니다."
       });
-
-      // 에러를 다시 throw하지 않음 (무한 재시도 방지)
     }
   },
 
-  // [함수] Track A 영화 제거 및 V2 API로 재추천
-  removeRecommendedMovie: async (movieId) => {
+  // [액션] 개별 영화 재추천 (통합 핸들러)
+  handleReRecommend: async (trackType, movieId) => {
     const state = get();
-    console.log("🔄 Track A 재추천 시작 ========================");
-    console.log("  제거할 영화 ID:", movieId);
+    const isTrackA = trackType === 'a';
+    const movieKey = isTrackA ? 'trackAMovies' : 'trackBMovies';
+    const runtimeKey = isTrackA ? 'trackATotalRuntime' : 'trackBTotalRuntime';
+    const legacyKey = isTrackA ? 'recommendedMovies' : 'popularMovies';
 
-    // 제거할 영화 찾기 및 인덱스 저장
-    const movieIndex = state.trackAMovies.findIndex((m) => m.id === movieId);
-    const movieToRemove = state.trackAMovies[movieIndex];
-    if (!movieToRemove || movieIndex === -1) {
-      console.log("⚠️ 제거할 영화를 찾을 수 없습니다");
-      return;
-    }
+    console.log(`🔄 [Track ${trackType.toUpperCase()}] 재추천 시작 (ID: ${movieId})`);
 
-    console.log(
-      "  제거할 영화:",
-      movieToRemove.title,
-      `(${movieToRemove.runtime}분)`,
-      "위치:",
-      movieIndex
-    );
+    const currentMovies = [...state[movieKey]];
+    const movieIndex = currentMovies.findIndex(m => m.id === movieId);
+    if (movieIndex === -1) return;
 
-    // 현재 영화에서 제거
-    const newTrackAMovies = state.trackAMovies.filter((m) => m.id !== movieId);
+    // 1. 중복 방지 ID 목록 업데이트
     const newExcludedIds = [...state.excludedIds, movieId];
 
-    // 사용자 입력 시간 계산 (HH:MM -> 분)
-    const [hours, minutes] = state.filters.time.split(":").map(Number);
-    const userInputTime = hours * 60 + minutes;
+    // 2. 남은 시간 계산
+    const userInputMinutes = parseMinutes(state.filters.time);
+    const otherMovies = currentMovies.filter(m => m.id !== movieId);
+    const sumOtherRuntime = otherMovies.reduce((sum, m) => sum + (m.runtime || 0), 0);
+    const targetRuntime = userInputMinutes - sumOtherRuntime;
 
-    // 남은 영화들의 총 러닝타임 계산
-    const remainingRuntime = newTrackAMovies.reduce(
-      (sum, m) => sum + (m.runtime || 0),
-      0
-    );
+    // 2.5. 해당 영화 자리를 스켈레톤으로 즉시 교체 (사용자 피드백 반영)
+    const skeletonMovies = [...currentMovies];
+    skeletonMovies[movieIndex] = { ...currentMovies[movieIndex], isSkeleton: true };
+    set({
+      [movieKey]: skeletonMovies,
+      [legacyKey]: skeletonMovies,
+      isLoading: false // 전역 로딩은 띄우지 않음 (개별 카드만 스켈레톤)
+    });
 
-    // target_runtime = 사용자 입력 시간 - 남은 영화들의 러닝타임
-    const targetRuntime = userInputTime - remainingRuntime;
-    console.log("  사용자 입력 시간:", userInputTime, "분");
-    console.log("  남은 영화 러닝타임:", remainingRuntime, "분");
-    console.log("  재추천 target_runtime:", targetRuntime, "분");
-
-    // V2 API로 재추천 요청 (먼저 API 호출)
     try {
       const response = await postReRecommendSingle({
         target_runtime: targetRuntime,
         excluded_ids: newExcludedIds,
-        track: "a",
+        track: trackType,
         genres: state.filters.genres,
-        exclude_adult: state.filters.excludeAdult,
+        exclude_adult: state.filters.exclude_adult
       });
 
       if (response.success && response.movie) {
         const newMovie = convertV2MovieToMovie(response.movie);
-        console.log(
-          "✅ Track A 재추천 성공:",
-          newMovie.title,
-          `(${newMovie.runtime}분)`,
-          "삽입 위치:",
-          movieIndex
-        );
 
-        // 카드가 당겨지는 효과 방지: 제거 전에 300ms 대기
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        // 애니메이션 효과를 위해 약간의 지연
+        await new Promise(r => setTimeout(r, 200));
 
-        // 제거와 삽입을 한 번에 처리
-        set((s) => {
-          const updatedMovies = s.trackAMovies.filter((m) => m.id !== movieId);
-          updatedMovies.splice(movieIndex, 0, newMovie);
+        const updatedMovies = [...currentMovies];
+        updatedMovies[movieIndex] = newMovie;
+
+        set((s) => ({
+          [movieKey]: updatedMovies,
+          [legacyKey]: updatedMovies,
+          [runtimeKey]: sumOtherRuntime + (newMovie.runtime || 0),
+          excludedIds: [...s.excludedIds, newMovie.id]
+        }));
+
+        // 업데이트된 전체 상태 저장
+        const finalState = get();
+        saveLastRecommendations(finalState.trackAMovies, finalState.trackBMovies, finalState.filters, finalState.userId);
+
+        // 프리페칭 실행 (성인 정보 등 수집)
+        get().prefetchMovieDetails([newMovie]);
+
+        console.log(`✅ [Track ${trackType.toUpperCase()}] 재추천 성공: ${newMovie.title}`);
+      } else {
+        console.warn("⚠️ 재추천 결과가 없습니다.");
+      }
+    } catch (err) {
+      console.error("❌ 재추천 오류:", err);
+    }
+  },
+
+  removeRecommendedMovie: (id) => get().handleReRecommend('a', id),
+  removePopularMovie: (id) => get().handleReRecommend('b', id),
+
+  setDetailMovieId: (id) => set({ detailMovieId: id }),
+
+  resetFilters: () => set({
+    filters: { time: "00:00", genres: [], exclude_adult: true },
+    trackAMovies: [],
+    trackATotalRuntime: 0,
+    trackBMovies: [],
+    trackBTotalRuntime: 0,
+    excludedIds: [],
+    recommendedMovies: [],
+    popularMovies: [],
+    isLoading: false,
+    error: null
+  }),
+
+  reset: () => set({
+    filters: { time: "00:00", genres: [], exclude_adult: true },
+    userId: null,
+    trackAMovies: [],
+    trackATotalRuntime: 0,
+    trackBMovies: [],
+    trackBTotalRuntime: 0,
+    excludedIds: [],
+    recommendedMovies: [],
+    popularMovies: [],
+    detailMovieId: null,
+    isLoading: false,
+    error: null
+  }),
+
+  prefetchMovieDetails: async (movies) => {
+    if (!movies.length) return;
+
+    console.log(`📡 [Pre-fetch] ${movies.length}개의 영화 상세 정보 로드 시작...`);
+
+    movies.forEach(async (movie) => {
+      try {
+        const detail: MovieDetail = await getMovieDetail(movie.id);
+
+        set((state) => {
+          const updateTrack = (track: Movie[]) =>
+            track.map(m => m.id === movie.id ? { ...m, adult: detail.adult } : m);
 
           return {
-            trackAMovies: updatedMovies,
-            recommendedMovies: updatedMovies,
-            trackATotalRuntime: remainingRuntime + (newMovie.runtime || 0),
-            excludedIds: [...newExcludedIds, newMovie.id],
+            trackAMovies: updateTrack(state.trackAMovies),
+            trackBMovies: updateTrack(state.trackBMovies),
+            recommendedMovies: updateTrack(state.recommendedMovies),
+            popularMovies: updateTrack(state.popularMovies)
           };
         });
-      } else {
-        console.log("⚠️ Track A 재추천 실패:", response.message);
+      } catch (error) {
+        console.error(`❌ [Pre-fetch] 영화(${movie.title}) 로드 실패:`, error);
       }
-    } catch (error) {
-      console.error("Track A 재추천 API 오류:", error);
-    }
-
-    console.log("🔄 Track A 재추천 완료 ========================");
-  },
-
-  // [함수] Track B 영화 제거 및 V2 API로 재추천
-  removePopularMovie: async (movieId) => {
-    const state = get();
-    console.log("🎬 Track B 재추천 시작 ========================");
-    console.log("  제거할 영화 ID:", movieId);
-
-    // 제거할 영화 찾기 및 인덱스 저장
-    const movieIndex = state.trackBMovies.findIndex((m) => m.id === movieId);
-    const movieToRemove = state.trackBMovies[movieIndex];
-    if (!movieToRemove || movieIndex === -1) {
-      console.log("⚠️ 제거할 영화를 찾을 수 없습니다");
-      return;
-    }
-
-    console.log(
-      "  제거할 영화:",
-      movieToRemove.title,
-      `(${movieToRemove.runtime}분)`,
-      "위치:",
-      movieIndex
-    );
-
-    // 현재 영화에서 제거
-    const newTrackBMovies = state.trackBMovies.filter((m) => m.id !== movieId);
-    const newExcludedIds = [...state.excludedIds, movieId];
-
-    // 사용자 입력 시간 계산 (HH:MM -> 분)
-    const [hours, minutes] = state.filters.time.split(":").map(Number);
-    const userInputTime = hours * 60 + minutes;
-
-    // 남은 영화들의 총 러닝타임 계산
-    const remainingRuntime = newTrackBMovies.reduce(
-      (sum, m) => sum + (m.runtime || 0),
-      0
-    );
-
-    // target_runtime = 사용자 입력 시간 - 남은 영화들의 러닝타임
-    const targetRuntime = userInputTime - remainingRuntime;
-    console.log("  사용자 입력 시간:", userInputTime, "분");
-    console.log("  남은 영화 러닝타임:", remainingRuntime, "분");
-    console.log("  재추천 target_runtime:", targetRuntime, "분");
-
-    // V2 API로 재추천 요청 (먼저 API 호출)
-    try {
-      const response = await postReRecommendSingle({
-        target_runtime: targetRuntime,
-        excluded_ids: newExcludedIds,
-        track: "b",
-        genres: state.filters.genres,
-        exclude_adult: state.filters.excludeAdult,
-      });
-
-      if (response.success && response.movie) {
-        const newMovie = convertV2MovieToMovie(response.movie);
-        console.log(
-          "✅ Track B 재추천 성공:",
-          newMovie.title,
-          `(${newMovie.runtime}분)`,
-          "삽입 위치:",
-          movieIndex
-        );
-
-        // 카드가 당겨지는 효과 방지: 제거 전에 300ms 대기
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        // 제거와 삽입을 한 번에 처리
-        set((s) => {
-          const updatedMovies = s.trackBMovies.filter((m) => m.id !== movieId);
-          updatedMovies.splice(movieIndex, 0, newMovie);
-
-          return {
-            trackBMovies: updatedMovies,
-            popularMovies: updatedMovies,
-            trackBTotalRuntime: remainingRuntime + (newMovie.runtime || 0),
-            excludedIds: [...newExcludedIds, newMovie.id],
-          };
-        });
-      } else {
-        console.log("⚠️ Track B 재추천 실패:", response.message);
-      }
-    } catch (error) {
-      console.error("Track B 재추천 API 오류:", error);
-    }
-
-    console.log("🎬 Track B 재추천 완료 ========================");
-  },
-
-  setDetailMovieId: (movieId) => {
-    console.log("🎬 setDetailMovieId called with:", movieId);
-    set({ detailMovieId: movieId });
-  },
-
-  resetFilters: () =>
-    set({
-      filters: {
-        time: "00:00",
-        genres: [],
-        excludeAdult: false,
-      },
-      // V2 상태 초기화
-      trackAMovies: [],
-      trackATotalRuntime: 0,
-      trackALabel: "맞춤 추천",
-      trackBMovies: [],
-      trackBTotalRuntime: 0,
-      trackBLabel: "다양성 추천",
-      excludedIds: [],
-      // 하위 호환
-      recommendedMovies: [],
-      popularMovies: [],
-    }),
-
-  // 전체 스토어 초기화 (로그아웃 시 사용)
-  reset: () =>
-    set({
-      filters: {
-        time: "00:00",
-        genres: [],
-        excludeAdult: false,
-      },
-      userId: null,
-      trackAMovies: [],
-      trackATotalRuntime: 0,
-      trackALabel: "맞춤 추천",
-      trackBMovies: [],
-      trackBTotalRuntime: 0,
-      trackBLabel: "다양성 추천",
-      excludedIds: [],
-      recommendedMovies: [],
-      popularMovies: [],
-      detailMovieId: null,
-      isLoading: false,
-      error: null,
-    }),
+    });
+  }
 }));

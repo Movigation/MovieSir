@@ -2,7 +2,10 @@
 // [사용법] showModal이 true일 때 자동으로 표시
 
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "@/app/providers/AuthContext";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
+import axiosInstance from "@/api/axiosInstance";
 
 interface Props {
     visible: boolean;
@@ -12,6 +15,39 @@ interface Props {
 export default function OnboardingReminderModal({ visible, onClose }: Props) {
     const navigate = useNavigate();
     const { user } = useAuth(); // 사용자 정보 가져오기
+
+    // [추가] 모달이 뜰 때 영화 데이터 및 이미지 프리페칭
+    useEffect(() => {
+        if (!visible) return;
+
+        const prefetchMovies = async () => {
+            try {
+                // 이미 데이터가 있으면 중복 호출 방지
+                const storedMovies = useOnboardingStore.getState().movies;
+                if (storedMovies && storedMovies.length > 0) return;
+
+                const response = await axiosInstance.get("/onboarding/survey/movies");
+                const movies = response.data.movies || [];
+
+                // 1. 데이터 저장
+                useOnboardingStore.getState().setMovies(movies);
+
+                // 2. 이미지 미리 로드 (브라우저 캐시 활용)
+                movies.forEach((movie: any) => {
+                    if (movie.poster_path) {
+                        const img = new Image();
+                        img.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+                    }
+                });
+
+                console.log("리마인더 시점: 영화 데이터 및 이미지 프리페칭 완료");
+            } catch (err) {
+                console.warn("⚠️ 리마인더 프리페칭 실패:", err);
+            }
+        };
+
+        prefetchMovies();
+    }, [visible]);
 
     if (!visible) return null;
 

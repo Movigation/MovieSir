@@ -25,7 +25,8 @@ export default function Modal({ isOpen, onClose, children, allowScroll = false }
 
     return createPortal(
         <div
-            className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-0 md:p-4"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-0 md:p-4"
+            style={{ zIndex: 99999 }}
             onClick={onClose}
         >
             <div

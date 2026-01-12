@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import { authAxiosInstance } from "@/api/axiosInstance";
+import axiosInstance from "@/api/axiosInstance";
 
 // OTT 로고 컴포넌트 - public 폴더의 SVG URL 사용
 const NetflixLogo = () => <img src="/logos/NETFLEX_Logo.svg" alt="Netflix" className="h-10 w-auto" />;
@@ -47,6 +48,37 @@ export default function OTTSelectionPage() {
             });
         }
     }, [location.state, reset, navigate, location.pathname]);
+
+    // [추가] 영화 데이터 미리 불러오기 (Prefetch)
+    useEffect(() => {
+        const prefetchMovies = async () => {
+            try {
+                // 이미 데이터가 있으면 중복 호출 방지
+                const storedMovies = useOnboardingStore.getState().movies;
+                if (storedMovies && storedMovies.length > 0) return;
+
+                const response = await axiosInstance.get("/onboarding/survey/movies");
+                const movies = response.data.movies || [];
+
+                // 1. 데이터 저장
+                useOnboardingStore.getState().setMovies(movies);
+
+                // 2. 이미지 미리 로드 (브라우저 캐시 활용)
+                movies.forEach((movie: any) => {
+                    if (movie.poster_path) {
+                        const img = new Image();
+                        img.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+                    }
+                });
+
+                console.log("🚀 영화 데이터 및 이미지 프리페칭 완료");
+            } catch (err) {
+                console.warn("⚠️ 프리페칭 실패 (이후 페이지에서 자동 재시도):", err);
+            }
+        };
+
+        prefetchMovies();
+    }, []);
 
     const handleNext = async () => {
         setIsLoading(true);
