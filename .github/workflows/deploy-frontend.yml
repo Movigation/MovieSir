@@ -78,13 +78,23 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            echo "📌 Deploy frontend to /var/www/demo"
+
+            echo "📌 최신 코드 가져오기"
+            cd ~/MovieSir
+            git fetch --all
+            git reset --hard origin/${{ github.ref_name }}
+
+            echo "📌 프론트엔드 배포"
             sudo rm -rf /var/www/demo/*
             sudo cp -r /tmp/frontend-build/* /var/www/demo/
             sudo chown -R www-data:www-data /var/www/demo/
             rm -rf /tmp/frontend-build
 
-            echo "📌 Deployed files:"
+            echo "📌 Nginx 설정 업데이트"
+            sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-available/moviesir
+            sudo nginx -t && sudo systemctl reload nginx
+
+            echo "📌 배포된 파일:"
             ls /var/www/demo/assets/ | grep -E "index-.*\.js$" | head -1
 
-            echo "✅ Frontend deployment complete"
+            echo "✅ 프론트엔드 배포 완료"

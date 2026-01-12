@@ -54,27 +54,27 @@ jobs:
           script: |
             set -e
 
-            echo "📌 Fetch latest code"
+            echo "📌 최신 코드 가져오기"
             cd ~/MovieSir
             git fetch --all
             git reset --hard origin/${{ github.ref_name }}
 
-            echo "📌 Create .env.production"
+            echo "📌 환경변수 파일 생성"
             cat > .env.production << 'ENVEOF'
             ${{ secrets.ENV_PRODUCTION_APP }}
             ENVEOF
 
-            echo "📌 Stop old containers"
+            echo "📌 기존 컨테이너 중지"
             docker compose --env-file .env.production down || true
 
-            echo "📌 Build & start backend containers"
+            echo "📌 백엔드 컨테이너 빌드 및 시작"
             docker compose --env-file .env.production up -d --build backend redis dozzle
 
-            echo "📌 Cleanup old images"
+            echo "📌 미사용 이미지 정리"
             docker image prune -f || true
 
-            echo "📌 Check backend health"
+            echo "📌 백엔드 헬스체크"
             sleep 3
-            curl -s http://localhost:8000/ || echo "⚠️ Health check pending"
+            curl -s http://localhost:8000/ || echo "⚠️ 헬스체크 대기중"
 
-            echo "✅ Backend deployment complete"
+            echo "✅ 백엔드 배포 완료"
