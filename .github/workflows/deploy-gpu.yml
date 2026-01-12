@@ -1,7 +1,15 @@
 name: Deploy GPU Server
 
 on:
-  workflow_dispatch:  # 수동 실행만 (Actions 탭에서 Run workflow 클릭)
+  push:
+    branches: [dev, main]
+    paths:
+      - 'ai/inference/**'
+      - 'ai/api.py'
+      - 'ai/requirements.txt'
+      - 'ai/Dockerfile'
+      - 'docker-compose.gpu.yml'
+  workflow_dispatch:  # 수동 실행도 가능
 
 jobs:
   deploy:
@@ -10,17 +18,17 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Deploy to GPU Server via SSH
-        uses: appleboy/ssh-action@v0.1.10
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.GPU_HOST }}
           username: ${{ secrets.GPU_USER }}
           key: ${{ secrets.SSH_KEY }}
           command_timeout: 30m
           script: |
-            set -e  # 에러 발생 시 즉시 중단
+            set -e
 
             if [ ! -d ~/MovieSir/.git ]; then
               echo "📌 Git repo not found, cloning..."
@@ -39,7 +47,7 @@ jobs:
             echo "📌 Fetch latest code"
             cd ~/MovieSir
             git fetch --all
-            git reset --hard origin/main
+            git reset --hard origin/${{ github.ref_name }}
 
             echo "📌 Create .env.production"
             cat > .env.production << 'ENVEOF'
@@ -52,7 +60,11 @@ jobs:
             echo "📌 Build & start AI container"
             docker compose -f docker-compose.gpu.yml --env-file .env.production up -d --build
 
-            echo "📌 Cleanup old images (keep build cache)"
+            echo "📌 Cleanup old images"
             docker image prune -f || true
+
+            echo "📌 Check AI service health"
+            sleep 5
+            curl -s http://localhost:8001/health || echo "⚠️ Health check failed (service may still be starting)"
 
             echo "✅ GPU Server deployment complete"

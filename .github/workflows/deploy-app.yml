@@ -1,33 +1,76 @@
 name: Deploy App Server
 
 on:
-  workflow_dispatch:  # 수동 실행만 (Actions 탭에서 Run workflow 클릭)
+  push:
+    branches: [dev, main]
+  workflow_dispatch:  # 수동 실행도 가능
 
 jobs:
+  # 1단계: 프론트엔드 빌드
+  build-frontend:
+    runs-on: ubuntu-latest
+    name: Build Frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
+
+  # 2단계: 서버 배포
   deploy:
     runs-on: ubuntu-latest
+    needs: build-frontend
     name: Deploy to App Server
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Deploy to App Server via SSH
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Download Frontend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend-dist
+
+      - name: Deploy Backend via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.APP_HOST }}
           username: ${{ secrets.APP_USER }}
           key: ${{ secrets.SSH_KEY }}
           command_timeout: 30m
           script: |
-            set -e  # 에러 발생 시 즉시 중단
-
-            cd ~/MovieSir || git clone https://github.com/${{ github.repository }}.git ~/MovieSir
+            set -e
 
             echo "📌 Fetch latest code"
             cd ~/MovieSir
             git fetch --all
-            git reset --hard origin/main
+            git reset --hard origin/${{ github.ref_name }}
 
             echo "📌 Create .env.production"
             cat > .env.production << 'ENVEOF'
@@ -40,7 +83,39 @@ jobs:
             echo "📌 Build & start containers"
             docker compose --env-file .env.production up -d --build
 
-            echo "📌 Cleanup old images (keep build cache)"
+            echo "📌 Cleanup old images"
             docker image prune -f || true
 
-            echo "✅ App Server deployment complete"
+            echo "✅ Backend deployment complete"
+
+      - name: Deploy Frontend via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "frontend-dist/*"
+          target: "/tmp/frontend-build"
+          strip_components: 1
+
+      - name: Move Frontend to Nginx Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            echo "📌 Deploy frontend to /var/www/demo"
+            sudo rm -rf /var/www/demo/*
+            sudo cp -r /tmp/frontend-build/* /var/www/demo/
+            sudo chown -R www-data:www-data /var/www/demo/
+            rm -rf /tmp/frontend-build
+
+            echo "📌 Verify deployment"
+            ls -la /var/www/demo/
+            echo ""
+            echo "📌 New JS file:"
+            ls /var/www/demo/assets/ | grep -E "index-.*\.js$" | head -1
+
+            echo "✅ Frontend deployment complete"
