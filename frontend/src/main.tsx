@@ -22,5 +22,4 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-// deploy test
-// deploy test Mon Jan 12 09:26:59 KST 2026
+// CI/CD 전체 배포 테스트: 2026-01-12 09:45
