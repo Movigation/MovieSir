@@ -1,21 +1,24 @@
 name: Deploy Backend
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI Backend"]
+    types:
+      - completed
     branches: [dev, main]
-    paths:
-      - 'backend/**'
-      - 'docker-compose.yml'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy Backend
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Deploy Backend via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -30,7 +33,7 @@ jobs:
             echo "📌 Fetch latest code"
             cd ~/MovieSir
             git fetch --all
-            git reset --hard origin/${{ github.ref_name }}
+            git reset --hard origin/${{ github.event.workflow_run.head_branch || github.ref_name }}
 
             echo "📌 Create .env.production"
             cat > .env.production << 'ENVEOF'
@@ -40,7 +43,7 @@ jobs:
             echo "📌 Stop old containers"
             docker compose --env-file .env.production down || true
 
-            echo "📌 Build & start backend containers (without frontend)"
+            echo "📌 Build & start backend containers"
             docker compose --env-file .env.production up -d --build backend redis dozzle
 
             echo "📌 Cleanup old images"

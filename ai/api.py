@@ -206,3 +206,4 @@ def recommend_single(request: RecommendSingleRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+# deploy test Mon Jan 12 09:26:59 KST 2026

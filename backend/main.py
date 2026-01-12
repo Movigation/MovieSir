@@ -43,3 +43,4 @@ app.include_router(mypage_router)
 def root():
     return {"message": "ok"}
 # deploy test
+# deploy test Mon Jan 12 09:26:59 KST 2026

@@ -1,20 +1,24 @@
 name: Deploy Frontend
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI Frontend"]
+    types:
+      - completed
     branches: [dev, main]
-    paths:
-      - 'frontend/**'
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    name: Build & Deploy Frontend
+    name: Deploy Frontend
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,14 +28,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
-        run: |
-          cd frontend
-          npm ci
+        run: cd frontend && npm ci
 
       - name: Build Frontend
-        run: |
-          cd frontend
-          npm run build
+        run: cd frontend && npm run build
         env:
           VITE_API_URL: https://api.moviesir.cloud
 

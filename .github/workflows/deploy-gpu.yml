@@ -1,24 +1,24 @@
 name: Deploy GPU Server
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI AI"]
+    types:
+      - completed
     branches: [dev, main]
-    paths:
-      - 'ai/inference/**'
-      - 'ai/api.py'
-      - 'ai/requirements.txt'
-      - 'ai/Dockerfile'
-      - 'docker-compose.gpu.yml'
-  workflow_dispatch:  # 수동 실행도 가능
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy to GPU Server
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Deploy to GPU Server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -32,13 +32,11 @@ jobs:
 
             if [ ! -d ~/MovieSir/.git ]; then
               echo "📌 Git repo not found, cloning..."
-              # 모델 파일 백업
               if [ -d ~/MovieSir/ai/training ]; then
                 mv ~/MovieSir/ai/training ~/backup-training
               fi
               rm -rf ~/MovieSir
               git clone https://github.com/${{ github.repository }}.git ~/MovieSir
-              # 모델 파일 복원
               if [ -d ~/backup-training ]; then
                 cp -r ~/backup-training/* ~/MovieSir/ai/training/
               fi
@@ -47,7 +45,7 @@ jobs:
             echo "📌 Fetch latest code"
             cd ~/MovieSir
             git fetch --all
-            git reset --hard origin/${{ github.ref_name }}
+            git reset --hard origin/${{ github.event.workflow_run.head_branch || github.ref_name }}
 
             echo "📌 Create .env.production"
             cat > .env.production << 'ENVEOF'
