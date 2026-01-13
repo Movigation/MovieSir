@@ -162,6 +162,14 @@ export const useMovieStore = create<MovieState>((set, get) => ({
       // 세션 ID 저장
       const sessionId = result.session_id || null;
 
+      // [D방안] 새 추천 시 기존 OTT 클릭 로그 초기화 (세션 혼합 방지)
+      const userId = get().userId;
+      if (userId) {
+        const clickLogsKey = `movie_click_logs_${userId}`;
+        localStorage.removeItem(clickLogsKey);
+        console.log(`🗑️ [Storage] 기존 클릭 로그 초기화 완료 (새 세션: ${sessionId})`);
+      }
+
       set({
         trackAMovies,
         trackATotalRuntime: result.track_a.total_runtime,

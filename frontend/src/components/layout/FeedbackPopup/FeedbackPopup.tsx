@@ -15,7 +15,9 @@ export default function FeedbackPopup() {
     const { userId } = useMovieStore();
 
     useEffect(() => {
-        if (!userId) return;
+        // 로그인 상태 확인 (accessToken + userId 둘 다 필요)
+        const accessToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+        if (!accessToken || !userId) return;
 
         // 한 세션(새로고침 전까지) 동안 이미 떴다면 다시 체크하지 않음
         const sessionsShowed = (window as any).__FEEDBACK_SHOWED_THIS_SESSION__;
