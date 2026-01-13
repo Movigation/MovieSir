@@ -149,6 +149,7 @@ export default function ChatbotButton({
           flex items-center justify-center
           transition-all duration-200
           hover:scale-110 hover:brightness-110
+          active:scale-95 active:brightness-125
           ${isDark
             ? "bg-gradient-to-br from-blue-400 via-blue-500 to-cyan-400"
             : "bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500"

@@ -155,10 +155,10 @@ export default function SideRecommendationPopup({
                 >
                     {/* 필터 정보 요약 */}
                     {lastData.filters && (
-                        <div className="px-6 py-4 bg-gray-50 dark:bg-white/5 border-b border-black/5 dark:border-white/5">
-                            <div className="flex flex-col gap-1.5">
+                        <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-b border-black/5 dark:border-white/5">
+                            <div className="flex flex-col gap-1">
                                 <span className="text-[10px] uppercase tracking-wider text-blue-500 dark:text-blue-400 font-bold">당시 선택한 조건</span>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                <p className="text-xs text-gray-600 dark:text-gray-300 leading-tight">
                                     <span className="text-black dark:text-white font-semibold">{formatTime(lastData.filters.time)}</span> 동안 볼 수 있는{' '}
                                     <span className="text-black dark:text-white font-semibold">
                                         {lastData.filters.genres.length > 0 ? lastData.filters.genres.join(', ') : '전체'}
@@ -169,7 +169,7 @@ export default function SideRecommendationPopup({
                     )}
 
                     {/* 탭 헤더 */}
-                    <div className="flex justify-center px-4 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-gray-900/50">
+                    <div className="flex justify-center px-4 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-gray-900">
                         {[
                             { id: 'trackA', label: '취향 맞춤', count: lastData.trackA.length },
                             { id: 'trackB', label: '인기 영화', count: lastData.trackB.length },
@@ -177,7 +177,7 @@ export default function SideRecommendationPopup({
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`relative px-6 py-4 text-sm transition-all flex items-center gap-2 ${activeTab === tab.id
+                                className={`relative px-6 py-3 text-sm transition-all flex items-center gap-2 ${activeTab === tab.id
                                     ? 'font-bold text-black dark:text-white'
                                     : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                                     }`}
@@ -194,7 +194,7 @@ export default function SideRecommendationPopup({
                     </div>
 
                     {/* 콘텐츠 영역 (스크롤러 제거) */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide flex flex-col items-center py-4">
+                    <div className="flex-1 overflow-hidden flex flex-col items-center py-2 bg-gray-50 dark:bg-gray-900">
                         {currentTrackMovies.length > 0 ? (
                             <div className="w-full flex flex-col items-center">
                                 <div className="w-full mb-4 px-6">
@@ -206,9 +206,13 @@ export default function SideRecommendationPopup({
                                     </div>
                                 </div>
 
-                                {/* 캐러셀 스케일 조정 (모바일에서 포스터가 잘리지 않도록 95% 유지) */}
-                                <div className="w-full scale-95 origin-top transition-all duration-500">
-                                    <MovieCarousel key={activeTab}>
+                                {/* 캐러셀 사이즈 조정 (사이드바 환경에 맞춰 축소 및 반응형 적용) */}
+                                <div className="w-full transition-all duration-500">
+                                    <MovieCarousel
+                                        key={activeTab}
+                                        containerClassName="h-[380px]"
+                                        cardWidthClassName="w-[250px]"
+                                    >
                                         {currentTrackMovies.map((movie) => (
                                             <MovieCard
                                                 key={`${activeTab}-${movie.id}-${isOpen}`}
