@@ -8,6 +8,7 @@ import { X, LogOut } from 'lucide-react';
 import type { MyPageModalProps, MyPageView } from '@/services/mypage/MyPageModal/myPage.types';
 import UserProfile from '@/services/mypage/MyPageModal/components/UserProfile';
 import MenuList from '@/services/mypage/MyPageModal/components/MenuList';
+import { useAuth } from '@/app/providers/AuthContext';
 import WatchedMovies from '@/services/mypage/MyPageModal/components/WatchedMovies';
 import UserStats from '@/services/mypage/MyPageModal/components/UserStats';
 import UserSettings from '@/services/mypage/MyPageModal/components/UserSettings';
@@ -16,6 +17,7 @@ import OTTSelection from '@/services/mypage/MyPageModal/components/OTTSelection'
 
 export default function MyPageModal({ isOpen, onClose, userName, fullScreen = false }: MyPageModalProps & { fullScreen?: boolean }) {
     const [currentView, setCurrentView] = useState<MyPageView>('main');
+    const { logout } = useAuth();
 
     // ESC 키로 모달 닫기
     useEffect(() => {
@@ -47,15 +49,11 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
     };
 
     // 로그아웃 핸들러
-    const handleLogout = () => {
-        // TODO: 실제 로그아웃 로직 구현 필요
-        // 1. 로컬 스토리지에서 토큰 제거
-        // 2. 전역 상태 초기화
-        // 3. 로그인 페이지로 리다이렉트
+    const handleLogout = async () => {
         if (window.confirm('로그아웃 하시겠습니까?')) {
-            console.log('로그아웃');
-            onClose();
-            // 추가 로그아웃 로직
+            console.log('🚪 마이페이지: 로그아웃 실행');
+            onClose(); // 우선 모달 닫기
+            await logout(); // 실제 로그아웃 처리 (전역 상태 및 스토리지 정리)
         }
     };
 
@@ -66,7 +64,7 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
         return (
             <div
                 /* [디자인] 모달 컨테이너 (전체 화면) */
-                className="bg-gray-800 dark:bg-gray-900 w-full h-full rounded-xl shadow-2xl relative flex flex-col overflow-hidden"
+                className="bg-black dark:bg-gray-900 w-full h-full rounded-xl shadow-2xl relative flex flex-col overflow-hidden"
             >
                 {/* 헤더 (메인 뷰에서만 표시) */}
                 {currentView === 'main' && (
@@ -155,7 +153,7 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
             className="fixed inset-0 bg-black/50 z-modal flex items-center justify-center p-4"
         >
             <div
-                className="bg-gray-800 dark:bg-gray-900 w-[90%] md:w-full max-w-md h-[600px] rounded-xl shadow-2xl relative flex flex-col overflow-hidden"
+                className="bg-black dark:bg-gray-900 w-[90%] md:w-full max-w-md h-[600px] rounded-xl shadow-2xl relative flex flex-col overflow-hidden"
             >
                 {/* 헤더 (메인 뷰에서만 표시) */}
                 {currentView === 'main' && (

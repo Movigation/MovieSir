@@ -12,7 +12,7 @@ type UserSettingsProps = {
 };
 
 export default function UserSettings({ onBack }: UserSettingsProps) {
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, logout } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState(user?.nickname || '');
     const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
             setDeleteError('');
             await deleteUser(deletePassword);
             alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
-            // deleteUser 함수 내에서 이미 logout()을 호출하고 있음
+            await logout(); // 로컬 상태 정리
         } catch (error: any) {
             console.error('회원 탈퇴 실패:', error);
             setDeleteError(error.message || '회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.');

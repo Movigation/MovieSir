@@ -176,7 +176,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  z-index: 9998;
+  @apply z-tutorial;
   /* 일반 UI보다 높음 */
   pointer-events: auto;
   /* 외부 클릭 차단 */
@@ -186,7 +186,8 @@
 /* 하이라이트 대상에 부여되는 클래스 (레이아웃 보존형) */
 .tutorial-highlight-target {
   /* position: relative !important; <- 기존 배치를 방해하므로 제거 */
-  z-index: 9999 !important;
+  z-index: 90100 !important;
+  /* 오버레이(90020)보다 높게 설정 */
   pointer-events: auto !important;
   transition: all 0.3s ease;
 }
@@ -208,8 +209,8 @@
   color: white;
   text-align: center;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-  z-index: 10001;
-  /* 오버레이보다 위 */
+  z-index: 90110;
+  /* 오버레이 및 하이라이트 대상보다 위 */
   animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

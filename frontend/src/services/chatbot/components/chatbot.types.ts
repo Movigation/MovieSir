@@ -12,7 +12,7 @@ export type ChatbotProps = {
 // [반응형] Tailwind CSS의 sm, lg breakpoint 사용
 export type ChatbotPanelProps = {
     isOpen: boolean;
-    onClose: () => void;
+    onClose?: () => void;
     onRecommended?: (value: boolean) => void;  // 추천 완료 시 부모에게 알림
 };
 

@@ -31,50 +31,36 @@ export default function MovieCard({
     const [isRemoving, setIsRemoving] = useState(false);
     const [isWatched] = useState(movie.watched || false);
     const [isHovered, setIsHovered] = useState(false);
-    const [loadingPhase, setLoadingPhase] = useState<0 | 1 | 2>(2); // 기본값 2로 설정 (애니메이션 완료 상태)
+    const [loadingPhase, setLoadingPhase] = useState<0 | 1 | 2>(0); // 0: Skeleton, 1: Pop-in, 2: Final
     const cardRef = useRef<HTMLDivElement>(null);
-    const prevMovieIdRef = useRef<number | null>(null);
-
-    // 애니메이션 상태 리셋 (영화 ID가 실제로 변경될 때만)
+    // 데이터 로드 완료 또는 복구 시 제거 애니메이션 상태 리셋
     useEffect(() => {
-        if (movie && !movie.isEmpty) {
-            // 이전 movie ID와 비교하여 실제로 변경된 경우에만 애니메이션
-            const movieIdChanged = prevMovieIdRef.current !== null && prevMovieIdRef.current !== movie.id;
-
-            if (movieIdChanged) {
-                // 영화가 실제로 바뀐 경우에만 애니메이션 실행
-                setLoadingPhase(0);
-                const timer1 = setTimeout(() => setLoadingPhase(1), 100);
-                const timer2 = setTimeout(() => setLoadingPhase(2), 300);
-                prevMovieIdRef.current = movie.id;
-                return () => {
-                    clearTimeout(timer1);
-                    clearTimeout(timer2);
-                };
-            } else if (prevMovieIdRef.current === null) {
-                // 최초 마운트 시 애니메이션 없이 바로 표시
-                prevMovieIdRef.current = movie.id;
-                setLoadingPhase(2);
-            }
+        if (!movie.isSkeleton) {
+            setIsRemoving(false);
         }
+    }, [movie.isSkeleton, movie.id]);
+
+    // 새로운 영화 데이터가 로드될 때(ID 변경 시) 페이즈 리셋
+    useEffect(() => {
+        setLoadingPhase(0);
     }, [movie.id]);
 
-    // 외부 클릭 감지 (모바일에서 카드 접기)
+    // 외부 클릭 감지 (모바일에서 카드 바깥 클릭 시 닫기)
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
-                if (window.innerWidth < 1024 && isExpanded) {
-                    onCollapse();
-                }
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            if (isExpanded && cardRef.current && !cardRef.current.contains(event.target as Node)) {
+                onCollapse();
             }
         };
 
         if (isExpanded) {
             document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
         };
     }, [isExpanded, onCollapse]);
 
@@ -121,6 +107,13 @@ export default function MovieCard({
         }
     };
 
+    // 0. 스켈레톤 상태인 경우 (API 로딩 중)
+    if (movie.isSkeleton) {
+        return (
+            <div className="relative aspect-[2/3] w-full rounded-lg overflow-hidden shadow-md bg-gray-200 dark:bg-gray-800 skeleton-shimmer" />
+        );
+    }
+
     // 빈 카드인 경우
     if (movie.isEmpty) {
         return (
@@ -142,20 +135,30 @@ export default function MovieCard({
                 group
                 ${isExpanded ? 'z-30 ring-2 ring-blue-500 shadow-2xl' : 'z-10'}
                 ${isRemoving ? 'animate-slide-down-fade' : shouldAnimate ? 'animate-slide-up' : ''}
-                ${loadingPhase < 2 ? 'opacity-0' : 'opacity-100'}
             `}
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            {/* 1. 배경 포스터 이미지 */}
-            <div className="absolute inset-0 w-full h-full overflow-hidden">
+            {/* 1. 배경 포스터 이미지 & 스켈레톤 */}
+            <div className="absolute inset-0 w-full h-full overflow-hidden bg-gray-200 dark:bg-gray-800">
+                {/* 로딩 스켈레톤 (이미지 아래에 배치) */}
+                {loadingPhase === 0 && (
+                    <div className="absolute inset-0 w-full h-full skeleton-shimmer" />
+                )}
+
                 <img
                     src={movie.poster}
                     alt={movie.title}
+                    onLoad={() => {
+                        setLoadingPhase(1);
+                        setTimeout(() => setLoadingPhase(2), 150);
+                    }}
                     className={`
-                        w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.19,1,0.22,1)]
+                        w-full h-full object-cover transition-all duration-[600ms] ease-[cubic-bezier(0.19,1,0.22,1)]
                         ${(isHovered || isExpanded) ? 'scale-110' : 'scale-105'}
+                        ${loadingPhase === 0 ? 'opacity-0 blur-2xl' :
+                            loadingPhase === 1 ? 'opacity-60 blur-md' : 'opacity-100 blur-0'}
                     `}
                 />
             </div>
@@ -242,13 +245,20 @@ export default function MovieCard({
                 </div>
             </div>
 
-            {/* 4. 기타 배지 (Watched 등) */}
-            {isWatched && (
-                <div className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-sm z-20">
-                    <Eye size={12} />
-                    <span>Watched</span>
-                </div>
-            )}
+            {/* 4. 기타 배지 (Watched, Adult 등) */}
+            <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-20">
+                {movie.adult && (
+                    <div className="w-8 h-8 bg-transparent flex items-center justify-center animate-fade-in">
+                        <img src="/adult.svg" alt="성인 영화" className="w-6 h-6 object-contain" />
+                    </div>
+                )}
+                {isWatched && (
+                    <div className="bg-green-500/90 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-sm">
+                        <Eye size={12} />
+                        <span>Watched</span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

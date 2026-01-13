@@ -127,7 +127,12 @@ export default function MovieDetailModal() {
                             />
 
                             {/* OTT 정보 */}
-                            <DetailOTTSection ottProviders={movieDetail.ott_providers || []} />
+                            <DetailOTTSection
+                                movieId={movieDetail.movie_id}
+                                movieTitle={movieDetail.title}
+                                posterUrl={movieDetail.poster_url}
+                                ottProviders={movieDetail.ott_providers || []}
+                            />
 
                             {/* 줄거리 */}
                             <DetailOverview overview={movieDetail.overview} />

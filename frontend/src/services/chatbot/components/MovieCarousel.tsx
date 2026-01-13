@@ -107,7 +107,7 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
             </div>
             {/* 3D 캐러셀 컨테이너 */}
             <div
-                className="relative w-full h-[370px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto"
+                className="relative w-full h-[450px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto"
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
@@ -139,7 +139,7 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                             <div
                                 key={index}
                                 className={`
-                                    absolute w-[280px] sm:w-[320px] lg:w-[380px] h-[100px] sm:h-[100px] lg:h-[100px]
+                                    absolute w-[280px] sm:w-[320px] lg:w-[380px]
                                     transition-all duration-700 ease-out
                                     ${position === 'center' ? 'z-10 opacity-100' : ''}
                                     ${position === 'left-1' ? 'z-5 opacity-100 pointer-events-none' : ''}

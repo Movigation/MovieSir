@@ -27,12 +27,12 @@ import { useAuth } from '@/app/providers/AuthContext';
 import LoginModal from '@/services/auth/components/LoginModal/LoginModal';
 import OnboardingReminderModal from '@/services/onboarding/components/OnboardingReminderModal';
 import MovieDetailModal from '@/services/chatbot/MovieDetailModal/MovieDetailModal';
+import SideRecommendationPopup from '@/components/layout/SideRecommendationPopup/SideRecommendationPopup';
+import FeedbackPopup from '@/components/layout/FeedbackPopup/FeedbackPopup';
 // import GradientText from '@/components/ui/GradientText';
 
 export default function MainPage() {
     const { isAuthenticated, user } = useAuth();
-    // ✅ JWT 토큰 기반 인증: userId는 백엔드가 토큰에서 추출
-    // useMovieStore에서 userId 관리 제거 (불필요)
     const [isChatbotOpen, setIsChatbotOpen] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showOnboardingReminder, setShowOnboardingReminder] = useState(false);
@@ -92,22 +92,31 @@ export default function MainPage() {
 
     // 튜토리얼 체크 및 자동 종료 (온보딩 리마인더가 안 나올 때만 자동 시작/종료)
     useEffect(() => {
-        if (!isAuthenticated || !user || showOnboardingReminder) return;
+        if (!isAuthenticated || !user) return;
 
         const userId = user.id || (user as any).user_id;
         const tutorialKey = `tutorial_completed_user_${userId}`;
         const isTutorialCompleted = localStorage.getItem(tutorialKey) === 'true';
 
-        // 튜토리얼 미완료 시 즉시 0단계 시작 (온보딩 여부와 무관)
-        if (!isTutorialCompleted && !isChatbotOpen) {
-            setIsTutorialActive(true);
-            setTutorialStep(0);
-        }
-
-        // 튜토리얼 진행 중 챗봇이 열리면 해당 유저의 튜토리얼 완료 처리
+        // 1. 튜토리얼 종료 로직: 챗봇이 열리면 어떤 상황에서도 튜토리얼 완료 처리
         if (isTutorialActive && isChatbotOpen) {
+            console.log('🎓 튜토리얼 완료 처리');
             localStorage.setItem(tutorialKey, 'true');
             setIsTutorialActive(false);
+            return;
+        }
+
+        // 2. 튜토리얼 시작 로직: 온보딩 리마인더가 없을 때만 시작 시도
+        if (showOnboardingReminder) {
+            // 리마인더가 뜨면 진행 중이던 튜토리얼도 잠시 끔 (UI 겹침 방지)
+            if (isTutorialActive) setIsTutorialActive(false);
+            return;
+        }
+
+        if (!isTutorialCompleted && !isChatbotOpen && !isTutorialActive) {
+            console.log('🚀 튜토리얼 시작');
+            setIsTutorialActive(true);
+            setTutorialStep(0);
         }
     }, [isAuthenticated, user, showOnboardingReminder, isChatbotOpen, isTutorialActive]);
 
@@ -155,6 +164,12 @@ export default function MainPage() {
 
     return (
         <div className="flex flex-col items-center max-w-screen-lg mx-auto px-8 py-4">
+            {/* 최근 추천 다시보기 사이드 팝업 */}
+            <SideRecommendationPopup
+                isChatbotOpen={isChatbotOpen}
+                onOpen={() => setIsChatbotOpen(false)}
+            />
+
             {/* 히어로 타이틀 */}
             {/* [위치 조정 가이드]
                 - mt-6: 타이틀을 아래로 24px 이동 (이 값을 바꾸면 타이틀 위치 조정)
@@ -181,7 +196,7 @@ export default function MainPage() {
             <div className='max-w-screen-2xl mx-auto relative'>
                 <FloatingBubble
                     position="left"
-                    className="hidden sm:block !min-w-[250px] left-1/2 sm:left-[240px] -translate-x-1/2 bottom-[0px] sm:bottom-[-40px] font-bold text-blue-400 z-floating cursor-pointer"
+                    className={`hidden sm:block !min-w-[250px] left-1/2 sm:left-[240px] -translate-x-1/2 bottom-[0px] sm:bottom-[-40px] font-bold text-blue-400 z-floating cursor-pointer ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}`}
                     visible={!isChatbotOpen}
                     float
                     onClick={handleOpenChatbot}
@@ -206,6 +221,7 @@ export default function MainPage() {
                             bottom-[0px] sm:bottom-[-40px]
                             font-bold text-blue-400 z-floating cursor-pointer
                             sm:scale-75
+                            ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
                             `}
                     visible={!isChatbotOpen}
                     float
@@ -282,6 +298,9 @@ export default function MainPage() {
 
             {/* 영화 상세 모달 - ChatbotPanel 외부에서 렌더링하여 z-index 문제 해결 */}
             <MovieDetailModal />
+
+            {/* 사용자 만족도 조사 (Feedback Loop) 팝업 */}
+            <FeedbackPopup />
         </div >
     );
 }

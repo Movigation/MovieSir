@@ -804,8 +804,10 @@ class HybridRecommenderV3:
         print(f"Track: {track}")
         print(f"Excluded: {len(excluded_ids)} movies")
 
-        min_runtime = int(target_runtime * 0.9)
-        max_runtime = target_runtime
+        # 런타임 범위: 대체할 영화와 비슷한 길이
+        # target_runtime의 100%를 초과하지 않으면 전체 시간도 초과 안 됨
+        min_runtime = int(target_runtime * 0.9)  # 90% 이상
+        max_runtime = target_runtime  # 100% (초과 불가)
 
         # 사용자 프로필
         user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
@@ -849,6 +851,7 @@ class HybridRecommenderV3:
             top_k=300,
             exclude_ids=all_exclude
         )
+        print(f"Top candidates after scoring: {len(top_candidates)} movies")
 
         # 런타임 조건에 맞는 영화 찾기
         candidates = [

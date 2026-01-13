@@ -80,18 +80,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // user 상태가 변경될 때마다 MovieStore에 userId 동기화
     useEffect(() => {
         if (user) {
-            // MovieStore에 userId 설정 (문자열 ID를 숫자로 변환)
-            const userId = user.id || (user as any).user_id;
-            if (userId) {
-                const numericUserId = typeof userId === 'number' ? userId : parseInt(userId as string, 10);
-                console.log('✅ MovieStore userId 설정:', numericUserId);
-                setMovieStoreUserId(numericUserId);
+            // MovieStore에 userId 설정 (문자열 ID/숫자 모두 대응)
+            const rawId = user.id || (user as any).user_id;
+            if (rawId) {
+                const currentId = isNaN(Number(rawId)) ? rawId : Number(rawId);
+                console.log('👤 [AuthSync] MovieStore userId 동기화:', { rawId, currentId, type: typeof currentId });
+                setMovieStoreUserId(currentId as any);
             } else {
-                console.warn('⚠️ user 객체에 id가 없음:', user);
+                console.warn('⚠️ [AuthSync] user 객체에 id가 없음:', user);
             }
         } else {
             // 로그아웃 시 userId를 null로 설정
-            console.log('🔒 로그아웃: MovieStore userId를 null로 설정');
+            console.log('🔒 [AuthSync] 로그아웃: MovieStore userId를 null로 설정');
             setMovieStoreUserId(null);
         }
     }, [user, setMovieStoreUserId]);

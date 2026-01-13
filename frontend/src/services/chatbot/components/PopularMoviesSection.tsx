@@ -19,7 +19,7 @@ export default function PopularMoviesSection() {
 
   return (
     <div className="w-full">
-      <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-[320px] flex items-center gap-2">
+      <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 flex items-center gap-2">
         {"인기 영화 추천"}
         {totalRuntime > 0 && (
           <span className="text-sm font-medium text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
