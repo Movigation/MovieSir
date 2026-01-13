@@ -5,7 +5,7 @@ from typing import List, Optional, Any, Dict
 import os
 import numpy as np
 
-from inference.reco_model_v4 import HybridRecommenderV4
+from inference.reco_model_v5 import HybridRecommenderV5
 
 
 def convert_numpy_types(obj: Any) -> Any:
@@ -23,7 +23,7 @@ def convert_numpy_types(obj: Any) -> Any:
     return obj
 
 
-app = FastAPI(title="MovieSir AI Service v4")
+app = FastAPI(title="MovieSir AI Service v5")
 
 # 모델 로드 (서버 시작 시 한 번만)
 recommender = None
@@ -48,12 +48,12 @@ async def load_model():
 
     for attempt in range(1, max_retries + 1):
         try:
-            recommender = HybridRecommenderV4(
+            recommender = HybridRecommenderV5(
                 db_config=db_config,
                 lightgcn_model_path="training/lightgcn_model/best_model.pt",
                 lightgcn_data_path="training/lightgcn_data"
             )
-            print("✅ AI Model v4 loaded successfully")
+            print("✅ AI Model v5 loaded successfully")
             return
         except Exception as e:
             if attempt < max_retries:
@@ -68,7 +68,7 @@ async def load_model():
 
 @app.get("/")
 def health():
-    return {"message": "ok", "service": "ai", "version": "v4"}
+    return {"message": "ok", "service": "ai", "version": "v5"}
 
 
 @app.get("/health")
@@ -76,7 +76,7 @@ def health_check():
     return {
         "status": "healthy",
         "model_loaded": recommender is not None,
-        "version": "v4"
+        "version": "v5"
     }
 
 
