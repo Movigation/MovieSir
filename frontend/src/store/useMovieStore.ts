@@ -251,9 +251,24 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         console.log(`✅ [Track ${trackType.toUpperCase()}] 재추천 성공: ${newMovie.title}`);
       } else {
         console.warn("⚠️ 재추천 결과가 없습니다.");
+        // 기존 영화로 복구
+        set({
+          [movieKey]: currentMovies,
+          [legacyKey]: currentMovies
+        });
+        // 토스트 알림 (Zustand store 외부에서 showToast 호출 가능하게 handleReRecommend 인자로 받거나 store import)
+        const { useToastStore } = await import('@/store/useToastStore');
+        useToastStore.getState().showToast("조건에 맞는 다른 영화가 더 이상 없습니다.");
       }
     } catch (err) {
       console.error("❌ 재추천 오류:", err);
+      // 기존 영화로 복구
+      set({
+        [movieKey]: currentMovies,
+        [legacyKey]: currentMovies
+      });
+      const { useToastStore } = await import('@/store/useToastStore');
+      useToastStore.getState().showToast("추천 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     }
   },
 

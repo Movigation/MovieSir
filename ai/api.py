@@ -5,7 +5,7 @@ from typing import List, Optional, Any, Dict
 import os
 import numpy as np
 
-from inference.reco_model_v4 import HybridRecommenderV4
+from inference.db_conn_movie_reco_v4 import HybridRecommenderV4
 
 
 def convert_numpy_types(obj: Any) -> Any:

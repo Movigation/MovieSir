@@ -851,7 +851,7 @@ class HybridRecommenderV3:
             top_k=300,
             exclude_ids=all_exclude
         )
-        print(f"Top candidates after scoring: {len(top_candidates)} movies")
+        print(f"Top candidates after scoring: {len(top_100)} movies")
 
         # 런타임 조건에 맞는 영화 찾기
         candidates = [
