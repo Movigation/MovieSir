@@ -1,4 +1,5 @@
 # backend/main.py
+# deploy trigger: 2026-01-13
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
