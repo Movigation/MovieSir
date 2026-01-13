@@ -219,6 +219,7 @@ export default function ChatbotPanel({
           fixed
           top-[70px] left-0 right-0 bottom-0
           z-chatbot-backdrop
+          transition-opacity duration-300
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
         onClick={(e) => e.stopPropagation()}
@@ -252,11 +253,12 @@ export default function ChatbotPanel({
           bg-transparent
           z-chatbot-panel
           flex flex-col
-          transition-opacity duration-200
           max-w-screen-lg mx-auto
-          ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+          transition-all duration-200 ease-in-out
+          ${isOpen
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-8 pointer-events-none invisible'}
         `}
-        style={{ transition: 'opacity 0.2s ease-in-out' }}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >

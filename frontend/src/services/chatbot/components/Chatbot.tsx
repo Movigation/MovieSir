@@ -16,6 +16,8 @@ export default function Chatbot({
 
   // [상태] 추천 완료 여부 (2단계 위치 이동용)
   const [isRecommended, setIsRecommended] = useState(false);
+  // [상태] 원위치 복귀 시 투명화 (순간이동 효과)
+  const [isTeleporting, setIsTeleporting] = useState(false);
 
   // [반응형] 챗봇 버튼 ref (애니메이션용)
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -24,14 +26,26 @@ export default function Chatbot({
   const handleChatbotButtonClick = () => {
     if (isOpen) {
       // 이미 열려있으면 닫기
+      setIsTeleporting(true); // 순간이동 시작
       setIsOpen?.(false);
       setIsRecommended(false);  // 추천 상태 초기화
+
+      // 애니메이션(500ms) 완료 후 다시 보이게
+      setTimeout(() => {
+        setIsTeleporting(false);
+      }, 500);
     } else if (!isAuthenticated) {
       // 비로그인 시 로그인 모달 표시
       onLoginRequired?.();
     } else {
       // 로그인 상태면 챗봇 열기
+      setIsTeleporting(true);
       setIsOpen?.(true);
+
+      // 즉시 이동 후 100ms 뒤에 페이드 인
+      setTimeout(() => {
+        setIsTeleporting(false);
+      }, 100);
     }
   };
 
@@ -72,8 +86,9 @@ export default function Chatbot({
         <div
           ref={buttonRef}
           className={`
-            inline-block w-28 h-28
-            transition-all duration-500 ease-out
+              inline-block w-28 h-28
+              transition-all ease-out
+              ${isTeleporting ? "duration-0 opacity-0 scale-0" : "duration-500 opacity-100 scale-100"}
             ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
             ${!isOpen
               ? "relative translate-y-[200px] sm:translate-y-[150px]"

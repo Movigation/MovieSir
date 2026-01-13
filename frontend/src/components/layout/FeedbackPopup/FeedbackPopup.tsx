@@ -70,21 +70,29 @@ export default function FeedbackPopup() {
         checkFeedbackTarget();
     }, [userId]);
 
-    const handleFeedback = (type: 'good' | 'bad' | 'later') => {
+    const handleFeedback = async (type: 'good' | 'bad' | 'later') => {
         if (!targetMovie || !userId) return;
 
         if (type !== 'later') {
-            // 하트/하트-크랙 피드백 완료 기록
-            const feedbackDoneKey = `feedback_done_list_${userId}`;
-            const feedbackDone = JSON.parse(localStorage.getItem(feedbackDoneKey) || '[]');
-            // 최신 100개 유지
-            const updatedDone = [targetMovie.movieId, ...feedbackDone.filter((id: number) => id !== targetMovie.movieId)].slice(0, 100);
-            localStorage.setItem(feedbackDoneKey, JSON.stringify(updatedDone));
+            try {
+                // 백엔드 API 호출
+                const { postSatisfaction } = await import('@/api/movieApi');
+                await postSatisfaction(targetMovie.sessionId.toString(), type === 'good');
 
-            // 세션 완료 기록 (A > B 로직용)
-            localStorage.setItem(`last_responded_session_time_${userId}`, targetMovie.sessionId.toString());
+                // 하트/하트-크랙 피드백 완료 기록
+                const feedbackDoneKey = `feedback_done_list_${userId}`;
+                const feedbackDone = JSON.parse(localStorage.getItem(feedbackDoneKey) || '[]');
+                // 최신 100개 유지
+                const updatedDone = [targetMovie.movieId, ...feedbackDone.filter((id: number) => id !== targetMovie.movieId)].slice(0, 100);
+                localStorage.setItem(feedbackDoneKey, JSON.stringify(updatedDone));
 
-            console.log(`🎬 [User ${userId}] 피드백 수집 완료: [${targetMovie.title}] - ${type}`);
+                // 세션 완료 기록 (A > B 로직용)
+                localStorage.setItem(`last_responded_session_time_${userId}`, targetMovie.sessionId.toString());
+
+                console.log(`🎬 [User ${userId}] 피드백 수집 및 백엔드 전송 완료: [${targetMovie.title}] - ${type}`);
+            } catch (error) {
+                console.error("피드백 백엔드 전송 실패 (로컬 저장은 완료):", error);
+            }
         } else {
             // '아직 안 봤어요' 클릭 시: 다음 체크 시 다시 뜰 수 있도록 세션 기록은 안 함
             console.log('⏳ 피드백 보류: 아직 안 봤음');

@@ -159,7 +159,8 @@ def get_movie_detail(
             SELECT
                 p.provider_id,
                 p.provider_name,
-                m.link_url
+                m.link_url,
+                m.payment_type
             FROM movie_ott_map m
             JOIN ott_providers p ON m.provider_id = p.provider_id
             WHERE m.movie_id = :mid
@@ -174,6 +175,7 @@ def get_movie_detail(
                 "provider_id": row.provider_id,
                 "provider_name": row.provider_name,
                 "url": row.link_url,
+                "payment_type": row.payment_type,
             }
             for row in ott_rows
         ],
