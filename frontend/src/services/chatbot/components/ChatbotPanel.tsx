@@ -252,9 +252,9 @@ export default function ChatbotPanel({
           bg-transparent
           z-chatbot-panel
           flex flex-col
-          transition-opacity duration-200
+          transition-opacity
           max-w-screen-lg mx-auto
-          ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+          ${isOpen ? 'opacity-100 pointer-events-auto duration-200' : 'opacity-0 pointer-events-none duration-0 invisible'}
         `}
         style={{ transition: 'opacity 0.2s ease-in-out' }}
         onClick={(e) => e.stopPropagation()}

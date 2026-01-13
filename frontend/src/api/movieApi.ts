@@ -131,12 +131,27 @@ export const postReRecommendSingle = async (request: ReRecommendRequest): Promis
         if (response.data.success && response.data.movie) {
             console.log('[V2 API] 재추천 성공:', response.data.movie.title);
         } else {
-            console.log('[V2 API] 재추천 실패:', response.data.message);
+            console.log('[V2 API] 재추천 결과 없음:', response.data.message);
         }
 
         return response.data;
     } catch (error: any) {
         console.error("V2 재추천 API 호출 중 오류:", error);
+        throw error;
+    }
+};
+
+// [용도] 추천 만족도 조사 제출
+// [사용법] await postSatisfaction("1234567890", true);
+export const postSatisfaction = async (sessionId: string, isPositive: boolean): Promise<any> => {
+    try {
+        const response = await axiosInstance.post("/api/mypage/satisfaction", {
+            session_id: sessionId,
+            is_positive: isPositive
+        });
+        return response.data;
+    } catch (error) {
+        console.error("만족도 조사 제출 실패:", error);
         throw error;
     }
 };
