@@ -39,7 +39,13 @@ export default function Chatbot({
       onLoginRequired?.();
     } else {
       // 로그인 상태면 챗봇 열기
+      setIsTeleporting(true);
       setIsOpen?.(true);
+
+      // 즉시 이동 후 100ms 뒤에 페이드 인
+      setTimeout(() => {
+        setIsTeleporting(false);
+      }, 100);
     }
   };
 
@@ -80,9 +86,9 @@ export default function Chatbot({
         <div
           ref={buttonRef}
           className={`
-            inline-block w-28 h-28
-            transition-all duration-500 ease-out
-            ${isTeleporting ? "invisible" : "visible"}
+              inline-block w-28 h-28
+              transition-all ease-out
+              ${isTeleporting ? "duration-0 opacity-0 scale-0" : "duration-500 opacity-100 scale-100"}
             ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
             ${!isOpen
               ? "relative translate-y-[200px] sm:translate-y-[150px]"
