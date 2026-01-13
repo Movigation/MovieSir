@@ -158,12 +158,6 @@ export const postReRecommendSingle = async (request: ReRecommendRequest): Promis
         console.error("V2 재추천 API 호출 중 오류:", error);
         throw error;
     }
-
-    return response.data;
-  } catch (error: any) {
-    console.error("V2 재추천 API 호출 중 오류:", error);
-    throw error;
-  }
 };
 
 // [용도] 추천 만족도 조사 제출
