@@ -50,9 +50,12 @@ jobs:
       - name: Deploy to GPU Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.GPU_HOST }}
+          host: ${{ secrets.GPU_PRIVATE_IP }}
           username: ${{ secrets.GPU_USER }}
           key: ${{ secrets.SSH_KEY }}
+          proxy_host: ${{ secrets.APP_HOST }}
+          proxy_username: ${{ secrets.APP_USER }}
+          proxy_key: ${{ secrets.SSH_KEY }}
           command_timeout: 30m
           script: |
             set -e
