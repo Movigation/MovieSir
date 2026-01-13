@@ -19,13 +19,7 @@ export default function DetailOTTSection({
   const [activeTab, setActiveTab] = useState<"SUBSCRIPTION" | "OTHERS">(
     "SUBSCRIPTION"
   );
-  const { userId, filters } = useMovieStore();
-
-  // 헬퍼: "HH:MM" -> 분 변환
-  const parseMinutes = (time: string) => {
-    const [h, m] = time.split(":").map(Number);
-    return (h || 0) * 60 + (m || 0);
-  };
+  const { userId } = useMovieStore();
 
   if (!ottProviders || ottProviders.length === 0) return null;
 
@@ -108,9 +102,7 @@ export default function DetailOTTSection({
                   let logs = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
 
                   const now = Date.now();
-                  const filterMinutes = parseMinutes(filters.time);
-                  // 타임 필터가 0이면 최소 1분으로 설정 (방어 로직)
-                  const waitMinutes = filterMinutes > 0 ? filterMinutes : 1;
+                  // 피드백 팝업은 OTT 클릭 1분 후 표시
                   const targetShowTime = now + 1 * 60 * 1000;
 
                   const newEntry = {
