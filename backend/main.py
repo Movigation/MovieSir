@@ -22,9 +22,14 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        # 로컬 개발
         "http://localhost:5173",  # Vite dev server
         "http://localhost:3000",  # copy 프론트엔드
         "http://localhost:3001",  # copy2 프론트엔드
+        # 프로덕션
+        "https://moviesir.cloud",
+        "https://demo.moviesir.cloud",
+        "https://console.moviesir.cloud",
     ],
     allow_credentials=True,
     allow_methods=["*"],  # 모든 HTTP 메서드 허용

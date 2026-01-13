@@ -58,6 +58,54 @@ class AIModelAdapter:
 
         return []
 
+    def _get_recent_recommended_movies(self, user_id: str, session_limit: int = 3) -> List[int]:
+        """
+        최근 N개 추천 세션에서 추천된 영화 ID 조회
+        
+        Args:
+            user_id: 사용자 ID
+            session_limit: 조회할 최근 세션 개수 (기본값 3)
+        
+        Returns:
+            최근 추천된 영화 ID 리스트
+        """
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+
+            db = SessionLocal()
+            try:
+                # 최근 N개 세션의 recommended_movie_ids 조회
+                result = db.execute(
+                    text("""
+                        SELECT recommended_movie_ids 
+                        FROM recommendation_sessions 
+                        WHERE user_id = :uid 
+                        ORDER BY created_at DESC 
+                        LIMIT :limit
+                    """),
+                    {"uid": user_id, "limit": session_limit}
+                ).fetchall()
+
+                if result:
+                    # 모든 세션의 영화 ID를 하나의 리스트로 합침
+                    all_movie_ids = []
+                    for row in result:
+                        movie_ids = row[0]  # recommended_movie_ids 배열
+                        if movie_ids:
+                            all_movie_ids.extend(movie_ids)
+                    
+                    # 중복 제거
+                    return list(set(all_movie_ids))
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            print(f"[AI Model] Error fetching recent recommendations: {e}")
+
+        return []
+
     def _get_popular_movies(self, limit: int = 5) -> List[int]:
         """
         인기 영화 ID 리스트 반환 (24시간 캐싱 + 랜덤 샘플링)
@@ -210,6 +258,17 @@ class AIModelAdapter:
             # 사용자 영화 ID 조회 (force_refresh=True → 항상 새 프로필 생성)
             user_movie_ids = self._get_user_movie_ids(user_id, force_refresh=True)
             
+            # 최근 3개 세션에서 추천된 영화 조회
+            recent_recommended = self._get_recent_recommended_movies(user_id, session_limit=3)
+            print(f"[AI Model] Recent recommendations to exclude: {len(recent_recommended)} movies from last 3 sessions")
+            
+            # excluded_ids에 최근 추천 영화 추가
+            excluded_ids_a = excluded_ids_a or []
+            excluded_ids_a = list(set(excluded_ids_a + recent_recommended))
+            
+            excluded_ids_b = excluded_ids_b or []
+            excluded_ids_b = list(set(excluded_ids_b + recent_recommended))
+            
             # OTT 구독 정보 없으면 전체 OTT 사용
             if not preferred_otts:
                 preferred_otts = self._get_all_ott_names()
@@ -222,12 +281,12 @@ class AIModelAdapter:
                 "preferred_genres": preferred_genres,
                 "preferred_otts": preferred_otts,
                 "allow_adult": allow_adult,
-                "excluded_ids_a": excluded_ids_a or [],
-                "excluded_ids_b": excluded_ids_b or []
+                "excluded_ids_a": excluded_ids_a,
+                "excluded_ids_b": excluded_ids_b
             }
 
             print(f"[AI Model] Calling recommend: {self.ai_service_url}/recommend")
-            print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}, excluded_a={len(excluded_ids_a or [])}, excluded_b={len(excluded_ids_b or [])}")
+            print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}, excluded_a={len(excluded_ids_a)}, excluded_b={len(excluded_ids_b)}")
 
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
@@ -268,6 +327,13 @@ class AIModelAdapter:
         try:
             # 사용자 영화 ID 조회 (force_refresh=False → 캐시 사용, 5분 이내)
             user_movie_ids = self._get_user_movie_ids(user_id, force_refresh=False)
+            
+            # 최근 3개 세션에서 추천된 영화 조회
+            recent_recommended = self._get_recent_recommended_movies(user_id, session_limit=3)
+            print(f"[AI Model] Recent recommendations to exclude: {len(recent_recommended)} movies from last 3 sessions")
+            
+            # excluded_ids에 최근 추천 영화 추가
+            excluded_ids = list(set(excluded_ids + recent_recommended))
             
             # OTT 구독 정보 없으면 전체 OTT 사용
             if not preferred_otts:

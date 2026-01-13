@@ -82,8 +82,14 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     return results
 
 def log_click(db: Session, user_id: str, movie_id: int, provider_id: int):
-    new_log = MovieClick(user_id=user_id, movie_id=movie_id, provider_id=provider_id)
-    db.add(new_log)
+    """OTT 클릭을 user_movie_feedback 테이블에 저장 (provider_id는 저장하지 않음)"""
+    new_feedback = MovieClick(
+        user_id=user_id,
+        movie_id=movie_id,
+        feedback_type='ott_click',
+        session_id=None
+    )
+    db.add(new_feedback)
     db.commit()
 
 def mark_watched(db: Session, user_id: str, movie_id: int):
