@@ -85,8 +85,11 @@ jobs:
             echo "📌 빌드 캐시 정리"
             docker builder prune -f || true
 
-            echo "📌 AI 컨테이너 빌드 및 시작"
-            docker compose -f docker-compose.gpu.yml --env-file .env.production up -d --build
+            echo "📌 AI 이미지 빌드"
+            cd ~/MovieSir/ai && docker build -t moviesir-ai:latest .
+
+            echo "📌 AI 컨테이너 시작"
+            cd ~/MovieSir && docker compose -f docker-compose.gpu.yml --env-file .env.production up -d --no-build
 
             echo "📌 미사용 이미지 정리"
             docker image prune -f || true
