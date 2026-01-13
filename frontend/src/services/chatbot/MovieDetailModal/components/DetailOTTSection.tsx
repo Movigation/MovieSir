@@ -19,7 +19,7 @@ export default function DetailOTTSection({
   const [activeTab, setActiveTab] = useState<"SUBSCRIPTION" | "OTHERS">(
     "SUBSCRIPTION"
   );
-  const { userId } = useMovieStore();
+  const { userId, sessionId } = useMovieStore();
 
   if (!ottProviders || ottProviders.length === 0) return null;
 
@@ -111,6 +111,7 @@ export default function DetailOTTSection({
                     posterUrl,
                     clickedAt: now,
                     targetShowTime,
+                    sessionId, // 실제 DB 세션 ID (피드백 API용)
                   };
 
                   // 중복 제거 및 최신화

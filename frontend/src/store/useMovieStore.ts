@@ -31,6 +31,9 @@ interface MovieState {
   // 세션 내 중복 방지용 ID 목록 (모델 필터링용)
   excludedIds: number[];
 
+  // 추천 세션 ID (피드백용)
+  sessionId: number | null;
+
   // 하위 호환 변수 (기존 UI 지원용 별칭)
   recommendedMovies: Movie[];
   popularMovies: Movie[];
@@ -61,7 +64,7 @@ interface MovieState {
 }
 
 // 헬퍼: 마지막 추천 결과 로컬 스토리지 저장 (UI 영구 보관용)
-const saveLastRecommendations = (trackA: Movie[], trackB: Movie[], filters: Filters, userId: number | string | null) => {
+const saveLastRecommendations = (trackA: Movie[], trackB: Movie[], filters: Filters, userId: number | string | null, sessionId: number | null) => {
   if (!userId) {
     console.warn("⚠️ [Storage] 비로그인 상태이거나 유저 ID가 없어 저장을 건너띕니다.");
     return;
@@ -72,11 +75,12 @@ const saveLastRecommendations = (trackA: Movie[], trackB: Movie[], filters: Filt
       trackA,
       trackB,
       filters,
+      sessionId, // 추천 세션 ID 저장 (피드백용)
       timestamp: Date.now()
     };
     const key = `last_recommendations_${userId}`;
     localStorage.setItem(key, JSON.stringify(data));
-    console.log(`💾 [Storage] [User ${userId}] 추천 결과 저장 완료 (Key: ${key})`, data);
+    console.log(`💾 [Storage] [User ${userId}] 추천 결과 저장 완료 (Key: ${key}, Session: ${sessionId})`, data);
   } catch (e) {
     console.error('❌ [Storage] localStorage 저장 실패:', e);
   }
@@ -105,6 +109,8 @@ export const useMovieStore = create<MovieState>((set, get) => ({
   trackBLabel: "다양성 추천",
 
   excludedIds: [],
+
+  sessionId: null,
 
   recommendedMovies: [],
   popularMovies: [],
@@ -153,6 +159,9 @@ export const useMovieStore = create<MovieState>((set, get) => ({
       // 세션 중복 방지용 ID 집계
       const allMovieIds = [...trackAMovies, ...trackBMovies].map(m => m.id);
 
+      // 세션 ID 저장
+      const sessionId = result.session_id || null;
+
       set({
         trackAMovies,
         trackATotalRuntime: result.track_a.total_runtime,
@@ -162,6 +171,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         trackBLabel: result.track_b.label,
 
         excludedIds: allMovieIds,
+        sessionId,
         recommendedMovies: trackAMovies,
         popularMovies: trackBMovies,
 
@@ -169,7 +179,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
       });
 
       // UI용 로컬 스토리지 저장
-      saveLastRecommendations(trackAMovies, trackBMovies, filters, get().userId);
+      saveLastRecommendations(trackAMovies, trackBMovies, filters, get().userId, sessionId);
 
       // 상세 정보 프리페치 (성인 여부 업데이트 등)
       get().prefetchMovieDetails([...trackAMovies, ...trackBMovies]);
@@ -243,7 +253,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
         // 업데이트된 전체 상태 저장
         const finalState = get();
-        saveLastRecommendations(finalState.trackAMovies, finalState.trackBMovies, finalState.filters, finalState.userId);
+        saveLastRecommendations(finalState.trackAMovies, finalState.trackBMovies, finalState.filters, finalState.userId, finalState.sessionId);
 
         // 프리페칭 실행 (성인 정보 등 수집)
         get().prefetchMovieDetails([newMovie]);
@@ -284,6 +294,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
     trackBMovies: [],
     trackBTotalRuntime: 0,
     excludedIds: [],
+    sessionId: null,
     recommendedMovies: [],
     popularMovies: [],
     isLoading: false,
@@ -298,6 +309,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
     trackBMovies: [],
     trackBTotalRuntime: 0,
     excludedIds: [],
+    sessionId: null,
     recommendedMovies: [],
     popularMovies: [],
     detailMovieId: null,
