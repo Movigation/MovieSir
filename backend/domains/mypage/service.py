@@ -217,6 +217,8 @@ def save_satisfaction_survey(
 ) -> dict:
     """
     추천 만족도 조사 저장
+    - user_movie_feedback 테이블에 저장
+    - 해당 세션의 모든 추천 영화에 대해 만족도 피드백을 기록
     
     Args:
         db: 데이터베이스 세션
@@ -231,9 +233,10 @@ def save_satisfaction_survey(
         HTTPException 404: 해당 세션을 찾을 수 없는 경우
     
     Note:
-        recommendation_sessions 테이블의 feedback_details JSONB 컬럼에 저장
+        user_movie_feedback 테이블의 feedback_type 컬럼에 저장
+        - feedback_type: 'satisfaction_positive' 또는 'satisfaction_negative'
     """
-    from backend.domains.recommendation.models import RecommendationSession
+    from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
     
     # 1. session_id 파싱 (문자열을 정수로 변환)
     try:
@@ -255,20 +258,34 @@ def save_satisfaction_survey(
             detail="해당 추천 세션을 찾을 수 없습니다"
         )
     
-    # 3. feedback_details에 만족도 저장
-    feedback_data = {
-        "is_positive": is_positive,
-        "submitted_at": datetime.utcnow().isoformat()
-    }
+    # 3. feedback_type 결정
+    feedback_type = 'satisfaction_positive' if is_positive else 'satisfaction_negative'
     
-    session.feedback_details = feedback_data
+    # 4. 해당 세션의 모든 추천 영화에 대해 만족도 피드백 저장
+    recommended_movie_ids = session.recommended_movie_ids or []
     
-    # 4. DB에 저장
-    db.add(session)
+    if not recommended_movie_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="추천된 영화가 없는 세션입니다"
+        )
+    
+    # 각 영화에 대해 만족도 피드백 저장
+    for movie_id in recommended_movie_ids:
+        feedback = UserMovieFeedback(
+            user_id=user.user_id,
+            movie_id=movie_id,
+            session_id=session_id_int,
+            feedback_type=feedback_type
+        )
+        db.add(feedback)
+    
+    # 5. DB에 저장
     db.commit()
-    db.refresh(session)
     
     return {
         "session_id": session_id,
-        "is_positive": is_positive
+        "is_positive": is_positive,
+        "feedback_count": len(recommended_movie_ids)
     }
+
