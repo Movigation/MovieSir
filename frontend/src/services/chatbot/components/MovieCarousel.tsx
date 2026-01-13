@@ -7,9 +7,16 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface MovieCarouselProps {
     children: React.ReactNode;
     className?: string;
+    containerClassName?: string; // e.g., 'h-[450px]'
+    cardWidthClassName?: string; // e.g., 'w-[280px] sm:w-[320px]'
 }
 
-export default function MovieCarousel({ children, className = '' }: MovieCarouselProps) {
+export default function MovieCarousel({
+    children,
+    className = '',
+    containerClassName = 'h-[450px] sm:h-[450px] lg:h-[550px]',
+    cardWidthClassName = 'w-[280px] sm:w-[320px] lg:w-[380px]'
+}: MovieCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const startX = useRef(0);
@@ -107,11 +114,14 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
             </div>
             {/* 3D 캐러셀 컨테이너 */}
             <div
-                className="relative w-full h-[450px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto"
+                className={`relative w-full perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto ${containerClassName}`}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                style={{ perspective: '1000px', cursor: isDragging ? 'grabbing' : 'grab' }}
+                style={{
+                    perspective: '1000px',
+                    cursor: isDragging ? 'grabbing' : 'grab'
+                }}
             >
                 {/* 좌측 화살표 - 항상 표시 */}
                 <button
@@ -139,7 +149,7 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                             <div
                                 key={index}
                                 className={`
-                                    absolute w-[280px] sm:w-[320px] lg:w-[380px]
+                                    absolute ${cardWidthClassName}
                                     transition-all duration-700 ease-out
                                     ${position === 'center' ? 'z-10 opacity-100' : ''}
                                     ${position === 'left-1' ? 'z-5 opacity-100 pointer-events-none' : ''}
