@@ -24,11 +24,13 @@ export default function DetailOTTSection({ movieId, movieTitle, posterUrl, ottPr
 
     const subscriptions = ottProviders.filter(ott => {
         const type = ott.payment_type?.toUpperCase();
-        return type === 'SUBSCRIPTION' || type === 'FLATRATE';
+        // 구독/무료: SUBSCRIPTION, FLATRATE(TMDB표준), FREE, ADS(광고형 무료)
+        return type === 'SUBSCRIPTION' || type === 'FLATRATE' || type === 'FREE' || type === 'ADS';
     });
     const others = ottProviders.filter(ott => {
         const type = ott.payment_type?.toUpperCase();
-        return type !== 'SUBSCRIPTION' && type !== 'FLATRATE';
+        // 구독/무료가 아닌 모든 것 (RENT, BUY 포함)
+        return type !== 'SUBSCRIPTION' && type !== 'FLATRATE' && type !== 'FREE' && type !== 'ADS';
     });
 
     // 탭 정보 구성
