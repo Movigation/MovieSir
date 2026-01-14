@@ -33,6 +33,8 @@ class RecommendRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None  # 선호 장르
     preferred_otts: Optional[List[str]] = None  # 선호 OTT
     allow_adult: bool = False  # 성인 영화 허용
+    excluded_ids_a: List[int] = []  # 트랙 A 제외할 영화 ID
+    excluded_ids_b: List[int] = []  # 트랙 B 제외할 영화 ID
     client_user_id: Optional[str] = None  # 클라이언트측 사용자 ID (추적용)
 
 
@@ -101,7 +103,9 @@ async def external_recommend(
                     "available_time": request.available_time,
                     "preferred_genres": request.preferred_genres,
                     "preferred_otts": request.preferred_otts,
-                    "allow_adult": request.allow_adult
+                    "allow_adult": request.allow_adult,
+                    "excluded_ids_a": request.excluded_ids_a,
+                    "excluded_ids_b": request.excluded_ids_b
                 }
             )
 
