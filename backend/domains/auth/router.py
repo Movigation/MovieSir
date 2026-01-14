@@ -28,6 +28,7 @@ def login(
 
     - 이메일과 비밀번호로 로그인
     - 성공 시 JWT 토큰을 HttpOnly 쿠키로 발급
+    - remember_me 여부에 따라 토큰 만료 시간 차별화
     - 실패 시 401 에러 (이메일 또는 비밀번호 불일치)
     """
 
@@ -48,12 +49,44 @@ def login(
             detail="탈퇴한 회원입니다",
         )
 
-    # 4. JWT 토큰 생성 (둘 다 새로 발급)
-    access_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname})
-    refresh_token = create_access_token(data={"sub": str(user.user_id), "nickname": user.nickname})
-
-    # DB에 Refresh Token 저장 (로그인 시 업데이트)
-    user.refresh_token = refresh_token
+    # 4. remember_me 여부에 따라 토큰 만료 시간 설정
+    # - 자동로그인 체크 (remember_me=True): Access 30분, Refresh 7일 (자동 갱신)
+    # - 자동로그인 미체크 (remember_me=False): Access 1시간, Refresh 사용 안 함
+    from datetime import timedelta
+    
+    if request.remember_me:
+        access_token_max_age = 1800  # 30분 (자동 갱신 예정)
+        refresh_token_max_age = 604800  # 7일
+        
+        # 토큰 생성
+        access_token = create_access_token(
+            data={"sub": str(user.user_id), "nickname": user.nickname},
+            expires_delta=timedelta(seconds=access_token_max_age)
+        )
+        refresh_token = create_access_token(
+            data={"sub": str(user.user_id), "nickname": user.nickname},
+            expires_delta=timedelta(seconds=refresh_token_max_age)
+        )
+        
+        # DB에 Refresh Token 저장 (자동 갱신용)
+        user.refresh_token = refresh_token
+    else:
+        access_token_max_age = 3600  # 1시간 (프론트엔드 타이머와 동기화)
+        refresh_token_max_age = 3600  # 1시간 (갱신 없음)
+        
+        # 토큰 생성
+        access_token = create_access_token(
+            data={"sub": str(user.user_id), "nickname": user.nickname},
+            expires_delta=timedelta(seconds=access_token_max_age)
+        )
+        refresh_token = create_access_token(
+            data={"sub": str(user.user_id), "nickname": user.nickname},
+            expires_delta=timedelta(seconds=refresh_token_max_age)
+        )
+        
+        # Refresh Token 미사용 (자동로그인 체크 안 함)
+        user.refresh_token = None
+    
     db.add(user)
     db.commit()
 
@@ -61,11 +94,11 @@ def login(
     response.set_cookie(
         key="access_token",
         value=access_token,
-        httponly=True,          # JavaScript 접근 차단
-        secure=COOKIE_SECURE,   # HTTPS에서만 전송 (프로덕션)
-        samesite=COOKIE_SAMESITE,  # CSRF 방어
-        max_age=1800,           # 30분 (초 단위)
-        path="/",               # 모든 경로에서 사용
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=access_token_max_age,
+        path="/",
     )
 
     response.set_cookie(
@@ -74,11 +107,22 @@ def login(
         httponly=True,
         secure=COOKIE_SECURE,
         samesite=COOKIE_SAMESITE,
-        max_age=604800,         # 7일 (초 단위)
+        max_age=refresh_token_max_age,
         path="/",
     )
 
-    # 6. 사용자 정보만 응답 (토큰은 쿠키로 전송됨)
+    # 6. remember_me 상태를 쿠키로 전달 (프론트엔드에서 타이머 설정용)
+    response.set_cookie(
+        key="remember_me",
+        value="true" if request.remember_me else "false",
+        httponly=False,  # JavaScript에서 읽을 수 있어야 함
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=refresh_token_max_age,
+        path="/",
+    )
+
+    # 7. 사용자 정보만 응답 (토큰은 쿠키로 전송됨)
     user_response = UserResponse(
         user_id=str(user.user_id),
         email=user.email,
@@ -87,6 +131,79 @@ def login(
     )
 
     return LoginResponse(user=user_response)
+
+
+@router.post("/refresh", summary="토큰 갱신")
+def refresh_access_token(
+    refresh_token: str = Cookie(None),
+    response: Response = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Access Token 갱신 API (자동로그인 사용자 전용)
+    
+    - Refresh Token으로 새로운 Access Token 발급
+    - remember_me=True인 경우에만 사용
+    - Refresh Token이 만료되었거나 유효하지 않으면 401 에러
+    """
+    from backend.domains.auth.utils import verify_refresh_token
+    from datetime import timedelta
+    
+    # 1. Refresh Token 존재 확인
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh Token이 없습니다. 다시 로그인해주세요.",
+        )
+    
+    # 2. Refresh Token 검증 및 user_id 추출
+    user_id = verify_refresh_token(refresh_token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않거나 만료된 Refresh Token입니다.",
+        )
+    
+    # 3. DB에서 사용자 조회
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="사용자를 찾을 수 없습니다.",
+        )
+    
+    # 4. DB에 저장된 Refresh Token과 일치 여부 확인 (보안 강화)
+    if user.refresh_token != refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않은 Refresh Token입니다.",
+        )
+    
+    # 5. 탈퇴한 회원 체크
+    if user.deleted_at:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="탈퇴한 회원입니다.",
+        )
+    
+    # 6. 새로운 Access Token 생성 (30분)
+    new_access_token = create_access_token(
+        data={"sub": str(user.user_id), "nickname": user.nickname},
+        expires_delta=timedelta(seconds=1800)  # 30분
+    )
+    
+    # 7. 쿠키에 새 Access Token 설정
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=1800,  # 30분
+        path="/",
+    )
+    
+    return {"message": "Access Token이 갱신되었습니다."}
 
 
 @router.post("/logout", summary="로그아웃")
@@ -103,6 +220,7 @@ def logout(
     # 1. 쿠키 삭제
     response.delete_cookie(key="access_token", path="/")
     response.delete_cookie(key="refresh_token", path="/")
+    response.delete_cookie(key="remember_me", path="/")  # remember_me 쿠키도 삭제
 
     # 2. DB에서 리프레시 토큰 삭제 (NULL 처리)
     current_user.refresh_token = None
