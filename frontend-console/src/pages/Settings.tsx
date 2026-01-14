@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/api'
 
 export default function Settings() {
-  const { company, token } = useAuthStore()
+  const { company } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 

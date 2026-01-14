@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/stores/authStore'
 
 interface User {
   id: string
@@ -26,13 +25,12 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const { token } = useAuthStore()
 
   useEffect(() => {
     // TODO: 실제 API 연동 필요 - 현재는 mock 데이터 사용
     setUsers(mockUsers)
     setLoading(false)
-  }, [token])
+  }, [])
 
   const filteredUsers = users.filter(
     (user) =>
