@@ -19,19 +19,6 @@ export default function Login() {
     setLoading(true)
     setError('')
 
-    // 테스트 계정 처리
-    if (form.email === 'test@moviesir.cloud' && form.password === 'test1234') {
-      const testCompany = {
-        id: 'test-company-001',
-        name: '테스트 기업',
-        email: 'test@moviesir.cloud',
-        plan: 'FREE',
-      }
-      login(testCompany, 'test-token-12345')
-      navigate('/console/dashboard')
-      return
-    }
-
     try {
       const { data } = await api.post('/b2b/auth/login', {
         email: form.email,

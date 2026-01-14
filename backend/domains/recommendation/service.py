@@ -195,8 +195,8 @@ def save_recommendation_session(
     runtime_max: int,
     track_a_ids: List[int],
     track_b_ids: List[int]
-):
-    """추천 세션 저장 (Track A, B 분리 저장)"""
+) -> int:
+    """추천 세션 저장 (Track A, B 분리 저장) - session_id 반환"""
     import json
 
     feedback_details = {
@@ -204,11 +204,12 @@ def save_recommendation_session(
         "track_b_ids": track_b_ids
     }
 
-    db.execute(
+    result = db.execute(
         text("""
             INSERT INTO recommendation_sessions
             (user_id, req_genres, req_runtime_max, recommended_movie_ids, feedback_details, created_at)
             VALUES (:uid, :genres, :runtime, :movie_ids, :feedback, NOW())
+            RETURNING session_id
         """),
         {
             "uid": user_id,
@@ -218,4 +219,6 @@ def save_recommendation_session(
             "feedback": json.dumps(feedback_details)
         }
     )
+    session_id = result.fetchone()[0]
     db.commit()
+    return session_id

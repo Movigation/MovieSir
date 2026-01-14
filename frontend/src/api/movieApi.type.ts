@@ -137,6 +137,7 @@ export interface RecommendResponseV2 {
   track_a: TrackResultV2;
   track_b: TrackResultV2;
   elapsed_time?: number;
+  session_id?: number; // 추천 세션 ID (피드백용)
 }
 
 // [용도] 개별 영화 재추천 요청

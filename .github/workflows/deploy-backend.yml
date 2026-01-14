@@ -50,6 +50,7 @@ jobs:
           host: ${{ secrets.APP_HOST }}
           username: ${{ secrets.APP_USER }}
           key: ${{ secrets.SSH_KEY }}
+          port: 52222
           command_timeout: 30m
           script: |
             set -e

@@ -56,6 +56,7 @@ jobs:
           proxy_host: ${{ secrets.APP_HOST }}
           proxy_username: ${{ secrets.APP_USER }}
           proxy_key: ${{ secrets.SSH_KEY }}
+          proxy_port: 52222
           command_timeout: 30m
           script: |
             set -e

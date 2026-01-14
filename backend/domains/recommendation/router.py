@@ -64,15 +64,18 @@ def recommend_movies_v2(
         excluded_ids_b=excluded_b
     )
 
-    # 추천 결과 저장 (Track A, B 분리)
+    # 추천 결과 저장 (Track A, B 분리) - session_id 반환
     track_a_ids = [m['movie_id'] for m in result.get('track_a', {}).get('movies', [])]
     track_b_ids = [m['movie_id'] for m in result.get('track_b', {}).get('movies', [])]
 
+    session_id = None
     if track_a_ids or track_b_ids:
-        service.save_recommendation_session(
+        session_id = service.save_recommendation_session(
             db, user_id, req.genres, req.runtime_limit or 180, track_a_ids, track_b_ids
         )
 
+    # session_id를 응답에 추가
+    result['session_id'] = session_id
     return result
 
 

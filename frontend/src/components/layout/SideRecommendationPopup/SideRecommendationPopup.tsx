@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, History, ChevronRight } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from '@/services/chatbot/components/MovieCard';
 import MovieCarousel from '@/services/chatbot/components/MovieCarousel';
@@ -120,9 +120,12 @@ export default function SideRecommendationPopup({
             <div
                 className={`
                     fixed top-0 right-0 h-full w-full sm:w-auto z-chatbot-btn flex items-center justify-end
-                    transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]
-                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-                    ${isChatbotOpen ? 'hidden sm:flex' : 'flex'}
+                    transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
+                    ${isOpen
+                        ? 'translate-x-0'
+                        : (isChatbotOpen ? 'translate-x-[calc(100%+100px)]' : 'translate-x-full')
+                    }
+                    flex
                 `}
             >
                 {/* 1. 사이드 버튼 (Wrapper 기준 왼쪽 외부에 고정) */}
@@ -134,12 +137,12 @@ export default function SideRecommendationPopup({
                     }}
                     className={`
                         side-reco-trigger absolute left-0 -translate-x-full top-1/2 -translate-y-1/2
-                        bg-blue-600 hover:bg-blue-700 text-white w-[36px] h-[150px] rounded-l-xl
+                        bg-gray-500/25 hover:bg-gray-600/35 dark:bg-gray-500/55 dark:hover:bg-gray-500/75 text-white w-[36px] h-[150px] rounded-l-xl
                         flex flex-col items-center justify-center gap-2 shadow-lg
                     `}
                     title={isOpen ? '닫기' : '마지막 추천 다시보기'}
                 >
-                    {isOpen ? <X size={20} /> : <History size={20} className="animate-pulse" />}
+                    {isOpen ? <div /> : <div />}
                     <span className="[writing-mode:vertical-lr] font-bold tracking-widest text-sm">
                         {isOpen ? '닫기' : '추천 다시보기'}
                     </span>
@@ -157,7 +160,7 @@ export default function SideRecommendationPopup({
                     {lastData.filters && (
                         <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-b border-black/5 dark:border-white/5">
                             <div className="flex flex-col gap-1">
-                                <span className="text-[10px] uppercase tracking-wider text-blue-500 dark:text-blue-400 font-bold">당시 선택한 조건</span>
+                                <span className="text-[12px] uppercase tracking-wider text-blue-500 dark:text-blue-400 font-bold">선택한 조건</span>
                                 <p className="text-xs text-gray-600 dark:text-gray-300 leading-tight">
                                     <span className="text-black dark:text-white font-semibold">{formatTime(lastData.filters.time)}</span> 동안 볼 수 있는{' '}
                                     <span className="text-black dark:text-white font-semibold">
@@ -169,9 +172,9 @@ export default function SideRecommendationPopup({
                     )}
 
                     {/* 탭 헤더 */}
-                    <div className="flex justify-center px-4 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-gray-900">
+                    <div className="flex justify-center px-4 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-gray-800">
                         {[
-                            { id: 'trackA', label: '취향 맞춤', count: lastData.trackA.length },
+                            { id: 'trackA', label: '맞춤 추천', count: lastData.trackA.length },
                             { id: 'trackB', label: '인기 영화', count: lastData.trackB.length },
                         ].map((tab) => (
                             <button
@@ -194,7 +197,7 @@ export default function SideRecommendationPopup({
                     </div>
 
                     {/* 콘텐츠 영역 (스크롤러 제거) */}
-                    <div className="flex-1 overflow-hidden flex flex-col items-center py-2 bg-gray-50 dark:bg-gray-900">
+                    <div className="flex-1 overflow-hidden flex flex-col items-center py-2 bg-gray-50 dark:bg-gray-800">
                         {currentTrackMovies.length > 0 ? (
                             <div className="w-full flex flex-col items-center">
                                 <div className="w-full mb-4 px-6">
@@ -230,7 +233,7 @@ export default function SideRecommendationPopup({
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center text-gray-500 gap-4">
                                 <div className="p-4 bg-white/5 rounded-full">
-                                    <History size={48} className="opacity-20" />
+                                    <div />
                                 </div>
                                 <p className="text-sm">추천 데이터가 없습니다.</p>
                             </div>
@@ -238,7 +241,7 @@ export default function SideRecommendationPopup({
                     </div>
 
                     {/* 패널 푸터 (제목 하단 이동) */}
-                    <div className="relative flex items-center justify-center p-3 border-t border-black/10 dark:border-white/10">
+                    <div className="dark:bg-gray-800 relative flex items-center justify-center p-3">
                         <button
                             onClick={() => setIsOpen(false)}
                             className="absolute left-6 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
@@ -248,9 +251,9 @@ export default function SideRecommendationPopup({
                         </button>
 
                         <div className="text-center">
-                            <h2 className="text-xl font-bold text-black dark:text-white">최근 추천 영화</h2>
+                            <h2 className="text-[15px] font-bold text-blue-500 dark:text-blue-400">최근 추천 영화</h2>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(lastData.timestamp).toLocaleDateString()} 추천 목록
+                                {new Date(lastData.timestamp).toLocaleDateString()}
                             </p>
                         </div>
                     </div>

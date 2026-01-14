@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/api'
-import { useAuthStore } from '@/stores/authStore'
 import {
   AreaChart,
   Area,
@@ -17,51 +16,19 @@ interface UsageData {
   error: number
 }
 
-// 테스트용 mock 데이터
-const generateMockData = (days: number): UsageData[] => {
-  const data: UsageData[] = []
-  const today = new Date()
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    const count = Math.floor(Math.random() * 400) + 100
-    const errorRate = Math.random() * 0.05
-    data.push({
-      date: `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`,
-      count,
-      success: Math.floor(count * (1 - errorRate)),
-      error: Math.floor(count * errorRate),
-    })
-  }
-  return data
-}
-
-const mock7DayData = generateMockData(7)
-const mock30DayData = generateMockData(30)
-
 export default function Usage() {
   const [data, setData] = useState<UsageData[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'7d' | '30d'>('7d')
-  const { token } = useAuthStore()
 
   useEffect(() => {
     setLoading(true)
-
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setData(period === '7d' ? mock7DayData : mock30DayData)
-        setLoading(false)
-      }, 300)
-      return
-    }
-
     api
       .get(`/b2b/usage?period=${period}`)
       .then((res) => setData(res.data))
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [period, token])
+  }, [period])
 
   const totalCalls = data.reduce((sum, d) => sum + d.count, 0)
   const totalSuccess = data.reduce((sum, d) => sum + d.success, 0)

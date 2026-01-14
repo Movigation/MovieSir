@@ -1,4 +1,5 @@
 # backend/main.py
+# deploy trigger: 2026-01-14
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
@@ -15,6 +16,7 @@ from backend.domains.registration.router import router as registration_router
 from backend.domains.onboarding.router import router as onboarding_router
 from backend.domains.recommendation.router import router as recommendation_router
 from backend.domains.mypage.router import router as mypage_router
+from backend.domains.b2b.router import router as b2b_router
 
 app = FastAPI()
 
@@ -42,6 +44,7 @@ app.include_router(registration_router)
 app.include_router(onboarding_router)
 app.include_router(recommendation_router)
 app.include_router(mypage_router)
+app.include_router(b2b_router)
 
 
 @app.get("/")

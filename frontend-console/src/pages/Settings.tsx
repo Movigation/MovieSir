@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/api'
 
 export default function Settings() {
-  const { company, token } = useAuthStore()
+  const { company } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 
@@ -22,15 +22,6 @@ export default function Settings() {
 
     setLoading(true)
     setMessage({ type: '', text: '' })
-
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setMessage({ type: 'success', text: '비밀번호가 변경되었습니다' })
-        setPasswordForm({ current: '', new: '', confirm: '' })
-        setLoading(false)
-      }, 500)
-      return
-    }
 
     try {
       await api.post('/b2b/auth/change-password', {

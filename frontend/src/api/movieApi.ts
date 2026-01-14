@@ -164,7 +164,7 @@ export const postReRecommendSingle = async (request: ReRecommendRequest): Promis
 // [사용법] await postSatisfaction("1234567890", true);
 export const postSatisfaction = async (sessionId: string, isPositive: boolean): Promise<any> => {
     try {
-        const response = await axiosInstance.post("/api/mypage/satisfaction", {
+        const response = await axiosInstance.post("/mypage/satisfaction", {
             session_id: sessionId,
             is_positive: isPositive
         });

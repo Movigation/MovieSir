@@ -6,7 +6,7 @@ interface FeedbackLog {
     movieId: number;
     title: string;
     posterUrl: string;
-    sessionId: number; // 추천 세션 ID (timestamp)
+    sessionId: number; // 실제 DB 추천 세션 ID
 }
 
 export default function FeedbackPopup() {
@@ -15,7 +15,9 @@ export default function FeedbackPopup() {
     const { userId } = useMovieStore();
 
     useEffect(() => {
-        if (!userId) return;
+        // 로그인 상태 확인 (user 정보 + userId 둘 다 필요)
+        const user = localStorage.getItem("user") || sessionStorage.getItem("user");
+        if (!user || !userId) return;
 
         // 한 세션(새로고침 전까지) 동안 이미 떴다면 다시 체크하지 않음
         const sessionsShowed = (window as any).__FEEDBACK_SHOWED_THIS_SESSION__;
@@ -39,6 +41,9 @@ export default function FeedbackPopup() {
                     // 이미 피드백을 완료했는지 확인
                     if (feedbackDone.includes(log.movieId)) return false;
 
+                    // sessionId가 없으면 제외 (이전 버전 로그)
+                    if (!log.sessionId) return false;
+
                     // targetShowTime이 존재하고 현재 시간이 그보다 지났는지 확인
                     if (log.targetShowTime && now >= log.targetShowTime) {
                         return true;
@@ -48,7 +53,7 @@ export default function FeedbackPopup() {
                     movieId: log.movieId,
                     title: log.title,
                     posterUrl: log.posterUrl,
-                    sessionId: log.clickedAt // 클릭 시점을 세션 ID로 활용
+                    sessionId: log.sessionId // 실제 DB 세션 ID 사용
                 }));
             }
 

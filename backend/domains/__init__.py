@@ -5,6 +5,7 @@ from backend.domains.user.models import User, UserOttMap, UserOnboardingAnswer
 from backend.domains.movie.models import Movie, MovieVector, OttProvider, MovieOttMap
 from backend.domains.recommendation.models import MovieLog, MovieClick, RecommendationSession
 from backend.domains.onboarding.models import OnboardingCandidate
+from backend.domains.b2b.models import Company, ApiKey, ApiUsage, ApiLog, ContentRule, GuestSession
 
 __all__ = [
     "User",
@@ -18,4 +19,11 @@ __all__ = [
     "MovieClick",
     "RecommendationSession",
     "OnboardingCandidate",
+    # B2B Models
+    "Company",
+    "ApiKey",
+    "ApiUsage",
+    "ApiLog",
+    "ContentRule",
+    "GuestSession",
 ]

@@ -78,6 +78,7 @@ class RecommendationResponseV2(BaseModel):
     track_a: TrackResult
     track_b: TrackResult
     elapsed_time: Optional[float] = None
+    session_id: Optional[int] = None  # 추천 세션 ID (피드백용)
 
 
 class ReRecommendResponse(BaseModel):
