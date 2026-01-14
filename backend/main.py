@@ -1,5 +1,5 @@
 # backend/main.py
-# deploy trigger: 2026-01-14
+# deploy trigger: 2025-01-14 v3 - B2C_API_KEY 환경변수 추가 (Dog Fooding)
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
