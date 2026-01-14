@@ -6,6 +6,7 @@ import os
 import secrets
 import hashlib
 import httpx
+import resend
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -13,6 +14,11 @@ from sqlalchemy import func, and_
 from jose import jwt
 
 from backend.utils.password import hash_password, verify_password
+
+# Resend 설정
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "noreply@moviesir.cloud")
+RESEND_FROM_NAME = os.getenv("RESEND_FROM_NAME", "MovieSir")
 
 # OAuth 설정
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
@@ -130,6 +136,31 @@ def get_company_by_id(db: Session, company_id: int) -> Optional[Company]:
     return db.query(Company).filter(Company.company_id == company_id).first()
 
 
+def change_password(db: Session, company_id: int, current_password: str, new_password: str) -> bool:
+    """비밀번호 변경"""
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+
+    if not company:
+        raise ValueError("회사를 찾을 수 없습니다")
+
+    # OAuth 사용자는 비밀번호 변경 불가
+    if company.oauth_provider:
+        raise ValueError("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다")
+
+    # 현재 비밀번호 확인
+    if not company.password_hash:
+        raise ValueError("비밀번호가 설정되지 않은 계정입니다")
+
+    if not verify_password(current_password, company.password_hash):
+        raise ValueError("현재 비밀번호가 올바르지 않습니다")
+
+    # 새 비밀번호로 업데이트
+    company.password_hash = hash_password(new_password)
+    db.commit()
+
+    return True
+
+
 def company_to_response(company: Company) -> CompanyResponse:
     """Company 모델을 응답 스키마로 변환"""
     return CompanyResponse(
@@ -138,6 +169,39 @@ def company_to_response(company: Company) -> CompanyResponse:
         email=company.manager_email,
         plan=company.plan_type,
     )
+
+
+def update_company(db: Session, company_id: int, name: Optional[str] = None, email: Optional[str] = None) -> Company:
+    """회사 정보 수정"""
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+
+    if not company:
+        raise ValueError("회사를 찾을 수 없습니다")
+
+    # 이름 변경
+    if name is not None:
+        company.name = name
+
+    # 이메일 변경
+    if email is not None:
+        # OAuth 사용자는 이메일 변경 불가
+        if company.oauth_provider:
+            raise ValueError("소셜 로그인 사용자는 이메일을 변경할 수 없습니다")
+
+        # 이메일 중복 체크
+        existing = db.query(Company).filter(
+            Company.manager_email == email,
+            Company.company_id != company_id
+        ).first()
+        if existing:
+            raise ValueError("이미 사용 중인 이메일입니다")
+
+        company.manager_email = email
+
+    db.commit()
+    db.refresh(company)
+
+    return company
 
 
 # ==================== API Key Service ====================
@@ -200,6 +264,21 @@ def delete_api_key(db: Session, company_id: int, key_id: int) -> bool:
     db.delete(api_key)
     db.commit()
     return True
+
+
+def update_api_key(db: Session, company_id: int, key_id: int, name: str) -> Optional[ApiKey]:
+    """API 키 이름 수정"""
+    api_key = db.query(ApiKey).filter(
+        and_(ApiKey.key_id == key_id, ApiKey.company_id == company_id)
+    ).first()
+
+    if not api_key:
+        return None
+
+    api_key.key_name = name
+    db.commit()
+    db.refresh(api_key)
+    return api_key
 
 
 def api_key_to_response(api_key: ApiKey, raw_key: Optional[str] = None) -> ApiKeyResponse:
@@ -592,3 +671,133 @@ async def github_oauth_callback(db: Session, code: str, redirect_uri: str) -> Tu
 
         token = create_access_token(company.company_id)
         return company, token
+
+
+# ==================== Password Reset Service ====================
+
+def generate_temp_password(length: int = 12) -> str:
+    """임시 비밀번호 생성 (영문+숫자 조합)"""
+    alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _get_reset_email_html(temp_password: str) -> str:
+    """비밀번호 재설정 이메일 HTML 템플릿"""
+    return f"""
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f5f5f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="padding:40px 40px 30px; text-align:center; border-bottom:1px solid #f0f0f0;">
+                            <h1 style="margin:0; font-size:28px; font-weight:700; color:#2563EB;">MovieSir API</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:40px;">
+                            <h2 style="margin:0 0 20px; font-size:22px; font-weight:600; color:#333333;">
+                                임시 비밀번호 발급
+                            </h2>
+                            <p style="margin:0 0 30px; font-size:16px; line-height:1.6; color:#666666;">
+                                비밀번호 찾기 요청에 따라 임시 비밀번호를 발급해 드립니다.<br>
+                                아래 임시 비밀번호로 로그인 후 반드시 비밀번호를 변경해 주세요.
+                            </p>
+                            <div style="background-color:#f0f7ff; border:2px solid #2563EB; border-radius:8px; padding:25px; text-align:center; margin:0 0 30px;">
+                                <p style="margin:0 0 10px; font-size:14px; color:#999999;">임시 비밀번호</p>
+                                <p style="margin:0; font-size:28px; font-weight:700; letter-spacing:2px; color:#2563EB;">
+                                    {temp_password}
+                                </p>
+                            </div>
+                            <p style="margin:0; font-size:14px; line-height:1.6; color:#999999;">
+                                보안을 위해 로그인 후 <strong>Settings</strong>에서 비밀번호를 변경해 주세요.<br>
+                                본인이 요청하지 않았다면 이 메일을 무시하고, 즉시 비밀번호를 변경해 주세요.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:30px 40px; background-color:#fafafa; border-radius:0 0 12px 12px; text-align:center;">
+                            <p style="margin:0 0 10px; font-size:12px; color:#999999;">
+                                본 메일은 발신 전용이며, 회신되지 않습니다.
+                            </p>
+                            <p style="margin:0; font-size:12px; color:#cccccc;">
+                                &copy; 2025 MovieSir. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+
+def _get_reset_email_text(temp_password: str) -> str:
+    """비밀번호 재설정 이메일 플레인 텍스트"""
+    return f"""MovieSir API 임시 비밀번호 발급
+
+비밀번호 찾기 요청에 따라 임시 비밀번호를 발급해 드립니다.
+아래 임시 비밀번호로 로그인 후 반드시 비밀번호를 변경해 주세요.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+임시 비밀번호: {temp_password}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+보안을 위해 로그인 후 Settings에서 비밀번호를 변경해 주세요.
+본인이 요청하지 않았다면 이 메일을 무시하고, 즉시 비밀번호를 변경해 주세요.
+
+---
+본 메일은 발신 전용이며, 회신되지 않습니다.
+(C) 2025 MovieSir. All rights reserved.
+"""
+
+
+def send_reset_password_email(to_email: str, temp_password: str) -> None:
+    """임시 비밀번호 이메일 발송"""
+    if not RESEND_API_KEY:
+        print(f"[DEV][RESET] to={to_email}, temp_password={temp_password}")
+        return
+
+    resend.api_key = RESEND_API_KEY
+
+    resend.Emails.send({
+        "from": f"{RESEND_FROM_NAME} <{RESEND_FROM_EMAIL}>",
+        "to": [to_email],
+        "subject": "[MovieSir API] 임시 비밀번호가 발급되었습니다",
+        "html": _get_reset_email_html(temp_password),
+        "text": _get_reset_email_text(temp_password),
+    })
+
+
+def forgot_password(db: Session, email: str) -> bool:
+    """비밀번호 찾기 - 임시 비밀번호 발급 및 이메일 발송"""
+    company = db.query(Company).filter(Company.manager_email == email).first()
+
+    if not company:
+        # 보안상 이메일 존재 여부를 알려주지 않음
+        return True
+
+    # OAuth 사용자는 비밀번호 찾기 불가
+    if company.oauth_provider:
+        raise ValueError(f"{company.oauth_provider.capitalize()} 로그인 사용자입니다. 소셜 로그인을 이용해 주세요.")
+
+    if not company.is_active:
+        raise ValueError("비활성화된 계정입니다. 관리자에게 문의하세요.")
+
+    # 임시 비밀번호 생성 및 저장
+    temp_password = generate_temp_password()
+    company.password_hash = hash_password(temp_password)
+    db.commit()
+
+    # 이메일 발송
+    send_reset_password_email(email, temp_password)
+
+    return True

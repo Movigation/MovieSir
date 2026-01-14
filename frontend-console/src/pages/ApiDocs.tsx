@@ -1,5 +1,162 @@
 import { useState } from 'react'
 
+type Language = 'curl' | 'python' | 'javascript' | 'nodejs' | 'go' | 'java' | 'php' | 'ruby'
+
+const languages: { id: Language; name: string; color: string }[] = [
+  { id: 'curl', name: 'cURL', color: 'text-green-400' },
+  { id: 'python', name: 'Python', color: 'text-yellow-400' },
+  { id: 'javascript', name: 'JavaScript', color: 'text-yellow-300' },
+  { id: 'nodejs', name: 'Node.js', color: 'text-green-500' },
+  { id: 'go', name: 'Go', color: 'text-cyan-400' },
+  { id: 'java', name: 'Java', color: 'text-orange-400' },
+  { id: 'php', name: 'PHP', color: 'text-purple-400' },
+  { id: 'ruby', name: 'Ruby', color: 'text-red-400' },
+]
+
+const getCodeExample = (lang: Language, method: string, path: string, isPost: boolean): string => {
+  const url = `https://api.moviesir.cloud${path}`
+  const body = isPost ? '{"genres": ["액션"], "limit": 10}' : ''
+
+  switch (lang) {
+    case 'curl':
+      return `curl -X ${method} "${url}" \\
+  -H "X-API-Key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json"${isPost ? ` \\
+  -d '${body}'` : ''}`
+
+    case 'python':
+      return `import requests
+
+response = requests.${method.toLowerCase()}(
+    "${url}",
+    headers={
+        "X-API-Key": "YOUR_API_KEY",
+        "Content-Type": "application/json"
+    }${isPost ? `,
+    json=${body.replace(/"/g, '"')}` : ''}
+)
+
+data = response.json()
+print(data)`
+
+    case 'javascript':
+      return `const response = await fetch("${url}", {
+  method: "${method}",
+  headers: {
+    "X-API-Key": "YOUR_API_KEY",
+    "Content-Type": "application/json"
+  }${isPost ? `,
+  body: JSON.stringify(${body})` : ''}
+});
+
+const data = await response.json();
+console.log(data);`
+
+    case 'nodejs':
+      return `const axios = require('axios');
+
+const response = await axios.${method.toLowerCase()}(
+  "${url}",
+  ${isPost ? `${body},
+  ` : ''}{
+    headers: {
+      "X-API-Key": "YOUR_API_KEY",
+      "Content-Type": "application/json"
+    }
+  }
+);
+
+console.log(response.data);`
+
+    case 'go':
+      return `package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "io"
+)
+
+func main() {
+    ${isPost ? `body := []byte(\`${body}\`)
+    req, _ := http.NewRequest("${method}", "${url}", bytes.NewBuffer(body))` : `req, _ := http.NewRequest("${method}", "${url}", nil)`}
+
+    req.Header.Set("X-API-Key", "YOUR_API_KEY")
+    req.Header.Set("Content-Type", "application/json")
+
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+
+    data, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(data))
+}`
+
+    case 'java':
+      return `import java.net.http.*;
+import java.net.URI;
+
+HttpClient client = HttpClient.newHttpClient();
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("${url}"))
+    .header("X-API-Key", "YOUR_API_KEY")
+    .header("Content-Type", "application/json")
+    ${isPost ? `.POST(HttpRequest.BodyPublishers.ofString("${body.replace(/"/g, '\\"')}"))` : `.GET()`}
+    .build();
+
+HttpResponse<String> response = client.send(
+    request,
+    HttpResponse.BodyHandlers.ofString()
+);
+
+System.out.println(response.body());`
+
+    case 'php':
+      return `<?php
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+    CURLOPT_URL => "${url}",
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_CUSTOMREQUEST => "${method}",
+    CURLOPT_HTTPHEADER => [
+        "X-API-Key: YOUR_API_KEY",
+        "Content-Type: application/json"
+    ]${isPost ? `,
+    CURLOPT_POSTFIELDS => '${body}'` : ''}
+]);
+
+$response = curl_exec($curl);
+curl_close($curl);
+
+$data = json_decode($response, true);
+print_r($data);`
+
+    case 'ruby':
+      return `require 'net/http'
+require 'json'
+
+uri = URI("${url}")
+http = Net::HTTP.new(uri.host, uri.port)
+http.use_ssl = true
+
+request = Net::HTTP::${method === 'GET' ? 'Get' : 'Post'}.new(uri)
+request["X-API-Key"] = "YOUR_API_KEY"
+request["Content-Type"] = "application/json"
+${isPost ? `request.body = '${body}'` : ''}
+
+response = http.request(request)
+data = JSON.parse(response.body)
+puts data`
+
+    default:
+      return ''
+  }
+}
+
 const endpoints = [
   {
     method: 'POST',
@@ -106,6 +263,7 @@ const errorCodes = [
 
 export default function ApiDocs() {
   const [selectedEndpoint, setSelectedEndpoint] = useState(0)
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl')
   const [copiedCode, setCopiedCode] = useState(false)
 
   const copyCode = (code: string) => {
@@ -114,10 +272,13 @@ export default function ApiDocs() {
     setTimeout(() => setCopiedCode(false), 2000)
   }
 
-  const curlExample = `curl -X ${endpoints[selectedEndpoint].method} "https://api.moviesir.cloud${endpoints[selectedEndpoint].path}" \\
-  -H "X-API-Key: YOUR_API_KEY" \\
-  -H "Content-Type: application/json"${endpoints[selectedEndpoint].method === 'POST' ? ` \\
-  -d '{"genres": ["액션"], "limit": 10}'` : ''}`
+  const currentEndpoint = endpoints[selectedEndpoint]
+  const codeExample = getCodeExample(
+    selectedLanguage,
+    currentEndpoint.method,
+    currentEndpoint.path,
+    currentEndpoint.method === 'POST'
+  )
 
   return (
     <div className="p-4 lg:p-8">
@@ -212,19 +373,35 @@ export default function ApiDocs() {
             </div>
           )}
 
-          {/* cURL Example */}
+          {/* Code Example */}
           <div>
             <div className="flex items-center justify-between mb-2 lg:mb-3">
-              <h3 className="text-[10px] lg:text-xs font-medium text-gray-500">cURL 예제</h3>
+              <h3 className="text-[10px] lg:text-xs font-medium text-gray-500">코드 예제</h3>
               <button
-                onClick={() => copyCode(curlExample)}
+                onClick={() => copyCode(codeExample)}
                 className="text-[10px] lg:text-xs text-blue-400 hover:text-blue-300"
               >
                 {copiedCode ? '복사됨!' : '복사'}
               </button>
             </div>
-            <pre className="bg-black/30 rounded-lg p-3 lg:p-4 font-mono text-[9px] lg:text-xs text-gray-300 overflow-x-auto custom-scrollbar">
-              {curlExample}
+            {/* Language Tabs */}
+            <div className="flex gap-1 mb-3 overflow-x-auto pb-2 custom-scrollbar">
+              {languages.map((lang) => (
+                <button
+                  key={lang.id}
+                  onClick={() => setSelectedLanguage(lang.id)}
+                  className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-[9px] lg:text-xs font-medium whitespace-nowrap transition-colors ${
+                    selectedLanguage === lang.id
+                      ? `bg-white/10 ${lang.color}`
+                      : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {lang.name}
+                </button>
+              ))}
+            </div>
+            <pre className="bg-black/30 rounded-lg p-3 lg:p-4 font-mono text-[9px] lg:text-xs text-gray-300 overflow-x-auto custom-scrollbar max-h-64 lg:max-h-80">
+              {codeExample}
             </pre>
           </div>
 

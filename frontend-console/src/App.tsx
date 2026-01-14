@@ -5,6 +5,7 @@ import Api from '@/pages/Api'
 import Docs from '@/pages/Docs'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
+import ForgotPassword from '@/pages/ForgotPassword'
 import Dashboard from '@/pages/Dashboard'
 import ApiKeys from '@/pages/ApiKeys'
 import Usage from '@/pages/Usage'
@@ -30,6 +31,7 @@ function App() {
       <Route path="/docs" element={<Docs />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/google/callback" element={<OAuthCallback provider="google" />} />
       <Route path="/auth/github/callback" element={<OAuthCallback provider="github" />} />
       <Route

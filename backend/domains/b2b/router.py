@@ -11,8 +11,9 @@ from typing import List, Optional
 from backend.core.db import get_db
 from .schemas import (
     CompanyRegister, CompanyLogin, TokenResponse,
-    ApiKeyCreate, ApiKeyResponse,
-    DashboardResponse, LogEntry, OAuthCallback
+    ApiKeyCreate, ApiKeyResponse, UpdateApiKeyRequest,
+    DashboardResponse, LogEntry, OAuthCallback,
+    ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest
 )
 from . import service
 
@@ -129,6 +130,51 @@ async def github_callback(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/auth/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    비밀번호 변경
+    - current_password: 현재 비밀번호
+    - new_password: 새 비밀번호 (8자 이상)
+    """
+    try:
+        service.change_password(
+            db,
+            company.company_id,
+            data.current_password,
+            data.new_password
+        )
+        return {"success": True, "message": "비밀번호가 변경되었습니다"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/forgot-password")
+def forgot_password(
+    data: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    비밀번호 찾기 - 임시 비밀번호 발급
+    - email: 가입한 이메일
+
+    등록된 이메일로 임시 비밀번호를 발송합니다.
+    보안상 이메일 존재 여부와 관계없이 동일한 응답을 반환합니다.
+    """
+    try:
+        service.forgot_password(db, data.email)
+        return {
+            "success": True,
+            "message": "등록된 이메일로 임시 비밀번호를 발송했습니다."
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # ==================== API Key Endpoints ====================
 
 @router.get("/api-keys", response_model=List[ApiKeyResponse])
@@ -200,6 +246,30 @@ def delete_api_key(
     if not success:
         raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
     return {"success": True, "message": "API 키가 삭제되었습니다"}
+
+
+@router.patch("/api-keys/{key_id}")
+def update_api_key(
+    key_id: int,
+    data: UpdateApiKeyRequest,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 키 이름 수정
+    - name: 새로운 키 이름
+    """
+    api_key = service.update_api_key(db, company.company_id, key_id, data.name)
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
+    # 플랜 기준 일일 한도 적용
+    plan_limit = service.PLAN_LIMITS.get(company.plan_type, 1000)
+    api_key.daily_limit = plan_limit
+    return {
+        "success": True,
+        "message": "API 키 이름이 수정되었습니다",
+        "api_key": service.api_key_to_response(api_key)
+    }
 
 
 # ==================== Dashboard Endpoints ====================
@@ -292,3 +362,30 @@ def get_company_info(
     현재 로그인된 회사 정보 조회
     """
     return service.company_to_response(company)
+
+
+@router.patch("/me")
+def update_company_info(
+    data: UpdateCompanyRequest,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    회사 정보 수정
+    - name: 회사명 (선택)
+    - email: 이메일 (선택, OAuth 사용자는 변경 불가)
+    """
+    try:
+        updated = service.update_company(
+            db,
+            company.company_id,
+            name=data.name,
+            email=data.email
+        )
+        return {
+            "success": True,
+            "message": "회사 정보가 수정되었습니다",
+            "company": service.company_to_response(updated)
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

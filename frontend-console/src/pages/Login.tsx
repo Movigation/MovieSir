@@ -152,9 +152,9 @@ export default function Login() {
 
           {/* Links */}
           <div className="mt-6 flex items-center justify-center gap-3 text-sm">
-            <a href="#" className="text-white/50 hover:text-white/80 transition-colors">
+            <Link to="/forgot-password" className="text-white/50 hover:text-white/80 transition-colors">
               비밀번호 찾기
-            </a>
+            </Link>
             <span className="text-white/20">|</span>
             <Link to="/register" className="text-white/50 hover:text-white/80 transition-colors">
               회원가입
