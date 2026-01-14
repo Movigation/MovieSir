@@ -10,6 +10,7 @@ class LoginRequest(BaseModel):
     """로그인 요청"""
     email: EmailStr
     password: str
+    remember_me: bool = True  # 자동로그인 여부 (기본값: True)
 
 
 class LoginResponse(BaseModel):
