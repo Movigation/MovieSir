@@ -89,16 +89,6 @@ export default function Playground() {
 
     const startTime = Date.now()
 
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setResponseTime(234)
-        setResponse(mockResponse)
-        setStatus('success')
-        setLoading(false)
-      }, 500)
-      return
-    }
-
     try {
       const { data } = await api.post('/b2b/recommend', {
         runtime_limit: runtimeLimit,

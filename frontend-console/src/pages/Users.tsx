@@ -29,13 +29,7 @@ export default function Users() {
   const { token } = useAuthStore()
 
   useEffect(() => {
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setUsers(mockUsers)
-        setLoading(false)
-      }, 300)
-      return
-    }
+    // TODO: 실제 API 연동 필요 - 현재는 mock 데이터 사용
     setUsers(mockUsers)
     setLoading(false)
   }, [token])

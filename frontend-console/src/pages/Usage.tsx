@@ -47,15 +47,6 @@ export default function Usage() {
 
   useEffect(() => {
     setLoading(true)
-
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setData(period === '7d' ? mock7DayData : mock30DayData)
-        setLoading(false)
-      }, 300)
-      return
-    }
-
     api
       .get(`/b2b/usage?period=${period}`)
       .then((res) => setData(res.data))
