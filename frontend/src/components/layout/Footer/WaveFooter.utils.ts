@@ -6,6 +6,6 @@ export const waveLayers = [
 ];
 
 export const defaultTexts = {
-    title: "Movisir",
+    title: "Moviesir",
     description: "AI-powered movie recommender service",
 };

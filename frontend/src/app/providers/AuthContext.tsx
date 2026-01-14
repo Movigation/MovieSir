@@ -95,7 +95,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.log(`🔔 auth:logout 이벤트 받음 (이유: ${reason}) - AuthContext에서 로그아웃 처리`);
 
             if (reason === 'expired') {
-                showToast('세션이 만료되었습니다. 다시 로그인해 주세요.', 5000);
+                showToast('세션이 만료되었습니다. 다시 로그인해 주세요.', 10000, {
+                    label: '다시 로그인',
+                    onClick: () => window.dispatchEvent(new CustomEvent('auth:open-login'))
+                }, true);
             }
 
             setUser(null);
@@ -144,13 +147,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             if (remaining <= 0) {
                 console.log('⏰ 세션 만료 - 즉시 로그아웃');
-                showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 5000);
+                showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 10000, {
+                    label: '다시 로그인',
+                    onClick: () => window.dispatchEvent(new CustomEvent('auth:open-login'))
+                }, true);
                 logout();
             } else {
                 console.log(`⏰ 타이머 재설정: ${Math.floor(remaining / 1000)}초 후 로그아웃`);
                 timerId = setTimeout(() => {
                     console.log('⏰ 1시간 경과 - 자동 로그아웃 실행');
-                    showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 5000);
+                    showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 10000, {
+                        label: '다시 로그인',
+                        onClick: () => window.dispatchEvent(new CustomEvent('auth:open-login'))
+                    }, true);
                     logout();
                 }, remaining);
             }
@@ -178,7 +187,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     console.log('⏰ 1시간 경과 - 자동 로그아웃 실행');
 
                     // 팝업 표시
-                    showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 5000);
+                    showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 10000, {
+                        label: '다시 로그인',
+                        onClick: () => window.dispatchEvent(new CustomEvent('auth:open-login'))
+                    }, true);
 
                     logout();
                 }, 3600000); // 1시간 (밀리초)
