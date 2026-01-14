@@ -188,6 +188,20 @@ def deactivate_api_key(db: Session, company_id: int, key_id: int) -> bool:
     return True
 
 
+def delete_api_key(db: Session, company_id: int, key_id: int) -> bool:
+    """API 키 완전 삭제"""
+    api_key = db.query(ApiKey).filter(
+        and_(ApiKey.key_id == key_id, ApiKey.company_id == company_id)
+    ).first()
+
+    if not api_key:
+        return False
+
+    db.delete(api_key)
+    db.commit()
+    return True
+
+
 def api_key_to_response(api_key: ApiKey, raw_key: Optional[str] = None) -> ApiKeyResponse:
     """ApiKey 모델을 응답 스키마로 변환"""
     # raw_key가 없으면 마스킹된 키 반환

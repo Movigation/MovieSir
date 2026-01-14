@@ -55,6 +55,14 @@ async def get_current_company(
     return company
 
 
+# 플랜별 일일 한도
+PLAN_LIMITS = {
+    "BASIC": 1000,
+    "PRO": 10000,
+    "ENTERPRISE": 100000,
+}
+
+
 # ==================== External API 인증 (API Key) ====================
 
 async def verify_api_key(
@@ -66,6 +74,7 @@ async def verify_api_key(
 
     - Header: X-API-Key: sk-moviesir-xxxx
     - Rate Limit 체크 포함
+    - 일일 한도는 회사 플랜 기준으로 동적 적용
     """
     # API 키 해시
     hashed_key = hashlib.sha256(x_api_key.encode()).hexdigest()
@@ -84,15 +93,22 @@ async def verify_api_key(
             }
         )
 
+    # 회사 플랜 기준 일일 한도 (동적 적용)
+    company = db.query(Company).filter(Company.company_id == api_key.company_id).first()
+    daily_limit = PLAN_LIMITS.get(company.plan_type, 1000) if company else api_key.daily_limit
+
     # Rate Limit 체크
-    if not await check_rate_limit(str(api_key.key_id), api_key.daily_limit):
+    if not await check_rate_limit(str(api_key.key_id), daily_limit):
         raise HTTPException(
             status_code=429,
             detail={
                 "code": "RATE_LIMIT_EXCEEDED",
-                "message": f"Daily limit ({api_key.daily_limit}) exceeded",
-                "limit": api_key.daily_limit
+                "message": f"Daily limit ({daily_limit}) exceeded",
+                "limit": daily_limit
             }
         )
+
+    # API 키에 동적 한도 설정 (응답용)
+    api_key.daily_limit = daily_limit
 
     return api_key

@@ -34,16 +34,7 @@ const API_BASE_URL = import.meta.env.PROD
   ? 'https://api.moviesir.cloud'
   : 'http://localhost:8000'
 
-const genres = ['액션', '드라마', '코미디', 'SF', '로맨스', '스릴러', '공포', '애니메이션', '범죄', '가족']
-const timeOptions = [
-  { value: 60, label: '1시간' },
-  { value: 90, label: '1시간 30분' },
-  { value: 120, label: '2시간' },
-  { value: 150, label: '2시간 30분' },
-  { value: 180, label: '3시간' },
-  { value: 240, label: '4시간' },
-  { value: 300, label: '5시간' },
-]
+const genres = ['드라마', '코미디', '스릴러', '로맨스', '액션', '다큐멘터리', '공포', '범죄', '모험', '가족', 'SF', '미스터리', 'TV 영화', '애니메이션', '판타지', '음악']
 
 export default function Playground() {
   // API Key (수동 입력 필수, localStorage에 저장 가능)
@@ -79,7 +70,9 @@ export default function Playground() {
   }
 
   // Request Parameters
-  const [availableTime, setAvailableTime] = useState(120)
+  const [hours, setHours] = useState(2)
+  const [minutes, setMinutes] = useState(0)
+  const availableTime = hours * 60 + minutes
   const [selectedGenres, setSelectedGenres] = useState<string[]>(['액션'])
   const [allowAdult, setAllowAdult] = useState(false)
   const [userMovieIds] = useState<number[]>([1, 2, 3]) // 기본값 (온보딩 영화 ID)
@@ -235,17 +228,27 @@ export default function Playground() {
             {/* Available Time */}
             <div>
               <label className="block text-xs text-gray-500 mb-2">시청 가능 시간</label>
-              <select
-                value={availableTime}
-                onChange={e => setAvailableTime(Number(e.target.value))}
-                className="w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-[#1f1f28] border border-white/10 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {timeOptions.map(opt => (
-                  <option key={opt.value} value={opt.value} className="bg-[#1f1f28] text-white">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={2}
+                  max={12}
+                  value={hours}
+                  onChange={e => setHours(Math.min(12, Math.max(2, Number(e.target.value))))}
+                  className="w-20 px-3 py-2 lg:py-2.5 bg-[#1f1f28] border border-white/10 rounded-lg text-white text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span className="text-xs text-gray-400">시간</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={minutes}
+                  onChange={e => setMinutes(Math.min(59, Math.max(0, Number(e.target.value))))}
+                  className="w-20 px-3 py-2 lg:py-2.5 bg-[#1f1f28] border border-white/10 rounded-lg text-white text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span className="text-xs text-gray-400">분</span>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-1.5">2시간 ~ 12시간 59분</p>
             </div>
 
             {/* Genre Selection */}

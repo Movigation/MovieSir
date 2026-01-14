@@ -65,6 +65,17 @@ export default function ApiKeys() {
     if (!confirm('이 API 키를 비활성화하시겠습니까?')) return
 
     try {
+      await api.patch(`/b2b/api-keys/${id}/deactivate`)
+      loadKeys()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const deleteKey = async (id: string) => {
+    if (!confirm('이 API 키를 완전히 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return
+
+    try {
       await api.delete(`/b2b/api-keys/${id}`)
       loadKeys()
     } catch (err) {
@@ -216,11 +227,17 @@ export default function ApiKeys() {
                         {key.is_active && (
                           <button
                             onClick={() => deactivateKey(key.id)}
-                            className="text-[10px] lg:text-xs text-red-400 hover:text-red-300 hidden sm:inline"
+                            className="text-[10px] lg:text-xs text-yellow-400 hover:text-yellow-300 hidden sm:inline"
                           >
                             비활성화
                           </button>
                         )}
+                        <button
+                          onClick={() => deleteKey(key.id)}
+                          className="text-[10px] lg:text-xs text-red-400 hover:text-red-300 hidden sm:inline"
+                        >
+                          삭제
+                        </button>
                       </div>
                     </td>
                   </tr>

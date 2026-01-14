@@ -137,9 +137,16 @@ def list_api_keys(
 ):
     """
     API 키 목록 조회
+    - daily_limit은 회사 플랜 기준으로 반환
     """
     api_keys = service.get_api_keys(db, company.company_id)
-    return [service.api_key_to_response(k) for k in api_keys]
+    # 플랜 기준 일일 한도 적용
+    plan_limit = service.PLAN_LIMITS.get(company.plan_type, 1000)
+    result = []
+    for k in api_keys:
+        k.daily_limit = plan_limit  # 플랜 기준 한도로 설정
+        result.append(service.api_key_to_response(k))
+    return result
 
 
 @router.post("/api-keys", response_model=ApiKeyResponse)
@@ -156,24 +163,42 @@ def create_api_key(
     """
     try:
         api_key, raw_key = service.create_api_key(db, company.company_id, data)
+        # 플랜 기준 일일 한도 적용
+        plan_limit = service.PLAN_LIMITS.get(company.plan_type, 1000)
+        api_key.daily_limit = plan_limit
         return service.api_key_to_response(api_key, raw_key)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/api-keys/{key_id}")
+@router.patch("/api-keys/{key_id}/deactivate")
 def deactivate_api_key(
     key_id: int,
     company=Depends(get_current_company),
     db: Session = Depends(get_db)
 ):
     """
-    API 키 비활성화
+    API 키 비활성화 (소프트 삭제)
     """
     success = service.deactivate_api_key(db, company.company_id, key_id)
     if not success:
         raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
     return {"success": True, "message": "API 키가 비활성화되었습니다"}
+
+
+@router.delete("/api-keys/{key_id}")
+def delete_api_key(
+    key_id: int,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 키 완전 삭제
+    """
+    success = service.delete_api_key(db, company.company_id, key_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
+    return {"success": True, "message": "API 키가 삭제되었습니다"}
 
 
 # ==================== Dashboard Endpoints ====================
