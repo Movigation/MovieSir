@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from '@/services/chatbot/components/MovieCard';
 import MovieCarousel from '@/services/chatbot/components/MovieCarousel';
