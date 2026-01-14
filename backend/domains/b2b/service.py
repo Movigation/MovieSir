@@ -321,6 +321,78 @@ def get_usage_data(db: Session, company_id: int, days: int = 7) -> List[dict]:
     return result
 
 
+def get_endpoint_stats(db: Session, company_id: int, days: int = 7) -> List[dict]:
+    """엔드포인트별 호출 통계"""
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    if not key_ids:
+        return []
+
+    # 최근 N일간 로그
+    since_date = datetime.utcnow() - timedelta(days=days)
+
+    logs = db.query(ApiLog.endpoint, func.count(ApiLog.log_id).label("count")).filter(
+        and_(
+            ApiLog.key_id.in_(key_ids),
+            ApiLog.created_at >= since_date
+        )
+    ).group_by(ApiLog.endpoint).order_by(func.count(ApiLog.log_id).desc()).limit(5).all()
+
+    if not logs:
+        return []
+
+    total = sum(log.count for log in logs)
+    result = []
+
+    for log in logs:
+        percent = round((log.count / total) * 100) if total > 0 else 0
+        result.append({
+            "endpoint": log.endpoint or "/v1/recommend",
+            "calls": log.count,
+            "percent": percent,
+        })
+
+    return result
+
+
+def get_response_time_stats(db: Session, company_id: int, days: int = 7) -> dict:
+    """응답 시간 통계 (avg, p50, p95, p99)"""
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    if not key_ids:
+        return {"avg": 0, "p50": 0, "p95": 0, "p99": 0}
+
+    # 최근 N일간 응답 시간
+    since_date = datetime.utcnow() - timedelta(days=days)
+
+    times = db.query(ApiLog.process_time_ms).filter(
+        and_(
+            ApiLog.key_id.in_(key_ids),
+            ApiLog.created_at >= since_date,
+            ApiLog.process_time_ms.isnot(None)
+        )
+    ).all()
+
+    if not times:
+        return {"avg": 0, "p50": 0, "p95": 0, "p99": 0}
+
+    # 응답 시간 리스트 추출 및 정렬
+    time_values = sorted([t[0] for t in times if t[0] is not None])
+    n = len(time_values)
+
+    if n == 0:
+        return {"avg": 0, "p50": 0, "p95": 0, "p99": 0}
+
+    avg = round(sum(time_values) / n)
+    p50 = time_values[int(n * 0.5)] if n > 0 else 0
+    p95 = time_values[int(n * 0.95)] if n > 0 else 0
+    p99 = time_values[min(int(n * 0.99), n - 1)] if n > 0 else 0
+
+    return {"avg": avg, "p50": p50, "p95": p95, "p99": p99}
+
+
 # ==================== Logs Service ====================
 
 def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEntry]:

@@ -16,16 +16,38 @@ interface UsageData {
   error: number
 }
 
+interface EndpointStat {
+  endpoint: string
+  calls: number
+  percent: number
+}
+
+interface ResponseTimeStat {
+  avg: number
+  p50: number
+  p95: number
+  p99: number
+}
+
 export default function Usage() {
   const [data, setData] = useState<UsageData[]>([])
+  const [endpointStats, setEndpointStats] = useState<EndpointStat[]>([])
+  const [responseTimeStats, setResponseTimeStats] = useState<ResponseTimeStat>({ avg: 0, p50: 0, p95: 0, p99: 0 })
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'7d' | '30d'>('7d')
 
   useEffect(() => {
     setLoading(true)
-    api
-      .get(`/b2b/usage?period=${period}`)
-      .then((res) => setData(res.data))
+    Promise.all([
+      api.get(`/b2b/usage?period=${period}`),
+      api.get(`/b2b/usage/endpoints?period=${period}`),
+      api.get(`/b2b/usage/response-time?period=${period}`),
+    ])
+      .then(([usageRes, endpointsRes, responseTimeRes]) => {
+        setData(usageRes.data)
+        setEndpointStats(endpointsRes.data)
+        setResponseTimeStats(responseTimeRes.data)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [period])
@@ -161,26 +183,26 @@ export default function Usage() {
         <div className="bg-[#16161d] rounded-xl p-5">
           <h2 className="text-sm font-medium text-white mb-4">Top Endpoints</h2>
           <div className="space-y-3">
-            {[
-              { endpoint: '/v1/recommend', calls: 8234, percent: 85 },
-              { endpoint: '/v1/movies/:id', calls: 1123, percent: 12 },
-              { endpoint: '/v1/genres', calls: 287, percent: 3 },
-            ].map((ep, i) => (
-              <div key={ep.endpoint}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-gray-300 font-mono">{ep.endpoint}</span>
-                  <span className="text-xs text-gray-500">{ep.calls.toLocaleString()} calls</span>
+            {endpointStats.length > 0 ? (
+              endpointStats.map((ep, i) => (
+                <div key={ep.endpoint}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-gray-300 font-mono">{ep.endpoint}</span>
+                    <span className="text-xs text-gray-500">{ep.calls.toLocaleString()} calls</span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-cyan-500' : i === 2 ? 'bg-green-500' : i === 3 ? 'bg-purple-500' : 'bg-orange-500'
+                      }`}
+                      style={{ width: `${ep.percent}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-cyan-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${ep.percent}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">데이터가 없습니다</p>
+            )}
           </div>
         </div>
 
@@ -188,14 +210,14 @@ export default function Usage() {
           <h2 className="text-sm font-medium text-white mb-4">Response Time</h2>
           <div className="space-y-3">
             {[
-              { label: 'Average', value: '234ms', color: 'text-white' },
-              { label: 'P50', value: '189ms', color: 'text-green-400' },
-              { label: 'P95', value: '456ms', color: 'text-yellow-400' },
-              { label: 'P99', value: '892ms', color: 'text-red-400' },
+              { label: 'Average', value: responseTimeStats.avg, color: 'text-white' },
+              { label: 'P50', value: responseTimeStats.p50, color: 'text-green-400' },
+              { label: 'P95', value: responseTimeStats.p95, color: 'text-yellow-400' },
+              { label: 'P99', value: responseTimeStats.p99, color: 'text-red-400' },
             ].map((stat) => (
               <div key={stat.label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                 <span className="text-sm text-gray-400">{stat.label}</span>
-                <span className={`text-sm font-medium ${stat.color}`}>{stat.value}</span>
+                <span className={`text-sm font-medium ${stat.color}`}>{stat.value > 0 ? `${stat.value}ms` : '-'}</span>
               </div>
             ))}
           </div>

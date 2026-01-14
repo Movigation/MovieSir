@@ -1,15 +1,39 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { api } from '@/api'
+
+interface UsageData {
+  today: number
+  daily_limit: number
+}
 
 export default function Layout() {
   const { company, logout } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [usage, setUsage] = useState<UsageData>({ today: 0, daily_limit: 1000 })
 
   // 브라우저 탭 제목 설정
   useEffect(() => {
     document.title = '무비서 Console'
+  }, [])
+
+  // 사용량 데이터 가져오기
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const { data } = await api.get('/b2b/dashboard')
+        setUsage({ today: data.today, daily_limit: data.daily_limit })
+      } catch (err) {
+        console.error('Failed to fetch usage:', err)
+      }
+    }
+    fetchUsage()
+
+    // 30초마다 갱신
+    const interval = setInterval(fetchUsage, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const handleLogout = () => {
@@ -97,15 +121,20 @@ export default function Layout() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-500">Current Plan</span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                company?.plan === 'ENTERPRISE' ? 'bg-amber-500/20 text-amber-400' :
                 company?.plan === 'PRO' ? 'bg-blue-500/20 text-blue-400' :
                 company?.plan === 'BASIC' ? 'bg-cyan-500/20 text-cyan-400' :
                 'bg-gray-500/20 text-gray-400'
               }`}>{company?.plan}</span>
             </div>
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: '34%' }} />
+              <div className={`h-full rounded-full ${
+                company?.plan === 'ENTERPRISE' ? 'bg-amber-500' : 'bg-blue-500'
+              }`} style={{ width: `${Math.min(Math.round((usage.today / usage.daily_limit) * 100), 100)}%` }} />
             </div>
-            <p className="text-xs text-gray-500 mt-1.5">342 / 1,000 calls today</p>
+            <p className="text-xs text-gray-500 mt-1.5">
+              {usage.today.toLocaleString()} / {usage.daily_limit.toLocaleString()} calls today
+            </p>
           </div>
         </div>
 

@@ -228,6 +228,34 @@ def get_usage(
     return service.get_usage_data(db, company.company_id, days)
 
 
+@router.get("/usage/endpoints")
+def get_endpoint_stats(
+    period: str = Query(default="7d", description="조회 기간 (7d 또는 30d)"),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    엔드포인트별 호출 통계
+    - period: 7d (7일) 또는 30d (30일)
+    """
+    days = 30 if period == "30d" else 7
+    return service.get_endpoint_stats(db, company.company_id, days)
+
+
+@router.get("/usage/response-time")
+def get_response_time_stats(
+    period: str = Query(default="7d", description="조회 기간 (7d 또는 30d)"),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    응답 시간 통계 (avg, p50, p95, p99)
+    - period: 7d (7일) 또는 30d (30일)
+    """
+    days = 30 if period == "30d" else 7
+    return service.get_response_time_stats(db, company.company_id, days)
+
+
 # ==================== Company Info Endpoints ====================
 
 @router.get("/me")
