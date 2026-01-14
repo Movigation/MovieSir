@@ -1,6 +1,7 @@
 """
 B2B 도메인 API 라우터
 - /b2b/* 엔드포인트
+- 2025.01.15: 플랜 기반 일일 한도 동적 적용, API 키 삭제 기능 추가
 """
 from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
