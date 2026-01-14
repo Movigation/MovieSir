@@ -1,6 +1,6 @@
 {
-    "name": "Movisr - AI 영화 추천",
-    "short_name": "Movisr",
+    "name": "Moviesir - AI 영화 추천",
+    "short_name": "Moviesir",
     "description": "AI 기반 영화 추천 챗봇 서비스 - 취향에 맞는 영화를 추천받으세요",
     "start_url": "/",
     "display": "standalone",

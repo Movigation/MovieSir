@@ -3,7 +3,6 @@
 // [주의사항] position: absolute라 부모 요소보다 body 기준으로 두는 게 자연스러움
 
 import React from "react";
-import FadeIn from "@/components/transitions/FadeIn";
 import FloatAnimation from "@/components/transitions/Float";
 
 type Props = {
@@ -87,24 +86,25 @@ export default function FloatingBubble({
         </div>
     );
 
-    // 2. 애니메이션 래퍼 (FadeIn -> Float)
-    const AnimatedContent = (
-        <FadeIn>
-            {float ? <FloatAnimation>{InnerContent}</FloatAnimation> : InnerContent}
-        </FadeIn>
-    );
 
-    // 3. 최상위 위치 래퍼 (absolute positioning)
+    // 3. 최상위 위치 래퍼 (정적 위치만 담당)
     return (
         <div
-            className={`
-                absolute ${className} z-deco
-                transition-opacity duration-200
-                ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
-            `}
+            className={`absolute ${className} z-deco`}
             style={{ top, left }}
         >
-            {AnimatedContent}
+            {/* 4. 애니메이션 래퍼 (Scale + Opacity 담당) */}
+            <div
+                className={`
+                    transition-all ease-out
+                    ${position === 'left' ? 'origin-bottom-left' : 'origin-bottom-right'}
+                    ${visible
+                        ? 'opacity-100 scale-100 duration-500 pointer-events-auto'
+                        : 'opacity-0 scale-0 duration-0 pointer-events-none'}
+                `}
+            >
+                {float ? <FloatAnimation>{InnerContent}</FloatAnimation> : InnerContent}
+            </div>
         </div>
     );
 }

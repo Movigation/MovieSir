@@ -39,13 +39,9 @@ export default function Chatbot({
       onLoginRequired?.();
     } else {
       // 로그인 상태면 챗봇 열기
-      setIsTeleporting(true);
       setIsOpen?.(true);
-
-      // 즉시 이동 후 100ms 뒤에 페이드 인
-      setTimeout(() => {
-        setIsTeleporting(false);
-      }, 100);
+      // 100ms 뒤에 혹시 모를 잔상을 위해 상태 초기화 (여기서는 실질적으로 애니메이션만 작동)
+      setIsTeleporting(false);
     }
   };
 
