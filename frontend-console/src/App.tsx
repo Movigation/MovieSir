@@ -1,4 +1,4 @@
-// Deploy trigger: 2025-01-14 - Remove mock data, connect real B2B API
+// Deploy trigger: 2025-01-14 v2 - Add frontend-console CI/CD workflow
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import Api from '@/pages/Api'
