@@ -179,11 +179,10 @@ function handleLogout() {
         console.error("Zustand store reset failed:", e);
     }
 
-    // AuthContext에 로그아웃 이벤트 전달
-    window.dispatchEvent(new CustomEvent('auth:logout'));
-
-    // 메인 페이지로 리다이렉트
-    window.location.href = "/?expired=true";
+    // AuthContext에 로그아웃 이벤트 전달 (이유 포함)
+    window.dispatchEvent(new CustomEvent('auth:logout', {
+        detail: { reason: 'expired' }
+    }));
 }
 
 export default axiosInstance;

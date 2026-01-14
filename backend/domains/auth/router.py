@@ -1,6 +1,6 @@
 # backend/domains/auth/router.py
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Cookie
 from sqlalchemy.orm import Session
 import os
 
