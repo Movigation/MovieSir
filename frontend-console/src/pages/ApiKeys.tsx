@@ -11,26 +11,6 @@ interface ApiKey {
   created_at: string
 }
 
-// 테스트용 mock 데이터
-const mockApiKeys: ApiKey[] = [
-  {
-    id: 'key-001',
-    name: 'Production',
-    key: 'sk-moviesir-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6',
-    daily_limit: 1000,
-    is_active: true,
-    created_at: '2025-01-05T10:30:00Z',
-  },
-  {
-    id: 'key-002',
-    name: 'Development',
-    key: 'sk-moviesir-z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4',
-    daily_limit: 1000,
-    is_active: true,
-    created_at: '2025-01-03T14:20:00Z',
-  },
-]
-
 export default function ApiKeys() {
   const [keys, setKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,12 +20,6 @@ export default function ApiKeys() {
   const { token } = useAuthStore()
 
   const loadKeys = async () => {
-    if (token === 'test-token-12345') {
-      setKeys(mockApiKeys)
-      setLoading(false)
-      return
-    }
-
     try {
       const { data } = await api.get('/b2b/api-keys')
       setKeys(data)
@@ -64,25 +38,11 @@ export default function ApiKeys() {
     if (!newKeyName.trim()) return
     setCreating(true)
 
-    if (token === 'test-token-12345') {
-      const newKey: ApiKey = {
-        id: `key-${Date.now()}`,
-        name: newKeyName,
-        key: `sk-moviesir-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-        daily_limit: 1000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      }
-      setKeys([newKey, ...keys])
-      setNewKeyName('')
-      setCreating(false)
-      return
-    }
-
     try {
-      await api.post('/b2b/api-keys', { name: newKeyName })
+      const { data } = await api.post('/b2b/api-keys', { name: newKeyName })
+      // 새로 발급된 키를 목록 맨 앞에 추가 (원본 키 포함)
+      setKeys([data, ...keys])
       setNewKeyName('')
-      loadKeys()
     } catch (err) {
       console.error(err)
     } finally {
@@ -92,11 +52,6 @@ export default function ApiKeys() {
 
   const deactivateKey = async (id: string) => {
     if (!confirm('이 API 키를 비활성화하시겠습니까?')) return
-
-    if (token === 'test-token-12345') {
-      setKeys(keys.map(k => k.id === id ? { ...k, is_active: false } : k))
-      return
-    }
 
     try {
       await api.delete(`/b2b/api-keys/${id}`)
