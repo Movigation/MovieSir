@@ -26,14 +26,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Dependencies
-        run: cd frontend && npm ci
+      - name: Install & Build Frontend (Demo)
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
 
-      - name: TypeCheck & Build
-        run: cd frontend && npm run build
+      - name: Install & Build Frontend Console (B2B)
+        run: |
+          cd frontend-console
+          npm ci
+          npm run build
         env:
           VITE_API_URL: https://api.moviesir.cloud
 
@@ -51,10 +57,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install & Build
+      - name: Build Frontend (Demo)
         run: |
           cd frontend
           npm ci
@@ -62,7 +66,15 @@ jobs:
         env:
           VITE_API_URL: https://api.moviesir.cloud
 
-      - name: Deploy to Server via SCP
+      - name: Build Frontend Console (B2B)
+        run: |
+          cd frontend-console
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
+
+      - name: Deploy Demo App via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.APP_HOST }}
@@ -71,6 +83,17 @@ jobs:
           port: 52222
           source: "frontend/dist/*"
           target: "/tmp/frontend-build"
+          strip_components: 2
+
+      - name: Deploy Console App via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 52222
+          source: "frontend-console/dist/*"
+          target: "/tmp/console-build"
           strip_components: 2
 
       - name: Move to Nginx Directory
@@ -88,17 +111,25 @@ jobs:
             git fetch --all
             git reset --hard origin/${{ github.ref_name }}
 
-            echo "📌 프론트엔드 배포"
+            echo "📌 Demo App 배포 (/var/www/demo)"
             sudo rm -rf /var/www/demo/*
             sudo cp -r /tmp/frontend-build/* /var/www/demo/
             sudo chown -R www-data:www-data /var/www/demo/
             rm -rf /tmp/frontend-build
+
+            echo "📌 Console App 배포 (/var/www/console)"
+            sudo mkdir -p /var/www/console
+            sudo rm -rf /var/www/console/*
+            sudo cp -r /tmp/console-build/* /var/www/console/
+            sudo chown -R www-data:www-data /var/www/console/
+            rm -rf /tmp/console-build
 
             echo "📌 Nginx 설정 업데이트"
             sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-available/moviesir
             sudo nginx -t && sudo systemctl reload nginx
 
             echo "📌 배포된 파일:"
-            ls /var/www/demo/assets/ | grep -E "index-.*\.js$" | head -1
+            echo "Demo: $(ls /var/www/demo/assets/ | grep -E 'index-.*\.js$' | head -1)"
+            echo "Console: $(ls /var/www/console/assets/ | grep -E 'index-.*\.js$' | head -1)"
 
             echo "✅ 프론트엔드 배포 완료"
