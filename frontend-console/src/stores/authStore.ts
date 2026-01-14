@@ -23,7 +23,12 @@ export const useAuthStore = create<AuthState>()(
       company: null,
       token: null,
       login: (company, token) => set({ company, token }),
-      logout: () => set({ company: null, token: null }),
+      logout: () => {
+        // Playground API 키도 함께 정리
+        localStorage.removeItem('playground_api_key')
+        sessionStorage.removeItem('playground_api_key_temp')
+        set({ company: null, token: null })
+      },
       setCompany: (company) => set({ company }),
     }),
     {

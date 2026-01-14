@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -18,6 +19,16 @@ export default function ApiKeys() {
   const [creating, setCreating] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const { token } = useAuthStore()
+  const navigate = useNavigate()
+
+  // 원본 키인지 확인 (마스킹되지 않은 키)
+  const isRawKey = (key: string) => key.startsWith('sk-moviesir-') && !key.includes('*')
+
+  // Playground에서 테스트
+  const testInPlayground = (key: string) => {
+    sessionStorage.setItem('playground_api_key_temp', key)
+    navigate('/console/playground')
+  }
 
   const loadKeys = async () => {
     try {
@@ -159,6 +170,7 @@ export default function ApiKeys() {
                               ? 'text-green-400'
                               : 'text-gray-500 hover:text-white'
                           }`}
+                          title="복사"
                         >
                           {copiedId === key.id ? (
                             <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,6 +182,17 @@ export default function ApiKeys() {
                             </svg>
                           )}
                         </button>
+                        {isRawKey(key.key) && (
+                          <button
+                            onClick={() => testInPlayground(key.key)}
+                            className="p-1 lg:p-1.5 rounded transition-colors flex-shrink-0 text-blue-400 hover:text-blue-300"
+                            title="Playground에서 테스트"
+                          >
+                            <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 lg:py-4 text-xs lg:text-sm text-gray-400 hidden sm:table-cell whitespace-nowrap">

@@ -1,12 +1,4 @@
-import { useState, useEffect } from 'react'
-import { api } from '@/api'
-
-interface ApiKey {
-  key_id: number
-  key_name: string
-  key: string
-  is_active: boolean
-}
+import { useState } from 'react'
 
 interface Movie {
   movie_id: number
@@ -54,11 +46,37 @@ const timeOptions = [
 ]
 
 export default function Playground() {
-  // API Keys
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
-  const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null)
-  const [loadingKeys, setLoadingKeys] = useState(true)
-  const [manualApiKey, setManualApiKey] = useState('')
+  // API Key (수동 입력 필수, localStorage에 저장 가능)
+  const [manualApiKey, setManualApiKey] = useState(() => {
+    // 1. API Keys 페이지에서 넘어온 임시 키 확인 (sessionStorage)
+    const tempKey = sessionStorage.getItem('playground_api_key_temp')
+    if (tempKey) {
+      sessionStorage.removeItem('playground_api_key_temp') // 사용 후 삭제
+      return tempKey
+    }
+    // 2. 저장된 키 확인 (localStorage)
+    return localStorage.getItem('playground_api_key') || ''
+  })
+  const [rememberKey, setRememberKey] = useState(() => {
+    return localStorage.getItem('playground_api_key') !== null
+  })
+
+  // API 키 저장/삭제
+  const handleApiKeyChange = (value: string) => {
+    setManualApiKey(value)
+    if (rememberKey) {
+      localStorage.setItem('playground_api_key', value)
+    }
+  }
+
+  const handleRememberChange = (checked: boolean) => {
+    setRememberKey(checked)
+    if (checked && manualApiKey) {
+      localStorage.setItem('playground_api_key', manualApiKey)
+    } else {
+      localStorage.removeItem('playground_api_key')
+    }
+  }
 
   // Request Parameters
   const [availableTime, setAvailableTime] = useState(120)
@@ -73,27 +91,8 @@ export default function Playground() {
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch API Keys
-  useEffect(() => {
-    const fetchApiKeys = async () => {
-      try {
-        const { data } = await api.get('/b2b/api-keys')
-        const activeKeys = data.filter((k: ApiKey) => k.is_active)
-        setApiKeys(activeKeys)
-        if (activeKeys.length > 0) {
-          setSelectedKeyId(activeKeys[0].key_id)
-        }
-      } catch (err) {
-        console.error('Failed to fetch API keys:', err)
-      } finally {
-        setLoadingKeys(false)
-      }
-    }
-    fetchApiKeys()
-  }, [])
-
-  const selectedKey = apiKeys.find(k => k.key_id === selectedKeyId)
-  const effectiveApiKey = manualApiKey.trim() || selectedKey?.key || ''
+  // API 키는 보안상 마스킹되어 저장되므로 수동 입력 필수
+  const effectiveApiKey = manualApiKey.trim()
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres(prev =>
@@ -171,14 +170,6 @@ export default function Playground() {
     ? [...(response.data.track_a?.movies || []), ...(response.data.track_b?.movies || [])]
     : []
 
-  if (loadingKeys) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
-      </div>
-    )
-  }
-
   return (
     <div className="p-4 lg:p-8">
       {/* Header */}
@@ -215,17 +206,30 @@ export default function Playground() {
           <div className="p-4 lg:p-5 space-y-4 lg:space-y-5">
             {/* API Key Input */}
             <div>
-              <label className="block text-xs text-gray-500 mb-2">API Key</label>
+              <label className="block text-xs text-gray-500 mb-2">API Key <span className="text-red-400">*</span></label>
               <input
                 type="text"
                 value={manualApiKey}
-                onChange={e => setManualApiKey(e.target.value)}
-                placeholder="sk-moviesir-xxxx... (API Keys 페이지에서 복사)"
-                className="w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-600"
+                onChange={e => handleApiKeyChange(e.target.value)}
+                placeholder="sk-moviesir-xxxx..."
+                className={`w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-white/5 border rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-600 ${
+                  !effectiveApiKey ? 'border-yellow-500/50' : 'border-white/10'
+                }`}
               />
-              <p className="text-[10px] text-gray-600 mt-1">
-                API Keys 페이지에서 발급받은 키를 붙여넣으세요
-              </p>
+              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberKey}
+                  onChange={e => handleRememberChange(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded bg-white/5 border-white/10 text-blue-500 focus:ring-blue-500"
+                />
+                <span className="text-[11px] text-gray-400">이 브라우저에 API 키 저장</span>
+              </label>
+              {!effectiveApiKey && (
+                <p className="text-[10px] text-yellow-500 mt-1.5">
+                  ⚠️ API Keys 페이지에서 키 발급 시 표시되는 원본 키를 입력하세요
+                </p>
+              )}
             </div>
 
             {/* Available Time */}
