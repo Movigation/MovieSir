@@ -38,6 +38,7 @@ export default function MainPage() {
     const [showOnboardingReminder, setShowOnboardingReminder] = useState(false);
     const [isTutorialActive, setIsTutorialActive] = useState(false);
     const [tutorialStep, setTutorialStep] = useState(0);
+    const [delayedBubbleVisible, setDelayedBubbleVisible] = useState(!isChatbotOpen);
 
     // 온보딩 리마인더 체크 (DB: completed_at, localStorage: 24시간 체크)
     useEffect(() => {
@@ -138,6 +139,27 @@ export default function MainPage() {
         return () => window.removeEventListener('closeChatbot', handleCloseChatbot);
     }, []);
 
+    // 글로벌 로그인 모달 열기 이벤트 리스너
+    useEffect(() => {
+        const handleOpenLogin = () => setShowLoginModal(true);
+        window.addEventListener('auth:open-login', handleOpenLogin);
+        return () => window.removeEventListener('auth:open-login', handleOpenLogin);
+    }, []);
+
+    // 챗봇 패널 열기/닫기 시 말풍선 노출 타이밍 동기화
+    useEffect(() => {
+        if (isChatbotOpen) {
+            // 패널이 열리면 말풍선은 즉시 숨김
+            setDelayedBubbleVisible(false);
+        } else {
+            // 패널이 닫히면 캐릭터 복귀 애니메이션(500ms) 후 말풍선 표시
+            const timer = setTimeout(() => {
+                setDelayedBubbleVisible(true);
+            }, 900);
+            return () => clearTimeout(timer);
+        }
+    }, [isChatbotOpen]);
+
 
     // 챗봇 열기 핸들러 (로그인 체크)
     const handleOpenChatbot = () => {
@@ -197,7 +219,7 @@ export default function MainPage() {
                 <FloatingBubble
                     position="left"
                     className={`hidden sm:block !min-w-[250px] left-1/2 sm:left-[240px] -translate-x-1/2 bottom-[0px] sm:bottom-[-40px] font-bold text-blue-400 z-floating cursor-pointer ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}`}
-                    visible={!isChatbotOpen}
+                    visible={delayedBubbleVisible}
                     float
                     onClick={handleOpenChatbot}
                 >
@@ -223,7 +245,7 @@ export default function MainPage() {
                             sm:scale-75
                             ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
                             `}
-                    visible={!isChatbotOpen}
+                    visible={delayedBubbleVisible}
                     float
                     onClick={() => {
                         if (isTutorialActive) {

@@ -79,7 +79,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
             resetChatbot();
           }}
         >
-          MOVISIR
+          MOVIESIR
         </button>
       </div>
 
@@ -184,7 +184,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
           <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">도움말</h2>
           <div className="space-y-4 text-gray-700 dark:text-gray-300">
             <p className="leading-relaxed">
-              <strong className="text-gray-900 dark:text-white">MOVISIR</strong>에 오신 것을 환영합니다!
+              <strong className="text-gray-900 dark:text-white">MOVIESIR</strong>에 오신 것을 환영합니다!
             </p>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">주요 기능</h3>
