@@ -19,6 +19,7 @@ interface DashboardData {
   total: number
   daily_limit: number
   plan: string
+  api_key_count: number
   chart_data: { date: string; count: number; success: number; error: number }[]
 }
 
@@ -220,7 +221,7 @@ export default function Dashboard() {
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">API 키</p>
-              <p className="font-semibold text-white text-sm lg:text-base">2개</p>
+              <p className="font-semibold text-white text-sm lg:text-base">{data.api_key_count}개</p>
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">사용률</p>

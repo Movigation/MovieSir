@@ -212,6 +212,22 @@ def get_logs(
     return service.get_recent_logs(db, company.company_id, limit)
 
 
+# ==================== Usage Endpoints ====================
+
+@router.get("/usage")
+def get_usage(
+    period: str = Query(default="7d", description="조회 기간 (7d 또는 30d)"),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 사용량 조회
+    - period: 7d (7일) 또는 30d (30일)
+    """
+    days = 30 if period == "30d" else 7
+    return service.get_usage_data(db, company.company_id, days)
+
+
 # ==================== Company Info Endpoints ====================
 
 @router.get("/me")

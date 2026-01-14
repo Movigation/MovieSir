@@ -82,6 +82,7 @@ class DashboardResponse(BaseModel):
     total: int
     daily_limit: int
     plan: str
+    api_key_count: int
     chart_data: List[ChartDataPoint]
 
 

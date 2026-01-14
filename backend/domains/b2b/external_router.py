@@ -16,7 +16,8 @@ from datetime import datetime
 from backend.core.db import get_db
 from backend.core.rate_limit import get_remaining_quota
 from .dependencies import verify_api_key
-from .models import ApiKey, ApiLog
+from .models import ApiKey, ApiLog, ApiUsage
+from sqlalchemy import and_
 
 router = APIRouter(prefix="/v1", tags=["External API"])
 
@@ -163,7 +164,7 @@ async def external_recommend(
         )
 
     finally:
-        # 사용량 로깅
+        # 사용량 로깅 (개별 로그)
         response_time_ms = int((time.time() - start_time) * 1000)
         log = ApiLog(
             key_id=api_key.key_id,
@@ -173,6 +174,26 @@ async def external_recommend(
             created_at=datetime.utcnow()
         )
         db.add(log)
+
+        # 일별 집계 업데이트 (Dashboard용)
+        today = datetime.utcnow().date()
+        usage = db.query(ApiUsage).filter(
+            and_(ApiUsage.key_id == api_key.key_id, ApiUsage.usage_date == today)
+        ).first()
+
+        if usage:
+            usage.request_count = (usage.request_count or 0) + 1
+            if status_code >= 400:
+                usage.error_count = (usage.error_count or 0) + 1
+        else:
+            usage = ApiUsage(
+                key_id=api_key.key_id,
+                usage_date=today,
+                request_count=1,
+                error_count=1 if status_code >= 400 else 0
+            )
+            db.add(usage)
+
         db.commit()
 
 
@@ -281,7 +302,7 @@ async def external_recommend_single(
         )
 
     finally:
-        # 사용량 로깅
+        # 사용량 로깅 (개별 로그)
         response_time_ms = int((time.time() - start_time) * 1000)
         log = ApiLog(
             key_id=api_key.key_id,
@@ -291,6 +312,26 @@ async def external_recommend_single(
             created_at=datetime.utcnow()
         )
         db.add(log)
+
+        # 일별 집계 업데이트 (Dashboard용)
+        today = datetime.utcnow().date()
+        usage = db.query(ApiUsage).filter(
+            and_(ApiUsage.key_id == api_key.key_id, ApiUsage.usage_date == today)
+        ).first()
+
+        if usage:
+            usage.request_count = (usage.request_count or 0) + 1
+            if status_code >= 400:
+                usage.error_count = (usage.error_count or 0) + 1
+        else:
+            usage = ApiUsage(
+                key_id=api_key.key_id,
+                usage_date=today,
+                request_count=1,
+                error_count=1 if status_code >= 400 else 0
+            )
+            db.add(usage)
+
         db.commit()
 
 

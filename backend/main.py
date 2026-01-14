@@ -1,5 +1,5 @@
 # backend/main.py
-# deploy trigger: 2025-01-14 v5 - docker-compose 환경변수 추가 (B2C_API_KEY, OAuth, Resend)
+# deploy trigger: 2025-01-14 v6 - External API에 api_usage 집계 추가 (Dashboard 연동)
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함

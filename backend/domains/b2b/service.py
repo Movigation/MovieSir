@@ -275,8 +275,50 @@ def get_dashboard_data(db: Session, company_id: int) -> DashboardResponse:
         total=total_count,
         daily_limit=daily_limit,
         plan=company.plan_type,
+        api_key_count=len(api_keys),
         chart_data=chart_data,
     )
+
+
+# ==================== Usage Service ====================
+
+def get_usage_data(db: Session, company_id: int, days: int = 7) -> List[dict]:
+    """기간별 API 사용량 조회"""
+    # 회사의 모든 API 키
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    today = datetime.utcnow().date()
+    result = []
+
+    for i in range(days - 1, -1, -1):
+        date = today - timedelta(days=i)
+        date_str = date.strftime("%m/%d")
+
+        if key_ids:
+            usage = db.query(ApiUsage).filter(
+                and_(
+                    ApiUsage.key_id.in_(key_ids),
+                    ApiUsage.usage_date == date
+                )
+            ).all()
+
+            day_count = sum(u.request_count or 0 for u in usage)
+            day_error = sum(u.error_count or 0 for u in usage)
+            day_success = day_count - day_error
+        else:
+            day_count = 0
+            day_success = 0
+            day_error = 0
+
+        result.append({
+            "date": date_str,
+            "count": day_count,
+            "success": day_success,
+            "error": day_error,
+        })
+
+    return result
 
 
 # ==================== Logs Service ====================
@@ -301,9 +343,12 @@ def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEn
         endpoint = log.endpoint or "/v1/recommend"
         method = "POST" if "recommend" in endpoint else "GET"
 
+        # UTC → KST 변환 (+9시간)
+        kst_time = (log.created_at + timedelta(hours=9)) if log.created_at else None
+
         result.append(LogEntry(
             id=str(log.log_id),
-            time=log.created_at.strftime("%H:%M:%S") if log.created_at else "",
+            time=kst_time.strftime("%H:%M:%S") if kst_time else "",
             method=method,
             endpoint=endpoint,
             status=log.status_code or 200,
