@@ -5,10 +5,12 @@ on:
     branches: [dev, main]
     paths:
       - 'frontend/**'
+      - 'frontend-console/**'
   pull_request:
     branches: [dev, main]
     paths:
       - 'frontend/**'
+      - 'frontend-console/**'
   workflow_dispatch:
 
 jobs:

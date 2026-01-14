@@ -1,3 +1,4 @@
+// Deploy trigger: 2025-01-14 - Remove mock data, connect real B2B API
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import Api from '@/pages/Api'
