@@ -96,7 +96,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
   filters: {
     time: "00:00",
     genres: [],
-    exclude_adult: true, // 기본값: 성인 제외
+    exclude_adult: false, // 기본값: 성인 포함 (체크 해제)
   },
   userId: null,
 
@@ -296,7 +296,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
   setDetailMovieId: (id) => set({ detailMovieId: id }),
 
   resetFilters: () => set({
-    filters: { time: "00:00", genres: [], exclude_adult: true },
+    filters: { time: "00:00", genres: [], exclude_adult: false },
     trackAMovies: [],
     trackATotalRuntime: 0,
     trackBMovies: [],
@@ -310,7 +310,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
   }),
 
   reset: () => set({
-    filters: { time: "00:00", genres: [], exclude_adult: true },
+    filters: { time: "00:00", genres: [], exclude_adult: false },
     userId: null,
     trackAMovies: [],
     trackATotalRuntime: 0,

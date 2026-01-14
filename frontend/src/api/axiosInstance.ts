@@ -63,40 +63,89 @@ authAxiosInstance.interceptors.request.use(
 );
 
 // ------------------------------
-// Response Interceptor: 401 처리 (쿠키 기반 인증)
+// Response Interceptor: 401 처리 + 토큰 자동 갱신
 // ------------------------------
+let isRefreshing = false;  // 토큰 갱신 중복 방지
+let failedQueue: any[] = [];  // 대기 중인 요청 큐
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+// 쿠키 읽기 헬퍼 함수
+const getCookie = (name: string): string | null => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+};
+
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
         // 401 에러 처리
-        // ⚠️ 단, 로그인/회원가입 요청은 제외 (skipAuth 플래그)
         if (
             error.response?.status === 401 &&
-            !originalRequest.skipAuth
+            !originalRequest.skipAuth &&
+            !originalRequest._retry  // 무한 루프 방지
         ) {
-            // 🍪 쿠키 기반 인증: 401 에러 시 로그아웃 처리
-            // 1. 사용자 정보 및 상태 초기화 (Zustand)
-            try {
-                const { useMovieStore } = await import("@/store/useMovieStore");
-                useMovieStore.getState().setUserId(null);
-                useMovieStore.getState().resetFilters();
-            } catch (e) {
-                console.error("Zustand store reset failed:", e);
+            // remember_me 쿠키 확인
+            const rememberMe = getCookie('remember_me') === 'true';
+
+            // 🔄 자동로그인 체크 시: 토큰 갱신 시도
+            if (rememberMe && !isRefreshing) {
+                isRefreshing = true;
+                originalRequest._retry = true;
+
+                try {
+                    // /auth/refresh API 호출 (쿠키 자동 전송)
+                    await axiosInstance.post('/auth/refresh');
+
+                    // 토큰 갱신 성공 → 대기 중인 요청 처리
+                    processQueue(null, 'success');
+                    isRefreshing = false;
+
+                    // 원래 요청 재시도
+                    return axiosInstance(originalRequest);
+                } catch (refreshError) {
+                    // Refresh Token도 만료 → 로그아웃 처리
+                    processQueue(refreshError, null);
+                    isRefreshing = false;
+
+                    // 로그아웃 처리
+                    handleLogout();
+                    return Promise.reject(refreshError);
+                }
             }
-
-            // 2. AuthContext에 로그아웃 이벤트 전달 (커스텀 이벤트)
-            window.dispatchEvent(new CustomEvent('auth:logout'));
-
-            // 3. 메인 페이지로 리다이렉트 (로그아웃됨을 알림)
-            window.location.href = "/?expired=true";
-
-            return Promise.reject(error);
+            // 🔄 자동로그인 체크 안 함: 즉시 로그아웃
+            else if (!rememberMe) {
+                handleLogout();
+                return Promise.reject(error);
+            }
+            // 토큰 갱신 중인 경우: 대기 큐에 추가
+            else {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => {
+                        return axiosInstance(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
         }
 
-        // [New] Error Page Redirection
-        // skipErrorRedirect 플래그가 있는 요청은 에러 페이지로 리다이렉트하지 않음
+        // [기존] Error Page Redirection 코드는 그대로 유지
         const skipErrorRedirect = originalRequest?.skipErrorRedirect;
         const status = error.response?.status;
         const currentPath = window.location.pathname;
@@ -106,12 +155,10 @@ axiosInstance.interceptors.response.use(
                 window.location.href = "/error/400";
                 return Promise.reject(error);
             }
-
             if (status === 423 && currentPath !== "/error/423") {
                 window.location.href = "/error/423";
                 return Promise.reject(error);
             }
-
             if (status === 500 && currentPath !== "/error/500") {
                 window.location.href = "/error/500";
                 return Promise.reject(error);
@@ -121,5 +168,22 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+// 로그아웃 처리 헬퍼 함수
+function handleLogout() {
+    try {
+        const { useMovieStore } = require("@/store/useMovieStore");
+        useMovieStore.getState().setUserId(null);
+        useMovieStore.getState().resetFilters();
+    } catch (e) {
+        console.error("Zustand store reset failed:", e);
+    }
+
+    // AuthContext에 로그아웃 이벤트 전달
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+
+    // 메인 페이지로 리다이렉트
+    window.location.href = "/?expired=true";
+}
 
 export default axiosInstance;
