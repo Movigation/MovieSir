@@ -1,11 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/api'
 
 export default function Settings() {
-  const { company } = useAuthStore()
+  const { company, setCompany } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+
+  // 실시간으로 회사 정보 가져오기
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const { data } = await api.get('/b2b/me')
+        setCompany(data)
+      } catch (err) {
+        console.error('Failed to fetch company:', err)
+      }
+    }
+    fetchCompany()
+  }, [setCompany])
 
   const [passwordForm, setPasswordForm] = useState({
     current: '',
@@ -130,7 +143,7 @@ export default function Settings() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`p-4 rounded-xl transition-all ${
+              className={`p-4 rounded-xl transition-all flex flex-col ${
                 company?.plan === plan.name
                   ? plan.name === 'ENTERPRISE'
                     ? 'bg-amber-500/10 ring-1 ring-amber-500/50'
@@ -153,7 +166,7 @@ export default function Settings() {
                 )}
               </div>
               <p className="text-sm text-gray-400 mb-4">{plan.name === 'ENTERPRISE' ? '무제한 호출' : `일일 ${plan.limit}회 호출`}</p>
-              <ul className="space-y-2 mb-4">
+              <ul className="space-y-2 mb-4 flex-grow">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-2 text-xs text-gray-400">
                     <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,12 +177,20 @@ export default function Settings() {
                 ))}
               </ul>
               {company?.plan !== plan.name && (
-                <a
-                  href="mailto:support@moviesir.cloud?subject=요금제 문의"
-                  className="block w-full py-2 bg-white/5 text-gray-400 rounded-lg text-xs font-medium hover:bg-white/10 hover:text-white transition-colors text-center"
-                >
-                  도입 문의
-                </a>
+                plan.name === 'FREE' ? (
+                  <button
+                    className="block w-full py-2 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-400 transition-colors text-center"
+                  >
+                    무료로 시작
+                  </button>
+                ) : (
+                  <a
+                    href="mailto:support@moviesir.cloud?subject=요금제 문의"
+                    className="block w-full py-2 bg-white/5 text-gray-400 rounded-lg text-xs font-medium hover:bg-white/10 hover:text-white transition-colors text-center"
+                  >
+                    도입 문의
+                  </a>
+                )
               )}
             </div>
           ))}

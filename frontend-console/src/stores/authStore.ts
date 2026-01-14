@@ -14,6 +14,7 @@ interface AuthState {
   token: string | null
   login: (company: Company, token: string) => void
   logout: () => void
+  setCompany: (company: Company) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,6 +24,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       login: (company, token) => set({ company, token }),
       logout: () => set({ company: null, token: null }),
+      setCompany: (company) => set({ company }),
     }),
     {
       name: 'b2b-auth',

@@ -58,6 +58,7 @@ export default function Playground() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null)
   const [loadingKeys, setLoadingKeys] = useState(true)
+  const [manualApiKey, setManualApiKey] = useState('')
 
   // Request Parameters
   const [availableTime, setAvailableTime] = useState(120)
@@ -92,6 +93,7 @@ export default function Playground() {
   }, [])
 
   const selectedKey = apiKeys.find(k => k.key_id === selectedKeyId)
+  const effectiveApiKey = manualApiKey.trim() || selectedKey?.key || ''
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres(prev =>
@@ -113,12 +115,12 @@ export default function Playground() {
   // Generate curl command
   const curlCommand = `curl -X POST "${API_BASE_URL}/v1/recommend" \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: ${selectedKey?.key || 'sk-moviesir-xxx'}" \\
+  -H "X-API-Key: ${effectiveApiKey || 'sk-moviesir-xxx'}" \\
   -d '${JSON.stringify(requestBody, null, 2)}'`
 
   const sendRequest = async () => {
-    if (!selectedKey) {
-      setError('API 키를 선택해주세요')
+    if (!effectiveApiKey) {
+      setError('API 키를 입력해주세요')
       setStatus('error')
       return
     }
@@ -136,7 +138,7 @@ export default function Playground() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': selectedKey.key,
+          'X-API-Key': effectiveApiKey,
         },
         body: JSON.stringify(requestBody),
       })
@@ -203,15 +205,6 @@ export default function Playground() {
         </span>
       </div>
 
-      {/* API Key Warning */}
-      {apiKeys.length === 0 && (
-        <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-          <p className="text-sm text-yellow-400">
-            활성화된 API 키가 없습니다. API 키 페이지에서 키를 발급받으세요.
-          </p>
-        </div>
-      )}
-
       <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
         {/* Request Panel */}
         <div className="bg-[#16161d] rounded-xl overflow-hidden">
@@ -220,25 +213,19 @@ export default function Playground() {
             <code className="text-xs text-blue-400 font-mono">POST /v1/recommend</code>
           </div>
           <div className="p-4 lg:p-5 space-y-4 lg:space-y-5">
-            {/* API Key Selector */}
+            {/* API Key Input */}
             <div>
               <label className="block text-xs text-gray-500 mb-2">API Key</label>
-              <select
-                value={selectedKeyId || ''}
-                onChange={e => setSelectedKeyId(Number(e.target.value))}
-                className="w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={apiKeys.length === 0}
-              >
-                {apiKeys.length === 0 ? (
-                  <option value="">API 키 없음</option>
-                ) : (
-                  apiKeys.map(key => (
-                    <option key={key.key_id} value={key.key_id}>
-                      {key.key_name} ({key.key.slice(0, 20)}...)
-                    </option>
-                  ))
-                )}
-              </select>
+              <input
+                type="text"
+                value={manualApiKey}
+                onChange={e => setManualApiKey(e.target.value)}
+                placeholder="sk-moviesir-xxxx... (API Keys 페이지에서 복사)"
+                className="w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-600"
+              />
+              <p className="text-[10px] text-gray-600 mt-1">
+                API Keys 페이지에서 발급받은 키를 붙여넣으세요
+              </p>
             </div>
 
             {/* Available Time */}
@@ -247,10 +234,10 @@ export default function Playground() {
               <select
                 value={availableTime}
                 onChange={e => setAvailableTime(Number(e.target.value))}
-                className="w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 lg:px-4 py-2 lg:py-2.5 bg-[#1f1f28] border border-white/10 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {timeOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>
+                  <option key={opt.value} value={opt.value} className="bg-[#1f1f28] text-white">
                     {opt.label}
                   </option>
                 ))}
@@ -293,7 +280,7 @@ export default function Playground() {
             {/* Send Button */}
             <button
               onClick={sendRequest}
-              disabled={loading || apiKeys.length === 0}
+              disabled={loading || !effectiveApiKey}
               className="w-full py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
