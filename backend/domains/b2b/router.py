@@ -11,7 +11,7 @@ from backend.core.db import get_db
 from .schemas import (
     CompanyRegister, CompanyLogin, TokenResponse,
     ApiKeyCreate, ApiKeyResponse,
-    DashboardResponse, LogEntry
+    DashboardResponse, LogEntry, OAuthCallback
 )
 from . import service
 
@@ -86,6 +86,46 @@ def login(
         )
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
+
+
+@router.post("/auth/google/callback", response_model=TokenResponse)
+async def google_callback(
+    data: OAuthCallback,
+    db: Session = Depends(get_db)
+):
+    """
+    Google OAuth 콜백
+    - code: Google로부터 받은 인증 코드
+    """
+    try:
+        redirect_uri = data.redirect_uri or "https://console.moviesir.cloud/auth/google/callback"
+        company, token = await service.google_oauth_callback(db, data.code, redirect_uri)
+        return TokenResponse(
+            access_token=token,
+            company=service.company_to_response(company)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/github/callback", response_model=TokenResponse)
+async def github_callback(
+    data: OAuthCallback,
+    db: Session = Depends(get_db)
+):
+    """
+    GitHub OAuth 콜백
+    - code: GitHub로부터 받은 인증 코드
+    """
+    try:
+        redirect_uri = data.redirect_uri or "https://console.moviesir.cloud/auth/github/callback"
+        company, token = await service.github_oauth_callback(db, data.code, redirect_uri)
+        return TokenResponse(
+            access_token=token,
+            company=service.company_to_response(company)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # ==================== API Key Endpoints ====================

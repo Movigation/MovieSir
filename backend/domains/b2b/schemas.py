@@ -22,6 +22,12 @@ class CompanyLogin(BaseModel):
     password: str
 
 
+class OAuthCallback(BaseModel):
+    """OAuth 콜백 요청"""
+    code: str = Field(..., description="OAuth 인증 코드")
+    redirect_uri: Optional[str] = Field(None, description="OAuth redirect URI (선택)")
+
+
 class CompanyResponse(BaseModel):
     """회사 정보 응답"""
     id: str

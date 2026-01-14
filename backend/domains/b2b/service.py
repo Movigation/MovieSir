@@ -5,6 +5,7 @@ B2B 도메인 서비스 레이어
 import os
 import secrets
 import hashlib
+import httpx
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -12,6 +13,12 @@ from sqlalchemy import func, and_
 from jose import jwt
 
 from backend.utils.password import hash_password, verify_password
+
+# OAuth 설정
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
 from .models import Company, ApiKey, ApiLog, ApiUsage
 from .schemas import (
     CompanyRegister, CompanyResponse, ApiKeyCreate, ApiKeyResponse,
@@ -304,3 +311,153 @@ def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEn
         ))
 
     return result
+
+
+# ==================== OAuth Service ====================
+
+async def google_oauth_callback(db: Session, code: str, redirect_uri: str) -> Tuple[Company, str]:
+    """Google OAuth 콜백 처리"""
+    # 1. code를 access token으로 교환
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+
+        if token_response.status_code != 200:
+            raise ValueError("Google 인증에 실패했습니다")
+
+        token_data = token_response.json()
+        access_token = token_data.get("access_token")
+
+        # 2. access token으로 사용자 정보 조회
+        user_response = await client.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        if user_response.status_code != 200:
+            raise ValueError("Google 사용자 정보를 가져올 수 없습니다")
+
+        user_data = user_response.json()
+        email = user_data.get("email")
+        name = user_data.get("name", email.split("@")[0])
+
+    # 3. 기존 회원인지 확인
+    company = db.query(Company).filter(Company.manager_email == email).first()
+
+    if company:
+        # 기존 회원 - 로그인
+        if not company.is_active:
+            raise ValueError("비활성화된 계정입니다")
+        token = create_access_token(company.company_id)
+        return company, token
+    else:
+        # 신규 회원 - 회원가입
+        company = Company(
+            name=name,
+            manager_email=email,
+            password_hash=None,  # OAuth 사용자는 비밀번호 없음
+            plan_type="BASIC",
+            is_active=True,
+            oauth_provider="google",
+        )
+        db.add(company)
+        db.commit()
+        db.refresh(company)
+
+        token = create_access_token(company.company_id)
+        return company, token
+
+
+async def github_oauth_callback(db: Session, code: str, redirect_uri: str) -> Tuple[Company, str]:
+    """GitHub OAuth 콜백 처리"""
+    # 1. code를 access token으로 교환
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://github.com/login/oauth/access_token",
+            data={
+                "code": code,
+                "client_id": GITHUB_CLIENT_ID,
+                "client_secret": GITHUB_CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+            },
+            headers={"Accept": "application/json"},
+        )
+
+        if token_response.status_code != 200:
+            raise ValueError("GitHub 인증에 실패했습니다")
+
+        token_data = token_response.json()
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            error = token_data.get("error_description", "알 수 없는 오류")
+            raise ValueError(f"GitHub 인증 실패: {error}")
+
+        # 2. access token으로 사용자 정보 조회
+        user_response = await client.get(
+            "https://api.github.com/user",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/vnd.github.v3+json",
+            },
+        )
+
+        if user_response.status_code != 200:
+            raise ValueError("GitHub 사용자 정보를 가져올 수 없습니다")
+
+        user_data = user_response.json()
+
+        # 이메일 가져오기 (public이 아닐 수 있음)
+        email = user_data.get("email")
+        if not email:
+            # 이메일 API 별도 호출
+            email_response = await client.get(
+                "https://api.github.com/user/emails",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github.v3+json",
+                },
+            )
+            if email_response.status_code == 200:
+                emails = email_response.json()
+                primary_email = next((e for e in emails if e.get("primary")), None)
+                email = primary_email.get("email") if primary_email else None
+
+        if not email:
+            raise ValueError("GitHub 이메일을 가져올 수 없습니다. GitHub 설정에서 이메일을 공개로 설정해주세요.")
+
+        name = user_data.get("name") or user_data.get("login", email.split("@")[0])
+
+    # 3. 기존 회원인지 확인
+    company = db.query(Company).filter(Company.manager_email == email).first()
+
+    if company:
+        # 기존 회원 - 로그인
+        if not company.is_active:
+            raise ValueError("비활성화된 계정입니다")
+        token = create_access_token(company.company_id)
+        return company, token
+    else:
+        # 신규 회원 - 회원가입
+        company = Company(
+            name=name,
+            manager_email=email,
+            password_hash=None,  # OAuth 사용자는 비밀번호 없음
+            plan_type="BASIC",
+            is_active=True,
+            oauth_provider="github",
+        )
+        db.add(company)
+        db.commit()
+        db.refresh(company)
+
+        token = create_access_token(company.company_id)
+        return company, token

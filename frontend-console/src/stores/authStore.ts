@@ -6,6 +6,7 @@ interface Company {
   name: string
   email: string
   plan: string
+  oauth_provider?: string  // google, github (소셜 로그인 사용자)
 }
 
 interface AuthState {

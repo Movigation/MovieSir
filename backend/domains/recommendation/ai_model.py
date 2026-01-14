@@ -1,6 +1,7 @@
 # backend/domains/recommendation/ai_model.py
 """
-AI 추천 모델 어댑터 v2 - GPU Server HTTP 호출
+AI 추천 모델 어댑터 v3 - B2B External API 호출
+B2C 무비서도 B2B API Key를 사용하여 추천 서비스 호출 (Dog Fooding)
 """
 
 import os
@@ -10,13 +11,17 @@ from typing import List, Optional, Dict, Any
 
 class AIModelAdapter:
     """
-    GPU Server의 AI Service를 HTTP로 호출하는 어댑터 (v2)
+    B2B External API를 통해 AI 추천 서비스를 호출하는 어댑터 (v3)
+    B2C 무비서가 B2B API의 고객으로서 동작
     """
 
     def __init__(self):
-        self.ai_service_url = os.getenv("AI_SERVICE_URL", "http://10.0.35.62:8001")
+        # B2B External API URL
+        self.api_base_url = os.getenv("B2B_API_URL", "http://localhost:8000")
+        # B2C용 API Key (B2B Console에서 발급받은 키)
+        self.api_key = os.getenv("B2C_API_KEY", "")
         self.is_loaded = True
-        
+
         # 캐싱 변수
         self._popular_movies_cache = None  # 인기 영화 목록 (24시간 TTL)
         self._cache_timestamp = None  # 캐시 생성 시각
@@ -285,18 +290,27 @@ class AIModelAdapter:
                 "excluded_ids_b": excluded_ids_b
             }
 
-            print(f"[AI Model] Calling recommend: {self.ai_service_url}/recommend")
+            print(f"[AI Model] Calling B2B API: {self.api_base_url}/v1/recommend")
             print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}, excluded_a={len(excluded_ids_a)}, excluded_b={len(excluded_ids_b)}")
+
+            headers = {"X-API-Key": self.api_key} if self.api_key else {}
 
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
-                    f"{self.ai_service_url}/recommend",
-                    json=payload
+                    f"{self.api_base_url}/v1/recommend",
+                    json=payload,
+                    headers=headers
                 )
                 response.raise_for_status()
-                result = response.json()
+                api_result = response.json()
 
-            print(f"[AI Model] Response received")
+            # External API 응답에서 data 추출
+            if api_result.get("success") and "data" in api_result:
+                result = api_result["data"]
+            else:
+                result = api_result
+
+            print(f"[AI Model] Response received from B2B API")
             return result
 
         except httpx.HTTPError as e:
@@ -351,16 +365,25 @@ class AIModelAdapter:
                 "allow_adult": allow_adult
             }
 
-            print(f"[AI Model] Calling recommend_single: {self.ai_service_url}/recommend_single")
+            print(f"[AI Model] Calling B2B API: {self.api_base_url}/v1/recommend_single")
             print(f"[AI Model] Payload: runtime={target_runtime}, track={track}, excluded={len(excluded_ids)}")
+
+            headers = {"X-API-Key": self.api_key} if self.api_key else {}
 
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
-                    f"{self.ai_service_url}/recommend_single",
-                    json=payload
+                    f"{self.api_base_url}/v1/recommend_single",
+                    json=payload,
+                    headers=headers
                 )
                 response.raise_for_status()
-                result = response.json()
+                api_result = response.json()
+
+            # External API 응답에서 data 추출
+            if api_result.get("success") and "data" in api_result:
+                result = api_result["data"]
+            else:
+                result = api_result
 
             if result:
                 print(f"[AI Model] Single movie: {result.get('title')} ({result.get('runtime')}min)")

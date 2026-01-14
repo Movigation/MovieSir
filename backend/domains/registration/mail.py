@@ -2,9 +2,7 @@
 
 import os
 import secrets
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
 
 
 def generate_signup_code(length: int = 6) -> str:
@@ -104,39 +102,28 @@ def _get_email_text(code: str) -> str:
 
 def send_signup_code_email(to_email: str, code: str) -> None:
     """
-    인증번호 메일 발송.
+    인증번호 메일 발송 (Resend API 사용).
 
-    - SMTP 환경변수가 설정되어 있으면 실제 메일 전송
+    - RESEND_API_KEY 환경변수가 설정되어 있으면 실제 메일 전송
     - 설정이 없으면 개발 모드로 간주하고 콘솔에만 찍고 끝냄
     """
+    api_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "noreply@moviesir.cloud")
+    from_name = os.getenv("RESEND_FROM_NAME", "MovieSir")
 
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    from_email = os.getenv("SMTP_FROM", smtp_user or "")
-    from_name = os.getenv("SMTP_FROM_NAME", "무비서")
-
-    # SMTP 설정이 없으면: 개발 모드 → 콘솔 로그만 남기고 끝
-    if not (smtp_host and smtp_user and smtp_password):
+    # API Key 설정이 없으면: 개발 모드 → 콘솔 로그만 남기고 끝
+    if not api_key:
         print(f"[DEV][SIGNUP] to={to_email}, code={code}")
         return
 
-    # HTML + 플레인 텍스트 멀티파트 메시지
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "[MovieSir] 이메일 인증을 완료해주세요"
-    msg["From"] = f"{from_name} <{from_email}>"
-    msg["To"] = to_email
+    # Resend API 설정
+    resend.api_key = api_key
 
-    # 플레인 텍스트 버전 (먼저 추가)
-    text_part = MIMEText(_get_email_text(code), "plain", "utf-8")
-    msg.attach(text_part)
-
-    # HTML 버전 (나중에 추가 - 우선 표시됨)
-    html_part = MIMEText(_get_email_html(code), "html", "utf-8")
-    msg.attach(html_part)
-
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
+    # 이메일 발송
+    resend.Emails.send({
+        "from": f"{from_name} <{from_email}>",
+        "to": [to_email],
+        "subject": "[MovieSir] 이메일 인증을 완료해주세요",
+        "html": _get_email_html(code),
+        "text": _get_email_text(code),
+    })

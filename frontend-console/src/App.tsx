@@ -14,6 +14,7 @@ import Logs from '@/pages/Logs'
 import ApiDocs from '@/pages/ApiDocs'
 import Playground from '@/pages/Playground'
 import Settings from '@/pages/Settings'
+import OAuthCallback from '@/pages/OAuthCallback'
 import { useAuthStore } from '@/stores/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,8 @@ function App() {
       <Route path="/docs" element={<Docs />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/auth/google/callback" element={<OAuthCallback provider="google" />} />
+      <Route path="/auth/github/callback" element={<OAuthCallback provider="github" />} />
       <Route
         path="/console"
         element={
