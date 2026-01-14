@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { api } from '@/api'
-import { useAuthStore } from '@/stores/authStore'
 
 interface Movie {
   tmdb_id: number
@@ -38,33 +37,6 @@ const runtimeOptions = [
   { value: 240, label: '4시간 이상' },
 ]
 
-// Mock response for test mode
-const mockResponse: ApiResponse = {
-  success: true,
-  data: {
-    track_a: {
-      label: '인기 영화',
-      movies: [
-        { tmdb_id: 1, title: '인터스텔라', release_year: 2014, rating: 8.6, poster_url: '', runtime: 169 },
-        { tmdb_id: 2, title: '다크 나이트', release_year: 2008, rating: 9.0, poster_url: '', runtime: 152 },
-        { tmdb_id: 3, title: '인셉션', release_year: 2010, rating: 8.8, poster_url: '', runtime: 148 },
-      ],
-    },
-    track_b: {
-      label: '추천 영화',
-      movies: [
-        { tmdb_id: 4, title: '매드맥스: 분노의 도로', release_year: 2015, rating: 8.1, poster_url: '', runtime: 120 },
-        { tmdb_id: 5, title: '존 윅', release_year: 2014, rating: 7.4, poster_url: '', runtime: 101 },
-        { tmdb_id: 6, title: '미션 임파서블', release_year: 2018, rating: 7.7, poster_url: '', runtime: 147 },
-      ],
-    },
-  },
-  meta: {
-    request_id: 'test-req-123',
-    processing_time_ms: 234,
-  },
-}
-
 export default function Playground() {
   const [runtimeLimit, setRuntimeLimit] = useState(120)
   const [selectedGenres, setSelectedGenres] = useState<string[]>(['액션'])
@@ -74,7 +46,6 @@ export default function Playground() {
   const [responseTime, setResponseTime] = useState<number | null>(null)
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { token } = useAuthStore()
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres(prev =>
@@ -88,16 +59,6 @@ export default function Playground() {
     setError(null)
 
     const startTime = Date.now()
-
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setResponseTime(234)
-        setResponse(mockResponse)
-        setStatus('success')
-        setLoading(false)
-      }, 500)
-      return
-    }
 
     try {
       const { data } = await api.post('/b2b/recommend', {

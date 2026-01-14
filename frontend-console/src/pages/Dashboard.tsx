@@ -22,14 +22,6 @@ interface DashboardData {
   chart_data: { date: string; count: number; success: number; error: number }[]
 }
 
-interface ActiveUser {
-  id: string
-  name: string
-  email: string
-  calls: number
-  lastActive: string
-}
-
 interface LogEntry {
   id: string
   time: string
@@ -39,100 +31,36 @@ interface LogEntry {
   latency: number
 }
 
-const mockDashboardData: DashboardData = {
-  today: 342,
-  total: 12847,
-  daily_limit: 1000,
-  plan: 'FREE',
-  chart_data: [
-    { date: '01/02', count: 234, success: 220, error: 14 },
-    { date: '01/03', count: 456, success: 440, error: 16 },
-    { date: '01/04', count: 321, success: 310, error: 11 },
-    { date: '01/05', count: 567, success: 545, error: 22 },
-    { date: '01/06', count: 432, success: 420, error: 12 },
-    { date: '01/07', count: 289, success: 280, error: 9 },
-    { date: '01/08', count: 342, success: 330, error: 12 },
-  ],
-}
-
-const mockTopEndpoints = [
-  { endpoint: '/v1/recommend', calls: 11234, avgLatency: 215, successRate: 98.2 },
-  { endpoint: '/v1/movies/:id', calls: 1456, avgLatency: 42, successRate: 99.1 },
-  { endpoint: '/v1/genres', calls: 157, avgLatency: 18, successRate: 100 },
-]
-
-const mockActiveUsers: ActiveUser[] = [
-  { id: '1', name: '김민수', email: 'minsu@example.com', calls: 1247, lastActive: '방금 전' },
-  { id: '2', name: '이수진', email: 'sujin@example.com', calls: 892, lastActive: '5분 전' },
-  { id: '3', name: '박지훈', email: 'jihoon@example.com', calls: 654, lastActive: '12분 전' },
-  { id: '4', name: '최유나', email: 'yuna@example.com', calls: 521, lastActive: '1시간 전' },
-  { id: '5', name: '정현우', email: 'hyunwoo@example.com', calls: 433, lastActive: '2시간 전' },
-]
-
-const mockLogs: LogEntry[] = [
-  { id: '1', time: '14:32:15', method: 'POST', endpoint: '/v1/recommend', status: 200, latency: 234 },
-  { id: '2', time: '14:31:42', method: 'POST', endpoint: '/v1/recommend', status: 200, latency: 198 },
-  { id: '3', time: '14:30:58', method: 'GET', endpoint: '/v1/movies/12345', status: 200, latency: 45 },
-  { id: '4', time: '14:29:33', method: 'POST', endpoint: '/v1/recommend', status: 429, latency: 12 },
-  { id: '5', time: '14:28:11', method: 'POST', endpoint: '/v1/recommend', status: 200, latency: 267 },
-]
-
-// 도넛 차트 데이터
-const usageOverviewData = [
-  { name: '성공', value: 85, color: '#3b82f6' },
-  { name: '에러', value: 10, color: '#ef4444' },
-  { name: '제한', value: 5, color: '#f59e0b' },
-]
-
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_topEndpoints, _setTopEndpoints] = useState<{ endpoint: string; calls: number; avgLatency: number; successRate: number }[]>([])
-  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const { token, company } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (token === 'test-token-12345') {
-      setData(mockDashboardData)
-      _setTopEndpoints(mockTopEndpoints)  // TODO: Top Endpoints 섹션 추가 시 사용
-      setActiveUsers(mockActiveUsers)
-      setLogs(mockLogs)
-      setLoading(false)
-      return
+    const fetchData = async () => {
+      try {
+        const [dashboardRes, logsRes] = await Promise.all([
+          api.get('/b2b/dashboard'),
+          api.get('/b2b/logs?limit=10'),
+        ])
+        setData(dashboardRes.data)
+        setLogs(logsRes.data)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
     }
-
-    api
-      .get('/b2b/dashboard')
-      .then((res) => setData(res.data))
-      .catch(console.error)
-      .finally(() => setLoading(false))
+    fetchData()
   }, [token])
 
   // Live Logs 5초 폴링
   useEffect(() => {
     const fetchLogs = async () => {
-      if (token === 'test-token-12345') {
-        const methods = ['GET', 'POST']
-        const endpoints = ['/v1/recommend', '/v1/movies/12345', '/v1/genres']
-        const statuses = [200, 200, 200, 200, 429, 404]
-        const now = new Date()
-        const newLog: LogEntry = {
-          id: `log-${Date.now()}`,
-          time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
-          method: methods[Math.floor(Math.random() * methods.length)],
-          endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
-          status: statuses[Math.floor(Math.random() * statuses.length)],
-          latency: Math.floor(Math.random() * 300) + 20,
-        }
-        setLogs((prev) => [newLog, ...prev].slice(0, 100))
-        return
-      }
-
       try {
-        const { data } = await api.get('/b2b/logs?limit=5')
+        const { data } = await api.get('/b2b/logs?limit=10')
         setLogs(data)
       } catch (err) {
         console.error('Failed to fetch logs:', err)
@@ -160,6 +88,20 @@ export default function Dashboard() {
   }
 
   const usagePercent = Math.round((data.today / data.daily_limit) * 100)
+
+  // chart_data에서 성공/에러 비율 계산
+  const totalSuccess = data.chart_data.reduce((sum, d) => sum + d.success, 0)
+  const totalError = data.chart_data.reduce((sum, d) => sum + d.error, 0)
+  const totalCalls = totalSuccess + totalError
+  const successPercent = totalCalls > 0 ? Math.round((totalSuccess / totalCalls) * 100) : 0
+  const errorPercent = totalCalls > 0 ? Math.round((totalError / totalCalls) * 100) : 0
+  const limitPercent = 100 - successPercent - errorPercent
+
+  const usageOverviewData = [
+    { name: '성공', value: successPercent, color: '#3b82f6' },
+    { name: '에러', value: errorPercent, color: '#ef4444' },
+    { name: '제한', value: limitPercent, color: '#f59e0b' },
+  ]
 
   return (
     <div className="p-4 lg:p-8">
@@ -229,7 +171,7 @@ export default function Dashboard() {
               0.2%
             </div>
           </div>
-          <p className="text-xl lg:text-2xl font-bold text-white mt-3">98.2%</p>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{successPercent > 0 ? `${successPercent}%` : '-'}</p>
           <p className="text-xs lg:text-sm text-gray-500 mt-1">성공률</p>
         </div>
 
@@ -368,55 +310,40 @@ export default function Dashboard() {
 
       {/* Bottom Section: Table + Recent */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-        {/* Active Users Table */}
+        {/* API Usage Summary */}
         <div className="lg:col-span-8 bg-[#16161d] rounded-xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-white">Active Users</h2>
-            <button className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+            <h2 className="text-sm font-medium text-white">API 사용 요약</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-[10px] lg:text-xs text-gray-500 border-b border-white/5">
-                  <th className="pb-3 font-medium hidden sm:table-cell">NO</th>
-                  <th className="pb-3 font-medium">이름</th>
-                  <th className="pb-3 font-medium hidden md:table-cell">이메일</th>
-                  <th className="pb-3 font-medium">호출</th>
-                  <th className="pb-3 font-medium hidden sm:table-cell">마지막 활동</th>
-                  <th className="pb-3 font-medium text-right">상태</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {activeUsers.map((user, i) => (
-                  <tr key={user.id}>
-                    <td className="py-3 text-xs lg:text-sm text-gray-500 hidden sm:table-cell">#{String(i + 1).padStart(2, '0')}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[10px] lg:text-xs font-medium flex-shrink-0">
-                          {user.name.charAt(0)}
-                        </div>
-                        <span className="text-xs lg:text-sm font-medium text-white truncate max-w-[80px] lg:max-w-none">{user.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 text-xs lg:text-sm text-blue-400 hidden md:table-cell truncate max-w-[120px]">{user.email}</td>
-                    <td className="py-3 text-xs lg:text-sm text-gray-400">{user.calls.toLocaleString()}</td>
-                    <td className="py-3 text-xs lg:text-sm text-gray-500 hidden sm:table-cell whitespace-nowrap">{user.lastActive}</td>
-                    <td className="py-3 text-right">
-                      <span className={`inline-flex items-center gap-1 lg:gap-1.5 px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-full text-[10px] lg:text-xs ${
-                        user.lastActive.includes('분') || user.lastActive.includes('방금')
-                          ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'
-                      }`}>
-                        <span className={`w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full ${
-                          user.lastActive.includes('분') || user.lastActive.includes('방금')
-                            ? 'bg-green-400' : 'bg-gray-400'
-                        }`} />
-                        <span className="hidden sm:inline">{user.lastActive.includes('분') || user.lastActive.includes('방금') ? 'Active' : 'Away'}</span>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <p className="text-2xl font-bold text-blue-400">{data.today}</p>
+              <p className="text-xs text-gray-500 mt-1">오늘 호출</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <p className="text-2xl font-bold text-green-400">{data.total}</p>
+              <p className="text-xs text-gray-500 mt-1">총 호출</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <p className="text-2xl font-bold text-cyan-400">{successPercent}%</p>
+              <p className="text-xs text-gray-500 mt-1">성공률</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-lg">
+              <p className="text-2xl font-bold text-purple-400">{data.daily_limit - data.today}</p>
+              <p className="text-xs text-gray-500 mt-1">남은 호출</p>
+            </div>
+          </div>
+          <div className="mt-4 p-4 bg-white/5 rounded-lg">
+            <div className="flex justify-between text-xs text-gray-500 mb-2">
+              <span>일일 사용량</span>
+              <span>{usagePercent}%</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(usagePercent, 100)}%` }}
+              />
+            </div>
           </div>
         </div>
 

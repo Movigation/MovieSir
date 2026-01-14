@@ -1,47 +1,14 @@
 import { useEffect, useState } from 'react'
+import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
 
 interface LogEntry {
   id: string
   time: string
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method: string
   endpoint: string
   status: number
   latency: number
-  ip: string
-  userAgent: string
-}
-
-const generateMockLogs = (): LogEntry[] => {
-  const methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[] = ['GET', 'POST', 'PUT', 'DELETE']
-  const endpoints = ['/v1/recommend', '/v1/movies/12345', '/v1/genres', '/v1/movies', '/v1/search']
-  const statuses = [200, 200, 200, 200, 200, 201, 400, 401, 404, 429, 500]
-  const ips = ['192.168.1.100', '10.0.0.55', '172.16.0.23', '203.0.113.42']
-  const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0)',
-    'Mozilla/5.0 (Macintosh)',
-    'PostmanRuntime/7.32',
-    'curl/7.88.1',
-    'Python-urllib/3.11',
-  ]
-
-  const logs: LogEntry[] = []
-  const now = new Date()
-
-  for (let i = 0; i < 50; i++) {
-    const time = new Date(now.getTime() - i * 30000)
-    logs.push({
-      id: `log-${i}`,
-      time: `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}:${String(time.getSeconds()).padStart(2, '0')}`,
-      method: methods[Math.floor(Math.random() * methods.length)],
-      endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      latency: Math.floor(Math.random() * 500) + 20,
-      ip: ips[Math.floor(Math.random() * ips.length)],
-      userAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
-    })
-  }
-  return logs
 }
 
 export default function Logs() {
@@ -51,41 +18,24 @@ export default function Logs() {
   const [methodFilter, setMethodFilter] = useState<string>('all')
   const { token } = useAuthStore()
 
-  useEffect(() => {
-    if (token === 'test-token-12345') {
-      setTimeout(() => {
-        setLogs(generateMockLogs())
-        setLoading(false)
-      }, 300)
-      return
+  const fetchLogs = async () => {
+    try {
+      const { data } = await api.get('/b2b/logs?limit=100')
+      setLogs(data)
+    } catch (err) {
+      console.error('Failed to fetch logs:', err)
+    } finally {
+      setLoading(false)
     }
-    setLogs(generateMockLogs())
-    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchLogs()
   }, [token])
 
-  // 실시간 로그 추가
+  // 5초마다 로그 갱신
   useEffect(() => {
-    const interval = setInterval(() => {
-      const methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[] = ['GET', 'POST', 'PUT', 'DELETE']
-      const endpoints = ['/v1/recommend', '/v1/movies/12345', '/v1/genres']
-      const statuses = [200, 200, 200, 200, 429, 404]
-      const ips = ['192.168.1.100', '10.0.0.55', '172.16.0.23']
-      const userAgents = ['Mozilla/5.0 (Windows NT 10.0)', 'PostmanRuntime/7.32', 'curl/7.88.1']
-
-      const now = new Date()
-      const newLog: LogEntry = {
-        id: `log-${Date.now()}`,
-        time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
-        method: methods[Math.floor(Math.random() * methods.length)],
-        endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        latency: Math.floor(Math.random() * 300) + 20,
-        ip: ips[Math.floor(Math.random() * ips.length)],
-        userAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
-      }
-      setLogs((prev) => [newLog, ...prev].slice(0, 200))
-    }, 3000)
-
+    const interval = setInterval(fetchLogs, 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -98,7 +48,7 @@ export default function Logs() {
 
   const successCount = logs.filter((l) => l.status < 400).length
   const errorCount = logs.filter((l) => l.status >= 400).length
-  const avgLatency = Math.round(logs.reduce((sum, l) => sum + l.latency, 0) / logs.length)
+  const avgLatency = logs.length > 0 ? Math.round(logs.reduce((sum, l) => sum + l.latency, 0) / logs.length) : 0
 
   if (loading) {
     return (
@@ -169,8 +119,6 @@ export default function Logs() {
               <option value="all">All</option>
               <option value="GET">GET</option>
               <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
             </select>
           </div>
         </div>
@@ -184,8 +132,6 @@ export default function Logs() {
                 <th className="pb-3 font-medium">엔드포인트</th>
                 <th className="pb-3 font-medium">상태</th>
                 <th className="pb-3 font-medium hidden sm:table-cell">응답</th>
-                <th className="pb-3 font-medium hidden md:table-cell">IP</th>
-                <th className="pb-3 font-medium hidden lg:table-cell">User Agent</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -197,11 +143,7 @@ export default function Logs() {
                       className={`px-1.5 lg:px-2 py-0.5 rounded text-[10px] lg:text-xs font-medium ${
                         log.method === 'GET'
                           ? 'bg-blue-500/20 text-blue-400'
-                          : log.method === 'POST'
-                          ? 'bg-green-500/20 text-green-400'
-                          : log.method === 'PUT'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : 'bg-red-500/20 text-red-400'
+                          : 'bg-green-500/20 text-green-400'
                       }`}
                     >
                       {log.method}
@@ -224,8 +166,6 @@ export default function Logs() {
                     </span>
                   </td>
                   <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-400 hidden sm:table-cell whitespace-nowrap">{log.latency}ms</td>
-                  <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-500 font-mono hidden md:table-cell">{log.ip}</td>
-                  <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-500 truncate max-w-[120px] hidden lg:table-cell">{log.userAgent}</td>
                 </tr>
               ))}
             </tbody>
@@ -233,7 +173,9 @@ export default function Logs() {
         </div>
 
         {filteredLogs.length === 0 && (
-          <div className="py-8 text-center text-gray-500 text-sm">필터에 맞는 로그가 없습니다</div>
+          <div className="py-8 text-center text-gray-500 text-sm">
+            {logs.length === 0 ? '아직 API 호출 기록이 없습니다' : '필터에 맞는 로그가 없습니다'}
+          </div>
         )}
       </div>
     </div>
