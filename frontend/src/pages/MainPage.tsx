@@ -155,7 +155,7 @@ export default function MainPage() {
             // 패널이 닫히면 캐릭터 복귀 애니메이션(500ms) 후 말풍선 표시
             const timer = setTimeout(() => {
                 setDelayedBubbleVisible(true);
-            }, 900);
+            }, 700);
             return () => clearTimeout(timer);
         }
     }, [isChatbotOpen]);

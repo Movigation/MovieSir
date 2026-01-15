@@ -116,6 +116,16 @@ services:
       retries: 3
       start_period: 5s
 
+  adminer:
+    image: adminer
+    container_name: moviesir-adminer-local
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
