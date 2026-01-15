@@ -1,6 +1,7 @@
 // Deploy trigger: 2025-01-14 v2 - Add frontend-console CI/CD workflow
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
+import Landing from '@/pages/Landing'
 import Api from '@/pages/Api'
 import Docs from '@/pages/Docs'
 import Login from '@/pages/Login'
@@ -22,10 +23,16 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return token ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+// 도메인에 따라 루트 경로 동작 결정
+function RootRoute() {
+  const isConsoleDomain = window.location.hostname === 'console.moviesir.cloud'
+  return isConsoleDomain ? <Navigate to="/login" replace /> : <Landing />
+}
+
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/api" element={<Api />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
