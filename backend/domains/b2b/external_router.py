@@ -36,6 +36,7 @@ class RecommendRequest(BaseModel):
     allow_adult: bool = False  # 성인 영화 허용
     excluded_ids_a: List[int] = []  # 트랙 A 제외할 영화 ID
     excluded_ids_b: List[int] = []  # 트랙 B 제외할 영화 ID
+    negative_movie_ids: Optional[List[int]] = None  # 부정 피드백 영화 ID (optional)
     client_user_id: Optional[str] = None  # 클라이언트측 사용자 ID (추적용)
 
 
@@ -106,7 +107,8 @@ async def external_recommend(
                     "preferred_otts": request.preferred_otts,
                     "allow_adult": request.allow_adult,
                     "excluded_ids_a": request.excluded_ids_a,
-                    "excluded_ids_b": request.excluded_ids_b
+                    "excluded_ids_b": request.excluded_ids_b,
+                    "negative_movie_ids": request.negative_movie_ids or []  # Optional
                 }
             )
 
@@ -206,6 +208,7 @@ class RecommendSingleRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
     allow_adult: bool = False
+    negative_movie_ids: Optional[List[int]] = None  # 부정 피드백 영화 ID (optional)
     client_user_id: Optional[str] = None
 
 
@@ -248,7 +251,8 @@ async def external_recommend_single(
                     "track": request.track,
                     "preferred_genres": request.preferred_genres,
                     "preferred_otts": request.preferred_otts,
-                    "allow_adult": request.allow_adult
+                    "allow_adult": request.allow_adult,
+                    "negative_movie_ids": request.negative_movie_ids or []  # Optional
                 }
             )
 
