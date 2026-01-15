@@ -59,7 +59,7 @@ def _get_email_html(code: str) -> str:
                     </tr>
                     <!-- 본문 -->
                     <tr>
-                        <td style="padding:20px 24px;">
+                        <td style="padding:20px 24px; text-align:center;">
                             <h1 class="title-text" style="margin:0 0 12px; font-size:17px; font-weight:700; color:#1e293b;">이메일 인증</h1>
                             <p class="info-text" style="margin:0 0 20px; font-size:14px; line-height:1.5; color:#64748b;">
                                 안녕하세요! 무비서 가입을 환영합니다<br>
