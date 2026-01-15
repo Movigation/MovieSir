@@ -50,6 +50,10 @@ export default {
             transform: 'translateY(0) scale(1)',
           },
         },
+        bounceHorizontal: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(10px)' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.5s ease-in-out',
@@ -57,6 +61,7 @@ export default {
         'panel-appear': 'panelAppear 0.2s ease-out',
         'slide-down': 'slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
         'slide-up': 'slideUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'bounce-horizontal': 'bounceHorizontal 1s ease-in-out infinite',
       },
       zIndex: {
         'base': '0',
@@ -64,9 +69,9 @@ export default {
         'panel': '20',
         'floating': '30',
         'nav': '40',
-        'nav-high': '9990',
-        'chatbot-backdrop': '9970',
-        'chatbot-panel': '9980',
+        'nav-high': '9970',
+        'chatbot-backdrop': '9980',
+        'chatbot-panel': '9990',
         'chatbot-btn': '9995',
         'modal': '90000',
         'toast': '90010',

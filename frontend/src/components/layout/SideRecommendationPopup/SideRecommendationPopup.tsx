@@ -119,7 +119,7 @@ export default function SideRecommendationPopup({
             {/* 슬라이딩 컨네이너 (버튼 + 패널 통합 이동) */}
             <div
                 className={`
-                    fixed top-0 right-0 h-full w-full sm:w-auto z-chatbot-btn flex items-center justify-end
+                    fixed top-0 right-0 h-full 2xl:h-[calc(100vh-4rem)] w-full sm:w-auto z-chatbot-btn flex items-center justify-end
                     transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
                     ${isOpen
                         ? 'translate-x-0'
@@ -137,7 +137,7 @@ export default function SideRecommendationPopup({
                     }}
                     className={`
                         side-reco-trigger absolute left-0 -translate-x-full top-1/2 -translate-y-1/2
-                        bg-gray-500/25 hover:bg-gray-600/35 dark:bg-gray-500/55 dark:hover:bg-gray-500/75 text-white w-[36px] h-[150px] rounded-l-xl
+                        bg-blue-600/35 hover:bg-blue-600/45 dark:bg-blue-500/55 dark:hover:bg-blue-500/75 text-white w-[36px] h-[150px] rounded-l-xl
                         flex flex-col items-center justify-center gap-2 shadow-lg
                     `}
                     title={isOpen ? '닫기' : '마지막 추천 다시보기'}
