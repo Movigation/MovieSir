@@ -234,8 +234,8 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-7xl">
           <a href="/" className="flex items-center gap-3">
-            <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
-            <span className="text-2xl font-bold text-gray-900">무비서</span>
+            <img src="/favicon.svg" alt={t('nav.brand')} className="w-10 h-10" />
+            <span className="text-2xl font-bold text-gray-900">{t('nav.brand')}</span>
           </a>
           <ul className="hidden gap-8 md:flex">
             <li>
@@ -409,19 +409,19 @@ export default function Landing() {
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    10K+
+                    {t('hero.movieDataValue')}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">{t('hero.movieData')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    1s
+                    {t('hero.recSpeedValue')}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">{t('hero.recSpeed')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    6
+                    {t('hero.customRecValue')}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">{t('hero.customRec')}</div>
                 </div>
@@ -442,7 +442,7 @@ export default function Landing() {
                   </div>
                   {/* AI Badge */}
                   <div className="absolute px-3 py-1 text-xs font-bold text-white rounded-full shadow-lg -top-3 -right-3 bg-accent-500">
-                    AI 추천
+                    {t('hero.aiRec')}
                   </div>
                 </div>
 
@@ -690,71 +690,91 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Recommendation Preview Section */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-gray-50">
-        <div className="max-w-[600px] mx-auto px-6">
+      {/* Recommendation Preview Section - Dark Theme */}
+      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-[#0f0f13]">
+        <div className="max-w-5xl px-6 mx-auto">
           <div className="mb-12 text-center animate-fade-up">
-            <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
+            <span className="inline-block px-5 py-2.5 bg-accent-600/20 border border-accent-500/30 text-accent-400 text-base font-medium rounded-full mb-8">
               {t('preview.badge')}
             </span>
-            <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-5xl">
-              {t('preview.title1')} <span className="text-accent-600">{t('preview.title2')}</span>
+            <h2 className="mb-6 text-4xl font-black text-white md:text-5xl">
+              {t('preview.title1')} <span className="text-accent-400">{t('preview.title2')}</span>
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-400">
               {t('preview.desc')}
             </p>
           </div>
 
-          <div className="space-y-4 animate-fade-up">
-            {[
-              {
-                title: "쇼생크 탈출",
-                year: 1994,
-                genres: ["드라마"],
-                runtime: "2시간 22분",
-                score: 95,
-              },
-              {
-                title: "대부",
-                year: 1972,
-                genres: ["드라마", "범죄"],
-                runtime: "2시간 55분",
-                score: 92,
-              },
-            ].map((movie, i) => (
-              <div
-                key={i}
-                className="flex gap-4 p-5 transition-all bg-white border border-gray-100 rounded-2xl hover:border-accent-200 hover:shadow-xl"
-              >
-                <div className="w-16 h-24 bg-gradient-to-br from-accent-500 to-accent-700 rounded-xl flex items-center justify-center text-2xl shadow-lg shadow-accent-500/20 flex-shrink-0">
-                  🎬
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-lg font-bold text-gray-900">{movie.title}</h4>
-                    <span className="text-sm text-gray-400">{movie.year}</span>
-                  </div>
-                  <div className="flex gap-2 mb-2">
-                    {movie.genres.map((g) => (
-                      <span
-                        key={g}
-                        className="text-xs px-2 py-0.5 bg-accent-50 text-accent-600 rounded-full font-medium"
-                      >
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>{movie.runtime}</span>
-                    <span className="font-medium text-green-600">{t('preview.matching')} {movie.score}%</span>
-                  </div>
-                </div>
+          <div className="space-y-10 animate-fade-up">
+            {/* Personalized Recommendations */}
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-1 h-6 rounded-full bg-accent-500"></div>
+                <h3 className="text-xl font-bold text-white">{t('preview.personalizedRec')}</h3>
               </div>
-            ))}
-            <div className="p-5 border rounded-2xl bg-accent-50 border-accent-100">
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { title: "Interstellar", year: "2014", runtime: "2h 49m", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
+                  { title: "기생충", year: "2019", runtime: "2h 12m", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
+                  { title: "Inception", year: "2010", runtime: "2h 28m", poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Ber.jpg" },
+                ].map((movie, i) => (
+                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-accent-500/20">
+                    <img
+                      src={movie.poster}
+                      alt={movie.title}
+                      className="object-cover w-full aspect-[2/3]"
+                    />
+                    <div className="absolute inset-0 transition-opacity bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-100"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h4 className="mb-1 text-lg font-bold text-white truncate">{movie.title}</h4>
+                      <div className="flex items-center gap-2 text-sm text-gray-300">
+                        <span>{movie.year}</span>
+                        <span className="text-gray-500">•</span>
+                        <span>{movie.runtime}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Popular Recommendations */}
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-1 h-6 bg-yellow-500 rounded-full"></div>
+                <h3 className="text-xl font-bold text-white">{t('preview.popularRec')}</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { title: "La La Land", year: "2016", runtime: "2h 8m", poster: "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg" },
+                  { title: "The Dark Knight", year: "2008", runtime: "2h 32m", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
+                  { title: "너의 이름은", year: "2016", runtime: "1h 46m", poster: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg" },
+                ].map((movie, i) => (
+                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-xl hover:scale-105 hover:shadow-2xl hover:shadow-yellow-500/20">
+                    <img
+                      src={movie.poster}
+                      alt={movie.title}
+                      className="object-cover w-full aspect-[2/3]"
+                    />
+                    <div className="absolute inset-0 transition-opacity bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-100"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h4 className="mb-1 text-lg font-bold text-white truncate">{movie.title}</h4>
+                      <div className="flex items-center gap-2 text-sm text-gray-300">
+                        <span>{movie.year}</span>
+                        <span className="text-gray-500">•</span>
+                        <span>{movie.runtime}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Total Runtime */}
+            <div className="p-5 border rounded-2xl bg-[#1a1a22] border-gray-800">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-700">{t('preview.totalRuntime')}</span>
-                <span className="text-2xl font-black text-accent-600">5시간 17분</span>
+                <span className="font-medium text-gray-400">{t('preview.totalRuntime')}</span>
+                <span className="text-2xl font-black text-accent-400">{t('preview.totalRuntimeValue')}</span>
               </div>
             </div>
           </div>
@@ -888,18 +908,18 @@ export default function Landing() {
 
           <div className="flex flex-wrap justify-center gap-12 stagger-scale">
             {[
-              { role: "Database" },
-              { role: "AI / ML" },
-              { role: "Frontend" },
-              { role: "Backend" },
-              { role: "Cloud" },
+              { roleKey: "team.roleDatabase" },
+              { roleKey: "team.roleAI" },
+              { roleKey: "team.roleFrontend" },
+              { roleKey: "team.roleBackend" },
+              { roleKey: "team.roleCloud" },
             ].map((member, i) => (
               <div key={i} className="text-center group">
                 <div className="flex items-center justify-center w-32 h-32 mx-auto mb-6 text-4xl font-bold text-white transition-transform rounded-full shadow-xl bg-accent-600 shadow-accent-500/30 group-hover:scale-110">
                   1
                 </div>
                 <p className="text-lg font-medium text-gray-600">
-                  {member.role}
+                  {t(member.roleKey)}
                 </p>
               </div>
             ))}
@@ -962,8 +982,8 @@ export default function Landing() {
           <div className="grid gap-12 mb-12 md:grid-cols-4">
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
-                <span className="text-xl font-bold">무비서</span>
+                <img src="/favicon.svg" alt={t('nav.brand')} className="w-10 h-10" />
+                <span className="text-xl font-bold">{t('nav.brand')}</span>
               </div>
               <p className="max-w-md leading-relaxed text-gray-400">
                 {t('footer.desc1')} <br />
@@ -1050,7 +1070,7 @@ export default function Landing() {
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"
         }`}
-        aria-label="맨 위로 이동"
+        aria-label={t('nav.scrollToTop')}
       >
         <svg
           className="w-6 h-6"

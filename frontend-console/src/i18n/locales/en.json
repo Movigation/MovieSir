@@ -4,7 +4,9 @@
     "howItWorks": "How It Works",
     "faq": "FAQ",
     "api": "API",
-    "useMoviesir": "Get Started"
+    "useMoviesir": "Get Started",
+    "brand": "MovieSir",
+    "scrollToTop": "Scroll to top"
   },
   "hero": {
     "badge": "Travel-time Based Content Recommendation",
@@ -19,8 +21,11 @@
     "startFree": "Start for Free",
     "viewApiDocs": "MovieSir API",
     "movieData": "Movie Data",
+    "movieDataValue": "10K+",
     "recSpeed": "Rec Speed",
+    "recSpeedValue": "1s",
     "customRec": "Custom Picks",
+    "customRecValue": "6",
     "aiRec": "AI Pick",
     "scroll": "Scroll"
   },
@@ -60,9 +65,11 @@
     "badge": "Preview Results",
     "title1": "See what you'll",
     "title2": "receive",
-    "desc": "Movie info and runtime provided at once",
-    "matching": "Match",
-    "totalRuntime": "Total Runtime"
+    "desc": "AI-analyzed personalized movie recommendations",
+    "personalizedRec": "Personalized Picks",
+    "popularRec": "Popular Picks",
+    "totalRuntime": "Total Runtime",
+    "totalRuntimeValue": "5h 17m"
   },
   "steps": {
     "badge": "How It Works",
@@ -95,7 +102,12 @@
   "team": {
     "badge": "About Us",
     "title": "Team Movigation",
-    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2nd Gen Team 3"
+    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2nd Gen Team 3",
+    "roleDatabase": "Database",
+    "roleAI": "AI / ML",
+    "roleFrontend": "Frontend",
+    "roleBackend": "Backend",
+    "roleCloud": "Cloud"
   },
   "cta": {
     "title1": "Get Started",

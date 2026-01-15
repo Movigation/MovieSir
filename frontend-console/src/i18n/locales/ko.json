@@ -4,7 +4,9 @@
     "howItWorks": "이용 방법",
     "faq": "자주 묻는 질문",
     "api": "API",
-    "useMoviesir": "무비서 이용하기"
+    "useMoviesir": "무비서 이용하기",
+    "brand": "무비서",
+    "scrollToTop": "맨 위로 이동"
   },
   "hero": {
     "badge": "이동 시간 맞춤형 콘텐츠 추천 서비스",
@@ -19,8 +21,11 @@
     "startFree": "무료로 시작하기",
     "viewApiDocs": "무비서 API 이동",
     "movieData": "영화 데이터",
+    "movieDataValue": "10K+",
     "recSpeed": "추천 속도",
+    "recSpeedValue": "1초",
     "customRec": "맞춤 추천",
+    "customRecValue": "6편",
     "aiRec": "AI 추천",
     "scroll": "스크롤"
   },
@@ -60,9 +65,11 @@
     "badge": "추천 결과 미리보기",
     "title1": "이런 결과를",
     "title2": "받아보세요",
-    "desc": "영화 정보와 런타임이 한 번에 제공됩니다",
-    "matching": "매칭",
-    "totalRuntime": "총 러닝타임"
+    "desc": "AI가 분석한 당신만의 맞춤 영화 추천",
+    "personalizedRec": "취향 맞춤 추천",
+    "popularRec": "인기 영화 추천",
+    "totalRuntime": "총 러닝타임",
+    "totalRuntimeValue": "5시간 17분"
   },
   "steps": {
     "badge": "이용 방법",
@@ -95,7 +102,12 @@
   "team": {
     "badge": "팀 소개",
     "title": "Team Movigation",
-    "desc": "스나이퍼팩토리 카카오클라우드 AIaaS 마스터 클래스 2기 3팀"
+    "desc": "스나이퍼팩토리 카카오클라우드 AIaaS 마스터 클래스 2기 3팀",
+    "roleDatabase": "데이터베이스",
+    "roleAI": "AI / ML",
+    "roleFrontend": "프론트엔드",
+    "roleBackend": "백엔드",
+    "roleCloud": "클라우드"
   },
   "cta": {
     "title1": "지금 바로",
