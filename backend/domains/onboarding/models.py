@@ -5,7 +5,7 @@ from backend.core.db import Base
 
 class OnboardingCandidate(Base):
     __tablename__ = "onboarding_candidates"
-    __table_args__ = {"schema": "public"}
+    __table_args__ = {"schema": "b2c"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     movie_id = Column(Integer, ForeignKey("movies.movie_id"), nullable=False)
