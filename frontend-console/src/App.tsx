@@ -3,9 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import Api from '@/pages/Api'
 import Docs from '@/pages/Docs'
-import Landing from '@/pages/Landing'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
+import ForgotPassword from '@/pages/ForgotPassword'
 import Dashboard from '@/pages/Dashboard'
 import ApiKeys from '@/pages/ApiKeys'
 import Usage from '@/pages/Usage'
@@ -14,6 +14,7 @@ import Logs from '@/pages/Logs'
 import ApiDocs from '@/pages/ApiDocs'
 import Playground from '@/pages/Playground'
 import Settings from '@/pages/Settings'
+import OAuthCallback from '@/pages/OAuthCallback'
 import { useAuthStore } from '@/stores/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -24,12 +25,15 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/api" element={<Api />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/auth/google/callback" element={<OAuthCallback provider="google" />} />
+      <Route path="/auth/github/callback" element={<OAuthCallback provider="github" />} />
       <Route
         path="/console"
         element={

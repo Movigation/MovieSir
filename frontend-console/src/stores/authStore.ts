@@ -6,6 +6,7 @@ interface Company {
   name: string
   email: string
   plan: string
+  oauth_provider?: string  // google, github (소셜 로그인 사용자)
 }
 
 interface AuthState {
@@ -13,6 +14,7 @@ interface AuthState {
   token: string | null
   login: (company: Company, token: string) => void
   logout: () => void
+  setCompany: (company: Company) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,7 +23,13 @@ export const useAuthStore = create<AuthState>()(
       company: null,
       token: null,
       login: (company, token) => set({ company, token }),
-      logout: () => set({ company: null, token: null }),
+      logout: () => {
+        // Playground API 키도 함께 정리
+        localStorage.removeItem('playground_api_key')
+        sessionStorage.removeItem('playground_api_key_temp')
+        set({ company: null, token: null })
+      },
+      setCompany: (company) => set({ company }),
     }),
     {
       name: 'b2b-auth',

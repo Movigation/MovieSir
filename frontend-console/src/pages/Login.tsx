@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
+import GoogleLoginButton from '@/components/GoogleLoginButton'
+import GitHubLoginButton from '@/components/GitHubLoginButton'
+
+const GOOGLE_CLIENT_ID = '45850155358-6c4spfsqiumti8dadakngs5el20udrhs.apps.googleusercontent.com'
+const GITHUB_CLIENT_ID = 'Ov231iDZxkHnqpBNOF3h'
+const REDIRECT_URI = import.meta.env.PROD
+  ? 'https://console.moviesir.cloud'
+  : 'http://localhost:5173'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -13,6 +21,16 @@ export default function Login() {
     email: '',
     password: '',
   })
+
+  const handleGoogleLogin = () => {
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${REDIRECT_URI}/auth/google/callback&response_type=code&scope=email%20profile`
+    window.location.href = googleAuthUrl
+  }
+
+  const handleGitHubLogin = () => {
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${REDIRECT_URI}/auth/github/callback&scope=user:email`
+    window.location.href = githubAuthUrl
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,57 +85,76 @@ export default function Login() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-6">
-              {/* Email Input */}
-              <div className="mb-3">
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="이메일"
-                  className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
-                  required
-                />
+            <div className="p-6">
+              {/* Social Login Buttons */}
+              <div className="space-y-3 mb-6">
+                <GoogleLoginButton onClick={handleGoogleLogin} />
+                <GitHubLoginButton onClick={handleGitHubLogin} />
               </div>
 
-              {/* Password Input */}
-              <div className="mb-5">
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="비밀번호"
-                  className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
-                  required
-                />
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/20"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-transparent text-white/50">또는</span>
+                </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-500/25"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    로그인 중...
-                  </span>
-                ) : (
-                  '로그인'
-                )}
-              </button>
-            </form>
+              {/* Email Login Form */}
+              <form onSubmit={handleSubmit}>
+                {/* Email Input */}
+                <div className="mb-3">
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="이메일"
+                    className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+
+                {/* Password Input */}
+                <div className="mb-5">
+                  <input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="비밀번호"
+                    className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-500/25"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      로그인 중...
+                    </span>
+                  ) : (
+                    '로그인'
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
 
           {/* Links */}
           <div className="mt-6 flex items-center justify-center gap-3 text-sm">
-            <a href="#" className="text-white/50 hover:text-white/80 transition-colors">
+            <Link to="/forgot-password" className="text-white/50 hover:text-white/80 transition-colors">
               비밀번호 찾기
-            </a>
+            </Link>
             <span className="text-white/20">|</span>
             <Link to="/register" className="text-white/50 hover:text-white/80 transition-colors">
               회원가입

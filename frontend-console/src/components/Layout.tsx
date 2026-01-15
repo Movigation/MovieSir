@@ -1,15 +1,39 @@
 import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { api } from '@/api'
+
+interface UsageData {
+  today: number
+  daily_limit: number
+}
 
 export default function Layout() {
   const { company, logout } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [usage, setUsage] = useState<UsageData>({ today: 0, daily_limit: 1000 })
 
   // 브라우저 탭 제목 설정
   useEffect(() => {
     document.title = '무비서 Console'
+  }, [])
+
+  // 사용량 데이터 가져오기
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const { data } = await api.get('/b2b/dashboard')
+        setUsage({ today: data.today, daily_limit: data.daily_limit })
+      } catch (err) {
+        console.error('Failed to fetch usage:', err)
+      }
+    }
+    fetchUsage()
+
+    // 30초마다 갱신
+    const interval = setInterval(fetchUsage, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const handleLogout = () => {
@@ -21,7 +45,7 @@ export default function Layout() {
     { path: '/console/dashboard', label: '대시보드', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { path: '/console/api-keys', label: 'API 키', icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z' },
     { path: '/console/usage', label: '사용량', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-    { path: '/console/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+    // { path: '/console/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },  // TODO: 추후 구현
     { path: '/console/logs', label: 'Logs', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { path: '/console/playground', label: 'Playground', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { path: '/console/docs', label: 'API 문서', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
@@ -97,15 +121,20 @@ export default function Layout() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-500">Current Plan</span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                company?.plan === 'ENTERPRISE' ? 'bg-amber-500/20 text-amber-400' :
                 company?.plan === 'PRO' ? 'bg-blue-500/20 text-blue-400' :
                 company?.plan === 'BASIC' ? 'bg-cyan-500/20 text-cyan-400' :
                 'bg-gray-500/20 text-gray-400'
               }`}>{company?.plan}</span>
             </div>
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: '34%' }} />
+              <div className={`h-full rounded-full ${
+                company?.plan === 'ENTERPRISE' ? 'bg-amber-500' : 'bg-blue-500'
+              }`} style={{ width: `${Math.min(Math.round((usage.today / usage.daily_limit) * 100), 100)}%` }} />
             </div>
-            <p className="text-xs text-gray-500 mt-1.5">342 / 1,000 calls today</p>
+            <p className="text-xs text-gray-500 mt-1.5">
+              {usage.today.toLocaleString()} / {usage.daily_limit.toLocaleString()} calls today
+            </p>
           </div>
         </div>
 
