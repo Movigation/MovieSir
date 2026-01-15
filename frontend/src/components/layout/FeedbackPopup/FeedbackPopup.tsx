@@ -269,18 +269,6 @@ export default function FeedbackPopup() {
                             className="md:hidden fixed inset-0 z-[100001] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-[3px] pointer-events-none animate-in fade-in duration-500"
                         >
                             <div className="text-white text-center space-y-6 max-w-[280px]">
-                                <div className="relative flex justify-center">
-                                    <div className="w-20 h-20 border-2 border-white/30 rounded-full flex items-center justify-center animate-pulse bg-white/5">
-                                        <svg className="w-10 h-10 text-white fill-current animate-bounce-horizontal" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v10h-2zm0 4h2v2h-2z" />
-                                            <path d="M10 9a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V9z" />
-                                            <rect x="9" y="10" width="6" height="4" rx="1" fill="white" />
-                                            <path d="M12 11c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" fill="black" />
-                                        </svg>
-                                    </div>
-                                    <div className="absolute top-1/2 -left-12 -translate-y-1/2 text-3xl animate-pulse"><CornerLeftDown /></div>
-                                    <div className="absolute top-1/2 -right-12 -translate-y-1/2 text-3xl animate-pulse"><CornerRightDown /></div>
-                                </div>
                                 <p className="text-[16px] font-bold leading-relaxed drop-shadow-xl text-white">
                                     무비서가 추천해준 영화가 <br />별로였다면&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;마음에 드셨다면<br /><span className="text-red-400"><CornerLeftDown className="inline" /> 왼쪽</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span className="text-green-400">오른쪽<CornerRightDown className="inline" /></span><br />으로 스와이프해주세요!
                                 </p>
