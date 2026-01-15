@@ -36,6 +36,20 @@ const API_BASE_URL = import.meta.env.PROD
 
 const genres = ['드라마', '코미디', '스릴러', '로맨스', '액션', '다큐멘터리', '공포', '범죄', '모험', '가족', 'SF', '미스터리', 'TV 영화', '애니메이션', '판타지', '음악']
 
+// 지원 언어 목록
+type Language = 'curl' | 'python' | 'javascript' | 'nodejs' | 'go' | 'java' | 'php' | 'ruby'
+
+const languages: { id: Language; name: string; color: string }[] = [
+  { id: 'curl', name: 'cURL', color: 'text-green-400' },
+  { id: 'python', name: 'Python', color: 'text-yellow-400' },
+  { id: 'javascript', name: 'JavaScript', color: 'text-yellow-300' },
+  { id: 'nodejs', name: 'Node.js', color: 'text-green-500' },
+  { id: 'go', name: 'Go', color: 'text-cyan-400' },
+  { id: 'java', name: 'Java', color: 'text-orange-400' },
+  { id: 'php', name: 'PHP', color: 'text-purple-400' },
+  { id: 'ruby', name: 'Ruby', color: 'text-red-400' },
+]
+
 export default function Playground() {
   // API Key (수동 입력 필수, localStorage에 저장 가능)
   const [manualApiKey, setManualApiKey] = useState(() => {
@@ -84,6 +98,9 @@ export default function Playground() {
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Code Example Language
+  const [selectedLang, setSelectedLang] = useState<Language>('curl')
+
   // API 키는 보안상 마스킹되어 저장되므로 수동 입력 필수
   const effectiveApiKey = manualApiKey.trim()
 
@@ -104,11 +121,157 @@ export default function Playground() {
     excluded_ids_b: [],
   }
 
-  // Generate curl command
-  const curlCommand = `curl -X POST "${API_BASE_URL}/v1/recommend" \\
+  // Generate code example for each language
+  const getCodeExample = (lang: Language): string => {
+    const apiKey = effectiveApiKey || 'sk-moviesir-xxx'
+    const bodyJson = JSON.stringify(requestBody, null, 2)
+    const bodyJsonIndented = JSON.stringify(requestBody, null, 4)
+
+    switch (lang) {
+      case 'curl':
+        return `curl -X POST "${API_BASE_URL}/v1/recommend" \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: ${effectiveApiKey || 'sk-moviesir-xxx'}" \\
-  -d '${JSON.stringify(requestBody, null, 2)}'`
+  -H "X-API-Key: ${apiKey}" \\
+  -d '${bodyJson}'`
+
+      case 'python':
+        return `import requests
+
+url = "${API_BASE_URL}/v1/recommend"
+headers = {
+    "Content-Type": "application/json",
+    "X-API-Key": "${apiKey}"
+}
+data = ${bodyJson.replace(/null/g, 'None').replace(/true/g, 'True').replace(/false/g, 'False')}
+
+response = requests.post(url, json=data, headers=headers)
+print(response.json())`
+
+      case 'javascript':
+        return `fetch("${API_BASE_URL}/v1/recommend", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "${apiKey}"
+  },
+  body: JSON.stringify(${bodyJson})
+})
+  .then(res => res.json())
+  .then(data => console.log(data));`
+
+      case 'nodejs':
+        return `const axios = require('axios');
+
+axios.post('${API_BASE_URL}/v1/recommend', ${bodyJson}, {
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': '${apiKey}'
+  }
+})
+  .then(res => console.log(res.data))
+  .catch(err => console.error(err));`
+
+      case 'go':
+        return `package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "io"
+)
+
+func main() {
+    data := map[string]interface{}{
+        "user_movie_ids":   []int{${userMovieIds.join(', ')}},
+        "available_time":   ${availableTime},
+        "preferred_genres": ${selectedGenres.length > 0 ? JSON.stringify(selectedGenres) : 'nil'},
+        "preferred_otts":   nil,
+        "allow_adult":      ${allowAdult},
+        "excluded_ids_a":   []int{},
+        "excluded_ids_b":   []int{},
+    }
+    jsonData, _ := json.Marshal(data)
+
+    req, _ := http.NewRequest("POST", "${API_BASE_URL}/v1/recommend", bytes.NewBuffer(jsonData))
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("X-API-Key", "${apiKey}")
+
+    client := &http.Client{}
+    resp, _ := client.Do(req)
+    defer resp.Body.Close()
+
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
+}`
+
+      case 'java':
+        return `import java.net.http.*;
+import java.net.URI;
+
+public class MovieSirAPI {
+    public static void main(String[] args) throws Exception {
+        String json = """
+            ${bodyJsonIndented}
+            """;
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("${API_BASE_URL}/v1/recommend"))
+            .header("Content-Type", "application/json")
+            .header("X-API-Key", "${apiKey}")
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
+
+        HttpResponse<String> response = client.send(request,
+            HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}`
+
+      case 'php':
+        return `<?php
+$url = '${API_BASE_URL}/v1/recommend';
+$data = ${bodyJson};
+
+$options = [
+    'http' => [
+        'method' => 'POST',
+        'header' => [
+            'Content-Type: application/json',
+            'X-API-Key: ${apiKey}'
+        ],
+        'content' => json_encode($data)
+    ]
+];
+
+$context = stream_context_create($options);
+$response = file_get_contents($url, false, $context);
+echo $response;
+?>`
+
+      case 'ruby':
+        return `require 'net/http'
+require 'json'
+require 'uri'
+
+uri = URI('${API_BASE_URL}/v1/recommend')
+http = Net::HTTP.new(uri.host, uri.port)
+http.use_ssl = true
+
+request = Net::HTTP::Post.new(uri)
+request['Content-Type'] = 'application/json'
+request['X-API-Key'] = '${apiKey}'
+request.body = ${bodyJson}.to_json
+
+response = http.request(request)
+puts response.body`
+
+      default:
+        return ''
+    }
+  }
 
   const sendRequest = async () => {
     if (!effectiveApiKey) {
@@ -336,19 +499,37 @@ export default function Playground() {
         </div>
       </div>
 
-      {/* cURL Command */}
+      {/* Code Examples */}
       <div className="bg-[#16161d] rounded-xl overflow-hidden mb-6">
         <div className="px-4 lg:px-5 py-3 lg:py-4 border-b border-white/5 flex justify-between items-center">
-          <h3 className="text-sm font-medium text-white">cURL</h3>
+          <h3 className="text-sm font-medium text-white">Code Example</h3>
           <button
-            onClick={() => copyToClipboard(curlCommand)}
+            onClick={() => copyToClipboard(getCodeExample(selectedLang))}
             className="px-2.5 py-1 text-xs bg-white/5 text-gray-400 rounded hover:text-white transition-colors"
           >
             복사
           </button>
         </div>
-        <pre className="p-4 font-mono text-xs text-green-400 overflow-auto max-h-[200px]">
-          {curlCommand}
+        {/* Language Tabs */}
+        <div className="px-4 lg:px-5 py-2 border-b border-white/5 flex gap-1 overflow-x-auto">
+          {languages.map(lang => (
+            <button
+              key={lang.id}
+              onClick={() => setSelectedLang(lang.id)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                selectedLang === lang.id
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+              }`}
+            >
+              {lang.name}
+            </button>
+          ))}
+        </div>
+        <pre className={`p-4 font-mono text-xs overflow-auto max-h-[300px] ${
+          languages.find(l => l.id === selectedLang)?.color || 'text-gray-400'
+        }`}>
+          {getCodeExample(selectedLang)}
         </pre>
       </div>
 
