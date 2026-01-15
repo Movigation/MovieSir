@@ -7,7 +7,7 @@ import os
 from backend.core.db import get_db
 from backend.domains.user.models import User
 from backend.domains.auth.schemas import LoginRequest, LoginResponse, UserResponse
-from backend.domains.auth.utils import create_access_token, get_current_user
+from backend.domains.auth.utils import create_access_token, get_current_user, get_current_user_optional
 from backend.utils.password import verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -210,21 +210,23 @@ def refresh_access_token(
 def logout(
     response: Response,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user_optional)  # 만료된 토큰도 허용
 ):
     """
     로그아웃 API
     - HttpOnly 쿠키에서 토큰 삭제
     - DB에 저장된 Refresh Token을 삭제하여 재발급을 불가능하게 함.
+    - 토큰이 만료되어도 쿠키 삭제는 수행됨
     """
-    # 1. 쿠키 삭제
+    # 1. 쿠키 삭제 (항상 수행)
     response.delete_cookie(key="access_token", path="/")
     response.delete_cookie(key="refresh_token", path="/")
-    response.delete_cookie(key="remember_me", path="/")  # remember_me 쿠키도 삭제
+    response.delete_cookie(key="remember_me", path="/")
 
-    # 2. DB에서 리프레시 토큰 삭제 (NULL 처리)
-    current_user.refresh_token = None
-    db.add(current_user)
-    db.commit()
+    # 2. DB에서 리프레시 토큰 삭제 (유효한 사용자인 경우에만)
+    if current_user:
+        current_user.refresh_token = None
+        db.add(current_user)
+        db.commit()
 
     return {"message": "로그아웃 되었습니다."}

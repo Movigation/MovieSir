@@ -36,6 +36,7 @@ Dockerfile
 # Training data (large files)
 training/original_data
 training/lightgcn_data
+training/lightgcn_model
 training/sbert_data
 
 # Other

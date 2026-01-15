@@ -60,6 +60,28 @@ def verify_refresh_token(token: str) -> Optional[str]:
 # ======================================================
 # 현재 로그인된 유저 조회 (쿠키 기반)
 # ======================================================
+def get_current_user_optional(
+    access_token: Optional[str] = Cookie(None),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """
+    현재 로그인된 유저 조회 (로그아웃용 - 만료된 토큰도 허용)
+    토큰이 없거나 만료/무효한 경우 None 반환
+    """
+    if not access_token:
+        return None
+
+    try:
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if not user_id:
+            return None
+        user = db.query(User).filter(User.user_id == user_id).first()
+        return user
+    except (ExpiredSignatureError, jwt.JWTError):
+        return None
+
+
 def get_current_user(
     access_token: Optional[str] = Cookie(None),  # HttpOnly 쿠키에서 자동 추출
     db: Session = Depends(get_db),
