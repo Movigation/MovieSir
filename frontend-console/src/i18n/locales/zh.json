@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "features": "核心功能",
+    "howItWorks": "使用方法",
+    "faq": "常见问题",
+    "api": "API",
+    "useMoviesir": "开始使用"
+  },
+  "hero": {
+    "badge": "基于出行时间的内容推荐服务",
+    "title1": "只需告诉我们",
+    "title2": "您的时间",
+    "title3": "电影",
+    "title4": "我来帮您挑选",
+    "desc1": "AI分析您的喜好",
+    "desc2": "只推荐您订阅的",
+    "desc3": "OTT平台上可观看的",
+    "desc4": "电影",
+    "startFree": "免费开始",
+    "viewApiDocs": "查看API文档",
+    "movieData": "电影数据",
+    "recSpeed": "推荐速度",
+    "customRec": "定制推荐",
+    "aiRec": "AI推荐",
+    "scroll": "滚动"
+  },
+  "ott": {
+    "badge": "集成平台",
+    "title1": "主要OTT",
+    "title2": "平台集成",
+    "desc": "只推荐您订阅的OTT平台上可直接观看的电影"
+  },
+  "pwa": {
+    "badge": "PWA支持",
+    "title1": "像原生应用",
+    "title2": "一样使用",
+    "desc": "无需安装,添加到主屏幕后即可像原生应用一样使用",
+    "addHome": "添加到主屏幕",
+    "addHomeDesc": "从浏览器添加后即可像应用一样直接启动",
+    "fastLoading": "快速加载",
+    "fastLoadingDesc": "缓存技术提供原生应用级别的速度",
+    "allDevices": "全设备支持",
+    "allDevicesDesc": "PC、平板、手机上体验一致"
+  },
+  "features": {
+    "badge": "核心功能",
+    "title1": "MovieSir的",
+    "title2": "特别推荐",
+    "desc": "基于AI的混合推荐系统为您找到完美匹配的电影",
+    "timeBasedTitle": "基于时间的推荐",
+    "timeBasedDesc": "输入出行时间,获得完美匹配的电影组合",
+    "aiTitle": "AI个性化推荐",
+    "aiDesc": "双AI混合系统理解您的口味,找到定制电影",
+    "ottTitle": "OTT集成",
+    "ottDesc": "只显示您订阅的OTT平台上可观看的电影",
+    "dualTitle": "双轨推荐",
+    "dualDesc": "同时提供个性化推荐和热门推荐,扩大选择范围"
+  },
+  "preview": {
+    "badge": "预览结果",
+    "title1": "看看您将",
+    "title2": "收到什么",
+    "desc": "电影信息和时长一目了然",
+    "matching": "匹配度",
+    "totalRuntime": "总时长"
+  },
+  "steps": {
+    "badge": "使用方法",
+    "title1": "5步完成",
+    "title2": "定制推荐",
+    "step1Title": "注册",
+    "step1Desc": "简单邮箱验证",
+    "step2Title": "喜好调查",
+    "step2Desc": "选择喜欢的电影",
+    "step3Title": "设置条件",
+    "step3Desc": "时间、类型筛选",
+    "step4Title": "AI推荐",
+    "step4Desc": "个性化电影推荐",
+    "step5Title": "立即观看",
+    "step5Desc": "一键跳转OTT"
+  },
+  "faq": {
+    "badge": "常见问题",
+    "title": "FAQ",
+    "desc": "查看关于MovieSir的常见问题",
+    "q1": "MovieSir是免费的吗?",
+    "a1": "是的,MovieSir完全免费!注册后即可无限制使用所有功能",
+    "q2": "支持哪些OTT平台?",
+    "a2": "目前支持Netflix、Tving、Watcha、Disney+、Apple TV+等主要OTT平台",
+    "q3": "需要安装应用吗?",
+    "a3": "不需要!MovieSir是PWA应用,可直接在浏览器中使用",
+    "q4": "推荐算法是如何工作的?",
+    "a4": "我们使用SBERT和LightGCN的混合系统提供最优推荐"
+  },
+  "team": {
+    "badge": "关于我们",
+    "title": "Team Movigation",
+    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2期 3组"
+  },
+  "cta": {
+    "title1": "立即",
+    "title2": "开始",
+    "desc1": "不再纠结看什么",
+    "desc2": "MovieSir为您找到完美电影",
+    "startFree": "免费开始",
+    "b2bConsole": "B2B控制台"
+  },
+  "footer": {
+    "desc1": "基于AI的混合推荐系统",
+    "desc2": "为您找到完美匹配的电影",
+    "desc3": "与MovieSir一起开启新的电影发现之旅",
+    "product": "产品",
+    "resources": "资源",
+    "console": "控制台",
+    "copyright": "2025 Team Movigation. All rights reserved.",
+    "teamDesc": "Sniper Factory KakaoCloud AIaaS Master Class 2期 3组"
+  }
+}
