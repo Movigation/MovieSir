@@ -134,7 +134,7 @@ async def external_recommend(
             data={
                 "track_a": ai_result.get("track_a"),
                 "track_b": ai_result.get("track_b"),
-                "algorithm": "hybrid-v5"
+                "algorithm": "hybrid"
             },
             meta={
                 "latency_ms": response_time_ms,

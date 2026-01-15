@@ -51,7 +51,7 @@ class DatabaseConnection:
             return cursor.fetchall()
 
 
-class HybridRecommenderV5:
+class HybridRecommender:
     def __init__(
         self,
         db_config: dict,
@@ -71,7 +71,7 @@ class HybridRecommenderV5:
         # DB 연결
         self.db = DatabaseConnection(**db_config)
 
-        print("Initializing Hybrid Recommender V5 (Noise-based Diversity)...")
+        print("Initializing Hybrid Recommender (Noise-based Diversity)...")
 
         # 1. 데이터 로드 (DB에서)
         self._load_metadata_from_db()
