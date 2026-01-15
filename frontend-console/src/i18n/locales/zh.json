@@ -69,7 +69,19 @@
     "personalizedRec": "个性化推荐",
     "popularRec": "热门推荐",
     "totalRuntime": "总时长",
-    "totalRuntimeValue": "5小时17分"
+    "totalRuntimeValue": "13小时55分",
+    "movie1Title": "星际穿越",
+    "movie1Runtime": "2小时49分",
+    "movie2Title": "寄生虫",
+    "movie2Runtime": "2小时12分",
+    "movie3Title": "盗梦空间",
+    "movie3Runtime": "2小时28分",
+    "movie4Title": "爱乐之城",
+    "movie4Runtime": "2小时8分",
+    "movie5Title": "蝙蝠侠:黑暗骑士",
+    "movie5Runtime": "2小时32分",
+    "movie6Title": "你的名字",
+    "movie6Runtime": "1小时46分"
   },
   "steps": {
     "badge": "使用方法",

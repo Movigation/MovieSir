@@ -69,7 +69,19 @@
     "personalizedRec": "취향 맞춤 추천",
     "popularRec": "인기 영화 추천",
     "totalRuntime": "총 러닝타임",
-    "totalRuntimeValue": "5시간 17분"
+    "totalRuntimeValue": "13시간 55분",
+    "movie1Title": "인터스텔라",
+    "movie1Runtime": "2시간 49분",
+    "movie2Title": "기생충",
+    "movie2Runtime": "2시간 12분",
+    "movie3Title": "인셉션",
+    "movie3Runtime": "2시간 28분",
+    "movie4Title": "라라랜드",
+    "movie4Runtime": "2시간 8분",
+    "movie5Title": "다크 나이트",
+    "movie5Runtime": "2시간 32분",
+    "movie6Title": "너의 이름은",
+    "movie6Runtime": "1시간 46분"
   },
   "steps": {
     "badge": "이용 방법",

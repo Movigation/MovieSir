@@ -69,7 +69,19 @@
     "personalizedRec": "Personalized Picks",
     "popularRec": "Popular Picks",
     "totalRuntime": "Total Runtime",
-    "totalRuntimeValue": "5h 17m"
+    "totalRuntimeValue": "13h 55m",
+    "movie1Title": "Interstellar",
+    "movie1Runtime": "2h 49m",
+    "movie2Title": "Parasite",
+    "movie2Runtime": "2h 12m",
+    "movie3Title": "Inception",
+    "movie3Runtime": "2h 28m",
+    "movie4Title": "La La Land",
+    "movie4Runtime": "2h 8m",
+    "movie5Title": "The Dark Knight",
+    "movie5Runtime": "2h 32m",
+    "movie6Title": "Your Name",
+    "movie6Runtime": "1h 46m"
   },
   "steps": {
     "badge": "How It Works",

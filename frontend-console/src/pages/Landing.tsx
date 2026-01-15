@@ -691,46 +691,46 @@ export default function Landing() {
       </section>
 
       {/* Recommendation Preview Section */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-gray-50">
-        <div className="max-w-3xl px-6 mx-auto">
-          <div className="mb-10 text-center animate-fade-up">
-            <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
+      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-20 bg-gray-50">
+        <div className="max-w-2xl px-6 mx-auto">
+          <div className="mb-8 text-center animate-fade-up">
+            <span className="inline-block px-4 py-2 bg-accent-50 border border-accent-100 text-accent-600 text-sm font-medium rounded-full mb-6">
               {t('preview.badge')}
             </span>
-            <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-5xl">
+            <h2 className="mb-4 text-3xl font-black text-gray-900 md:text-4xl">
               {t('preview.title1')} <span className="text-accent-600">{t('preview.title2')}</span>
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg text-gray-600">
               {t('preview.desc')}
             </p>
           </div>
 
-          <div className="space-y-6 animate-fade-up">
+          <div className="space-y-4 animate-fade-up">
             {/* Personalized Recommendations */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-1 h-5 rounded-full bg-accent-500"></div>
-                <h3 className="text-base font-bold text-gray-900">{t('preview.personalizedRec')}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 rounded-full bg-accent-500"></div>
+                <h3 className="text-sm font-bold text-gray-900">{t('preview.personalizedRec')}</h3>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { title: "Interstellar", year: "2014", runtime: "2h 49m", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-                  { title: "기생충", year: "2019", runtime: "2h 12m", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
-                  { title: "Inception", year: "2010", runtime: "2h 28m", poster: "https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg" },
+                  { titleKey: "preview.movie1Title", year: "2014", runtimeKey: "preview.movie1Runtime", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
+                  { titleKey: "preview.movie2Title", year: "2019", runtimeKey: "preview.movie2Runtime", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
+                  { titleKey: "preview.movie3Title", year: "2010", runtimeKey: "preview.movie3Runtime", poster: "https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg" },
                 ].map((movie, i) => (
-                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-xl">
+                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-lg">
                     <img
                       src={movie.poster}
-                      alt={movie.title}
+                      alt={t(movie.titleKey)}
                       className="object-cover w-full aspect-[2/3]"
                     />
-                    <div className="absolute inset-0 transition-opacity bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-90"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h4 className="mb-0.5 text-sm font-bold text-white truncate">{movie.title}</h4>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <h4 className="text-xs font-bold text-white truncate">{t(movie.titleKey)}</h4>
+                      <div className="flex items-center gap-1 text-[10px] text-gray-300">
                         <span>{movie.year}</span>
-                        <span className="text-gray-500">•</span>
-                        <span>{movie.runtime}</span>
+                        <span>•</span>
+                        <span>{t(movie.runtimeKey)}</span>
                       </div>
                     </div>
                   </div>
@@ -740,29 +740,29 @@ export default function Landing() {
 
             {/* Popular Recommendations */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-1 h-5 bg-yellow-500 rounded-full"></div>
-                <h3 className="text-base font-bold text-gray-900">{t('preview.popularRec')}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 bg-yellow-500 rounded-full"></div>
+                <h3 className="text-sm font-bold text-gray-900">{t('preview.popularRec')}</h3>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { title: "La La Land", year: "2016", runtime: "2h 8m", poster: "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg" },
-                  { title: "The Dark Knight", year: "2008", runtime: "2h 32m", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
-                  { title: "너의 이름은", year: "2016", runtime: "1h 46m", poster: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg" },
+                  { titleKey: "preview.movie4Title", year: "2016", runtimeKey: "preview.movie4Runtime", poster: "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg" },
+                  { titleKey: "preview.movie5Title", year: "2008", runtimeKey: "preview.movie5Runtime", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
+                  { titleKey: "preview.movie6Title", year: "2016", runtimeKey: "preview.movie6Runtime", poster: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg" },
                 ].map((movie, i) => (
-                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-xl">
+                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-lg">
                     <img
                       src={movie.poster}
-                      alt={movie.title}
+                      alt={t(movie.titleKey)}
                       className="object-cover w-full aspect-[2/3]"
                     />
-                    <div className="absolute inset-0 transition-opacity bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-90"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h4 className="mb-0.5 text-sm font-bold text-white truncate">{movie.title}</h4>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <h4 className="text-xs font-bold text-white truncate">{t(movie.titleKey)}</h4>
+                      <div className="flex items-center gap-1 text-[10px] text-gray-300">
                         <span>{movie.year}</span>
-                        <span className="text-gray-500">•</span>
-                        <span>{movie.runtime}</span>
+                        <span>•</span>
+                        <span>{t(movie.runtimeKey)}</span>
                       </div>
                     </div>
                   </div>
@@ -771,10 +771,10 @@ export default function Landing() {
             </div>
 
             {/* Total Runtime */}
-            <div className="p-4 border rounded-2xl bg-accent-50 border-accent-100">
+            <div className="p-3 border rounded-xl bg-accent-50 border-accent-100">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-700">{t('preview.totalRuntime')}</span>
-                <span className="text-xl font-black text-accent-600">{t('preview.totalRuntimeValue')}</span>
+                <span className="text-sm font-medium text-gray-700">{t('preview.totalRuntime')}</span>
+                <span className="text-lg font-black text-accent-600">{t('preview.totalRuntimeValue')}</span>
               </div>
             </div>
           </div>
