@@ -4,7 +4,9 @@
     "howItWorks": "使用方法",
     "faq": "常见问题",
     "api": "API",
-    "useMoviesir": "开始使用"
+    "useMoviesir": "开始使用",
+    "brand": "MovieSir",
+    "scrollToTop": "返回顶部"
   },
   "hero": {
     "badge": "基于出行时间的内容推荐服务",
@@ -17,10 +19,13 @@
     "desc3": "OTT平台上可观看的",
     "desc4": "电影",
     "startFree": "免费开始",
-    "viewApiDocs": "查看API文档",
+    "viewApiDocs": "MovieSir API",
     "movieData": "电影数据",
+    "movieDataValue": "10K+",
     "recSpeed": "推荐速度",
+    "recSpeedValue": "1秒",
     "customRec": "定制推荐",
+    "customRecValue": "6部",
     "aiRec": "AI推荐",
     "scroll": "滚动"
   },
@@ -60,9 +65,23 @@
     "badge": "预览结果",
     "title1": "看看您将",
     "title2": "收到什么",
-    "desc": "电影信息和时长一目了然",
-    "matching": "匹配度",
-    "totalRuntime": "总时长"
+    "desc": "AI分析的个性化电影推荐",
+    "personalizedRec": "个性化推荐",
+    "popularRec": "热门推荐",
+    "totalRuntime": "总时长",
+    "totalRuntimeValue": "13小时55分",
+    "movie1Title": "星际穿越",
+    "movie1Runtime": "2小时49分",
+    "movie2Title": "寄生虫",
+    "movie2Runtime": "2小时12分",
+    "movie3Title": "盗梦空间",
+    "movie3Runtime": "2小时28分",
+    "movie4Title": "爱乐之城",
+    "movie4Runtime": "2小时8分",
+    "movie5Title": "蝙蝠侠:黑暗骑士",
+    "movie5Runtime": "2小时32分",
+    "movie6Title": "你的名字",
+    "movie6Runtime": "1小时46分"
   },
   "steps": {
     "badge": "使用方法",
@@ -95,7 +114,12 @@
   "team": {
     "badge": "关于我们",
     "title": "Team Movigation",
-    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2期 3组"
+    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2期 3组",
+    "roleDatabase": "数据库",
+    "roleAI": "AI / ML",
+    "roleFrontend": "前端",
+    "roleBackend": "后端",
+    "roleCloud": "云端"
   },
   "cta": {
     "title1": "立即",

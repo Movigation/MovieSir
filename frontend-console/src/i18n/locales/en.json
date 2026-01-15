@@ -4,7 +4,9 @@
     "howItWorks": "How It Works",
     "faq": "FAQ",
     "api": "API",
-    "useMoviesir": "Get Started"
+    "useMoviesir": "Get Started",
+    "brand": "MovieSir",
+    "scrollToTop": "Scroll to top"
   },
   "hero": {
     "badge": "Travel-time Based Content Recommendation",
@@ -17,10 +19,13 @@
     "desc3": "movies available",
     "desc4": "on your subscribed OTT",
     "startFree": "Start for Free",
-    "viewApiDocs": "View API Docs",
+    "viewApiDocs": "MovieSir API",
     "movieData": "Movie Data",
+    "movieDataValue": "10K+",
     "recSpeed": "Rec Speed",
+    "recSpeedValue": "1s",
     "customRec": "Custom Picks",
+    "customRecValue": "6",
     "aiRec": "AI Pick",
     "scroll": "Scroll"
   },
@@ -60,9 +65,23 @@
     "badge": "Preview Results",
     "title1": "See what you'll",
     "title2": "receive",
-    "desc": "Movie info and runtime provided at once",
-    "matching": "Match",
-    "totalRuntime": "Total Runtime"
+    "desc": "AI-analyzed personalized movie recommendations",
+    "personalizedRec": "Personalized Picks",
+    "popularRec": "Popular Picks",
+    "totalRuntime": "Total Runtime",
+    "totalRuntimeValue": "13h 55m",
+    "movie1Title": "Interstellar",
+    "movie1Runtime": "2h 49m",
+    "movie2Title": "Parasite",
+    "movie2Runtime": "2h 12m",
+    "movie3Title": "Inception",
+    "movie3Runtime": "2h 28m",
+    "movie4Title": "La La Land",
+    "movie4Runtime": "2h 8m",
+    "movie5Title": "The Dark Knight",
+    "movie5Runtime": "2h 32m",
+    "movie6Title": "Your Name",
+    "movie6Runtime": "1h 46m"
   },
   "steps": {
     "badge": "How It Works",
@@ -95,7 +114,12 @@
   "team": {
     "badge": "About Us",
     "title": "Team Movigation",
-    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2nd Gen Team 3"
+    "desc": "Sniper Factory KakaoCloud AIaaS Master Class 2nd Gen Team 3",
+    "roleDatabase": "Database",
+    "roleAI": "AI / ML",
+    "roleFrontend": "Frontend",
+    "roleBackend": "Backend",
+    "roleCloud": "Cloud"
   },
   "cta": {
     "title1": "Get Started",

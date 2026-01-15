@@ -234,8 +234,8 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-7xl">
           <a href="/" className="flex items-center gap-3">
-            <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
-            <span className="text-2xl font-bold text-gray-900">무비서</span>
+            <img src="/favicon.svg" alt={t('nav.brand')} className="w-10 h-10" />
+            <span className="text-2xl font-bold text-gray-900">{t('nav.brand')}</span>
           </a>
           <ul className="hidden gap-8 md:flex">
             <li>
@@ -311,12 +311,14 @@ export default function Landing() {
                 </>
               )}
             </div>
-            <Link
-              to="/login"
+            <a
+              href="https://demo.moviesir.cloud"
+              target="_blank"
+              rel="noreferrer"
               className="px-6 py-2.5 bg-accent-600 text-white text-base font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all"
             >
               {t('nav.useMoviesir')}
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -407,19 +409,19 @@ export default function Landing() {
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    10K+
+                    {t('hero.movieDataValue')}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">{t('hero.movieData')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    1s
+                    {t('hero.recSpeedValue')}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">{t('hero.recSpeed')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    6
+                    {t('hero.customRecValue')}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">{t('hero.customRec')}</div>
                 </div>
@@ -440,7 +442,7 @@ export default function Landing() {
                   </div>
                   {/* AI Badge */}
                   <div className="absolute px-3 py-1 text-xs font-bold text-white rounded-full shadow-lg -top-3 -right-3 bg-accent-500">
-                    AI 추천
+                    {t('hero.aiRec')}
                   </div>
                 </div>
 
@@ -509,7 +511,7 @@ export default function Landing() {
 
         {/* Scroll Indicator */}
         <div className="absolute flex flex-col items-center gap-2 -translate-x-1/2 bottom-8 left-1/2">
-          <span className="text-xs text-gray-400">스크롤</span>
+          <span className="text-xs text-gray-400">{t('hero.scroll')}</span>
           <div className="flex justify-center w-6 h-10 pt-2 border-2 rounded-full border-accent-300">
             <div className="w-1 h-2 rounded-full bg-accent-500 animate-bounce" />
           </div>
@@ -522,13 +524,13 @@ export default function Landing() {
         <div className="absolute left-0 right-0 top-44">
           <div className="px-6 mx-auto text-center animate-fade-down max-w-7xl">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-6">
-              연동 플랫폼
+              {t('ott.badge')}
             </span>
             <h2 className="mb-4 text-4xl font-black text-gray-900 md:text-6xl">
-              주요 OTT<span className="text-accent-600"> 연동 지원</span>
+              {t('ott.title1')}<span className="text-accent-600"> {t('ott.title2')}</span>
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              구독 중인 OTT에서 바로 시청 가능한 영화만 추천해드립니다
+              {t('ott.desc')}
             </p>
           </div>
         </div>
@@ -556,14 +558,13 @@ export default function Landing() {
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-20 text-center animate-fade-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              PWA 지원
+              {t('pwa.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              앱처럼 <span className="text-accent-600">사용하세요</span>
+              {t('pwa.title1')} <span className="text-accent-600">{t('pwa.title2')}</span>
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              별도 설치 없이 홈 화면에 추가하면 네이티브 앱처럼 사용할 수
-              있습니다
+              {t('pwa.desc')}
             </p>
           </div>
 
@@ -586,11 +587,10 @@ export default function Landing() {
                 </svg>
               </div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                홈 화면에 추가
+                {t('pwa.addHome')}
               </h3>
               <p className="text-lg text-gray-600">
-                브라우저에서 홈 화면에 추가하면 <br />
-                앱처럼 바로 실행됩니다
+                {t('pwa.addHomeDesc')}
               </p>
             </div>
 
@@ -612,11 +612,10 @@ export default function Landing() {
                 </svg>
               </div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                빠른 로딩 속도
+                {t('pwa.fastLoading')}
               </h3>
               <p className="text-lg text-gray-600">
-                캐싱 기술로 네이티브 앱 수준의 <br />
-                빠른 속도를 제공합니다
+                {t('pwa.fastLoadingDesc')}
               </p>
             </div>
 
@@ -638,11 +637,10 @@ export default function Landing() {
                 </svg>
               </div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                모든 기기 지원
+                {t('pwa.allDevices')}
               </h3>
               <p className="text-lg text-gray-600">
-                PC, 태블릿, 모바일 어디서든 <br />
-                동일한 경험을 제공합니다
+                {t('pwa.allDevicesDesc')}
               </p>
             </div>
           </div>
@@ -657,14 +655,13 @@ export default function Landing() {
         <div className="relative max-w-6xl px-6 mx-auto">
           <div className="mb-16 text-center animate-scale-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              핵심 기능
+              {t('features.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              무비서만의 <span className="text-accent-600">특별한 추천</span>
+              {t('features.title1')} <span className="text-accent-600">{t('features.title2')}</span>
             </h2>
             <p className="text-xl text-gray-600 whitespace-nowrap">
-              AI 기반 하이브리드 추천 시스템으로 당신에게 딱 맞는 영화를
-              찾아드립니다
+              {t('features.desc')}
             </p>
           </div>
 
@@ -694,70 +691,90 @@ export default function Landing() {
       </section>
 
       {/* Recommendation Preview Section */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-gray-50">
-        <div className="max-w-[600px] mx-auto px-6">
-          <div className="mb-12 text-center animate-fade-up">
-            <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              추천 결과 미리보기
+      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-20 bg-gray-50">
+        <div className="max-w-2xl px-6 mx-auto">
+          <div className="mb-8 text-center animate-fade-up">
+            <span className="inline-block px-4 py-2 bg-accent-50 border border-accent-100 text-accent-600 text-sm font-medium rounded-full mb-6">
+              {t('preview.badge')}
             </span>
-            <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-5xl">
-              이런 결과를 <span className="text-accent-600">받아보세요</span>
+            <h2 className="mb-4 text-3xl font-black text-gray-900 md:text-4xl">
+              {t('preview.title1')} <span className="text-accent-600">{t('preview.title2')}</span>
             </h2>
-            <p className="text-xl text-gray-600">
-              영화 정보와 런타임이 한 번에 제공됩니다
+            <p className="text-lg text-gray-600">
+              {t('preview.desc')}
             </p>
           </div>
 
           <div className="space-y-4 animate-fade-up">
-            {[
-              {
-                title: "쇼생크 탈출",
-                year: 1994,
-                genres: ["드라마"],
-                runtime: "2시간 22분",
-                score: 95,
-              },
-              {
-                title: "대부",
-                year: 1972,
-                genres: ["드라마", "범죄"],
-                runtime: "2시간 55분",
-                score: 92,
-              },
-            ].map((movie, i) => (
-              <div
-                key={i}
-                className="flex gap-4 p-5 transition-all bg-white border border-gray-100 rounded-2xl hover:border-accent-200 hover:shadow-xl"
-              >
-                <div className="w-16 h-24 bg-gradient-to-br from-accent-500 to-accent-700 rounded-xl flex items-center justify-center text-2xl shadow-lg shadow-accent-500/20 flex-shrink-0">
-                  🎬
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-lg font-bold text-gray-900">{movie.title}</h4>
-                    <span className="text-sm text-gray-400">{movie.year}</span>
-                  </div>
-                  <div className="flex gap-2 mb-2">
-                    {movie.genres.map((g) => (
-                      <span
-                        key={g}
-                        className="text-xs px-2 py-0.5 bg-accent-50 text-accent-600 rounded-full font-medium"
-                      >
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>{movie.runtime}</span>
-                    <span className="font-medium text-green-600">매칭 {movie.score}%</span>
-                  </div>
-                </div>
+            {/* Personalized Recommendations */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 rounded-full bg-accent-500"></div>
+                <h3 className="text-sm font-bold text-gray-900">{t('preview.personalizedRec')}</h3>
               </div>
-            ))}
-            <div className="p-5 border rounded-2xl bg-accent-50 border-accent-100">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { titleKey: "preview.movie1Title", year: "2014", runtimeKey: "preview.movie1Runtime", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
+                  { titleKey: "preview.movie2Title", year: "2019", runtimeKey: "preview.movie2Runtime", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
+                  { titleKey: "preview.movie3Title", year: "2010", runtimeKey: "preview.movie3Runtime", poster: "https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg" },
+                ].map((movie, i) => (
+                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-lg">
+                    <img
+                      src={movie.poster}
+                      alt={t(movie.titleKey)}
+                      className="object-cover w-full aspect-[2/3]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <h4 className="text-xs font-bold text-white truncate">{t(movie.titleKey)}</h4>
+                      <div className="flex items-center gap-1 text-[10px] text-gray-300">
+                        <span>{movie.year}</span>
+                        <span>•</span>
+                        <span>{t(movie.runtimeKey)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Popular Recommendations */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 bg-yellow-500 rounded-full"></div>
+                <h3 className="text-sm font-bold text-gray-900">{t('preview.popularRec')}</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { titleKey: "preview.movie4Title", year: "2016", runtimeKey: "preview.movie4Runtime", poster: "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg" },
+                  { titleKey: "preview.movie5Title", year: "2008", runtimeKey: "preview.movie5Runtime", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
+                  { titleKey: "preview.movie6Title", year: "2016", runtimeKey: "preview.movie6Runtime", poster: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg" },
+                ].map((movie, i) => (
+                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-lg">
+                    <img
+                      src={movie.poster}
+                      alt={t(movie.titleKey)}
+                      className="object-cover w-full aspect-[2/3]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <h4 className="text-xs font-bold text-white truncate">{t(movie.titleKey)}</h4>
+                      <div className="flex items-center gap-1 text-[10px] text-gray-300">
+                        <span>{movie.year}</span>
+                        <span>•</span>
+                        <span>{t(movie.runtimeKey)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Total Runtime */}
+            <div className="p-3 border rounded-xl bg-accent-50 border-accent-100">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-700">총 러닝타임</span>
-                <span className="text-2xl font-black text-accent-600">5시간 17분</span>
+                <span className="text-sm font-medium text-gray-700">{t('preview.totalRuntime')}</span>
+                <span className="text-lg font-black text-accent-600">{t('preview.totalRuntimeValue')}</span>
               </div>
             </div>
           </div>
@@ -772,12 +789,12 @@ export default function Landing() {
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-24 text-center animate-fade-down">
             <span className="inline-block px-5 py-2.5 bg-white/10 text-white text-base font-medium rounded-full mb-8">
-              이용 방법
+              {t('steps.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black md:text-6xl">
-              5단계로 완성되는
+              {t('steps.title1')}
               <br />
-              맞춤 추천
+              {t('steps.title2')}
             </h2>
           </div>
 
@@ -879,30 +896,30 @@ export default function Landing() {
         <div className="max-w-5xl px-6 mx-auto text-center">
           <div className="animate-rotate-in">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              팀 소개
+              {t('team.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              Team Movigation
+              {t('team.title')}
             </h2>
             <p className="mb-20 text-xl text-gray-500">
-              스나이퍼팩토리 카카오클라우드 AIaaS 마스터 클래스 2기 3팀
+              {t('team.desc')}
             </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-12 stagger-scale">
             {[
-              { role: "Database" },
-              { role: "AI / ML" },
-              { role: "Frontend" },
-              { role: "Backend" },
-              { role: "Cloud" },
+              { roleKey: "team.roleDatabase" },
+              { roleKey: "team.roleAI" },
+              { roleKey: "team.roleFrontend" },
+              { roleKey: "team.roleBackend" },
+              { roleKey: "team.roleCloud" },
             ].map((member, i) => (
               <div key={i} className="text-center group">
                 <div className="flex items-center justify-center w-32 h-32 mx-auto mb-6 text-4xl font-bold text-white transition-transform rounded-full shadow-xl bg-accent-600 shadow-accent-500/30 group-hover:scale-110">
                   1
                 </div>
                 <p className="text-lg font-medium text-gray-600">
-                  {member.role}
+                  {t(member.roleKey)}
                 </p>
               </div>
             ))}
@@ -965,8 +982,8 @@ export default function Landing() {
           <div className="grid gap-12 mb-12 md:grid-cols-4">
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
-                <span className="text-xl font-bold">무비서</span>
+                <img src="/favicon.svg" alt={t('nav.brand')} className="w-10 h-10" />
+                <span className="text-xl font-bold">{t('nav.brand')}</span>
               </div>
               <p className="max-w-md leading-relaxed text-gray-400">
                 {t('footer.desc1')} <br />
@@ -1053,7 +1070,7 @@ export default function Landing() {
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-4 pointer-events-none"
         }`}
-        aria-label="맨 위로 이동"
+        aria-label={t('nav.scrollToTop')}
       >
         <svg
           className="w-6 h-6"
