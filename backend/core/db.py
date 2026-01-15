@@ -33,6 +33,9 @@ engine = create_engine(
     DATABASE_URL,
     echo=False,  # 에러뜨면 True로 바꿔서 sql 체크!
     future=True,
+    connect_args={
+        "options": "-c search_path=public,b2c,b2b"
+    }
 )
 
 SessionLocal = sessionmaker(

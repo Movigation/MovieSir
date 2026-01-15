@@ -91,6 +91,7 @@ class RecommendRequest(BaseModel):
     allow_adult: bool = False
     excluded_ids_a: Optional[List[int]] = None  # Track A 제외 (같은 장르 이전 추천)
     excluded_ids_b: Optional[List[int]] = None  # Track B 제외 (전체 이전 추천)
+    negative_movie_ids: Optional[List[int]] = None  # 부정 피드백 영화 (유사도 페널티)
 
 
 class RecommendSingleRequest(BaseModel):
@@ -101,6 +102,7 @@ class RecommendSingleRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
     allow_adult: bool = False
+    negative_movie_ids: Optional[List[int]] = None  # NEW
 
 
 class MovieInfo(BaseModel):
@@ -151,7 +153,8 @@ def recommend(request: RecommendRequest):
             preferred_otts=request.preferred_otts,
             allow_adult=request.allow_adult,
             excluded_ids_a=request.excluded_ids_a or [],
-            excluded_ids_b=request.excluded_ids_b or []
+            excluded_ids_b=request.excluded_ids_b or [],
+            negative_movie_ids=request.negative_movie_ids or []  # NEW
         )
 
         # numpy 타입 변환
@@ -195,7 +198,8 @@ def recommend_single(request: RecommendSingleRequest):
             track=request.track,
             preferred_genres=request.preferred_genres,
             preferred_otts=request.preferred_otts,
-            allow_adult=request.allow_adult
+            allow_adult=request.allow_adult,
+            negative_movie_ids=request.negative_movie_ids or []  # NEW
         )
 
         if result:
