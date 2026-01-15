@@ -46,8 +46,9 @@ def _get_email_html(code: str) -> str:
                     <!-- 헤더: 로고 + 브랜드 -->
                     <tr>
                         <td style="padding:28px 24px 20px; text-align:center;">
-                            <img src="https://moviesir.cloud/moviesir-logo.png" alt="무비서" width="56" height="56" style="display:block; margin:0 auto 12px; border-radius:50%;">
-                            <p class="brand-text" style="margin:0; font-size:20px; font-weight:600; color:#3B82F6;">MovieSir</p>
+                            <img src="https://moviesir.cloud/moviesir-logo.png" alt="무비서" width="72" height="72" style="display:block; margin:0 auto 12px; border-radius:50%;">
+                            <p class="brand-text" style="margin:0; font-size:20px; font-weight:600; color:#3B82F6;">무비서</p>
+                            <p class="info-text" style="margin:4px 0 0; font-size:12px; color:#94a3b8;">이동 시간 맞춤형 콘텐츠 서비스</p>
                         </td>
                     </tr>
                     <!-- 구분선 -->
@@ -61,8 +62,8 @@ def _get_email_html(code: str) -> str:
                         <td style="padding:20px 24px;">
                             <h1 class="title-text" style="margin:0 0 12px; font-size:17px; font-weight:700; color:#1e293b;">이메일 인증</h1>
                             <p class="info-text" style="margin:0 0 20px; font-size:14px; line-height:1.5; color:#64748b;">
-                                안녕하세요! MovieSir 가입을 환영합니다.<br>
-                                아래 인증 코드를 입력해주세요.
+                                안녕하세요! 무비서 가입을 환영합니다<br>
+                                아래 인증 코드를 입력해주세요
                             </p>
                             <!-- 인증 코드 박스 -->
                             <div class="code-box" style="background-color:#f0f9ff; border:1px solid #bfdbfe; border-radius:8px; padding:20px; text-align:center;">
@@ -73,8 +74,8 @@ def _get_email_html(code: str) -> str:
                     <!-- 푸터 -->
                     <tr>
                         <td style="padding:16px 24px 24px; text-align:center;">
-                            <p class="info-text" style="margin:0 0 4px; font-size:13px; color:#64748b;">이 코드는 <strong>10분</strong> 동안만 유효합니다.</p>
-                            <p class="info-text" style="margin:0 0 16px; font-size:12px; color:#94a3b8;">본인이 요청하지 않았다면 무시해주세요.</p>
+                            <p class="info-text" style="margin:0 0 4px; font-size:13px; color:#64748b;">이 코드는 <strong>10분</strong> 동안만 유효합니다</p>
+                            <p class="info-text" style="margin:0 0 16px; font-size:12px; color:#94a3b8;">본인이 요청하지 않았다면 무시해주세요</p>
                             <p class="info-text" style="margin:0; font-size:11px; color:#cbd5e1;">Team Movigation</p>
                         </td>
                     </tr>
