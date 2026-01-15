@@ -64,7 +64,7 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
         return (
             <div
                 /* [디자인] 모달 컨테이너 (전체 화면) */
-                className="bg-black dark:bg-gray-900 w-full h-full rounded-xl shadow-2xl relative flex flex-col overflow-hidden"
+                className="bg-black dark:bg-gray-900 w-full min-h-screen pb-24 relative flex flex-col z-modal"
             >
                 {/* 헤더 (메인 뷰에서만 표시) */}
                 {currentView === 'main' && (
@@ -81,16 +81,10 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                         {/* 제목 */}
                         <div
                             /* [디자인] 헤더 영역 */
-                            /* p-4: 내부 여백 */
-                            /* text-center: 텍스트 중앙 정렬 */
-                            /* border-b border-gray-700: 하단에 회색 구분선 */
                             className="p-4 text-center border-b border-gray-700"
                         >
                             <h2
                                 /* [디자인] 제목 텍스트 */
-                                /* text-xl: 큰 글씨 크기 */
-                                /* font-bold: 굵은 글씨 */
-                                /* text-white: 흰색 텍스트 */
                                 className="text-xl font-bold text-white"
                             >
                                 마이페이지
@@ -103,9 +97,8 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                         {/* 메뉴 리스트 */}
                         <div
                             /* [디자인] 메뉴 리스트 컨테이너 */
-                            /* flex-1: 남은 공간을 모두 차지 */
-                            /* overflow-y-auto: 세로 스크롤 가능 */
-                            className="flex-1 overflow-y-auto"
+                            /* 모바일에서는 고정 높이 대신 자연스러운 흐름 사용 */
+                            className="flex-1"
                         >
                             <MenuList onMenuClick={handleViewChange} />
                         </div>
@@ -113,21 +106,11 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                         {/* 로그아웃 버튼 (푸터) */}
                         <div
                             /* [디자인] 푸터 영역 */
-                            /* p-4: 내부 여백 */
-                            /* border-t border-gray-700: 상단에 회색 구분선 */
                             className="p-4 border-t border-gray-700"
                         >
                             <button
                                 onClick={handleLogout}
                                 /* [디자인] 로그아웃 버튼 */
-                                /* w-full: 전체 너비 */
-                                /* flex items-center justify-center gap-2: 아이콘과 텍스트를 중앙에 배치하고 간격 유지 */
-                                /* py-3: 위아래 여백 (버튼 높이) */
-                                /* bg-gray-700: 다크 그레이 배경 */
-                                /* hover:bg-gray-600: 마우스 올리면 조금 밝은 그레이로 변경 */
-                                /* text-white: 흰색 텍스트 */
-                                /* rounded-lg: 모서리를 둥글게 */
-                                /* transition-colors: 색상 변화 애니메이션 */
                                 className="w-full flex items-center justify-center gap-2 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
                             >
                                 <LogOut size={20} />

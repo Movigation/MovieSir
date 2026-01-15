@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ThumbsUp, ThumbsDown, X, Hourglass } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ThumbsUp, ThumbsDown, X, CornerLeftDown, CornerRightDown } from 'lucide-react';
 import { useMovieStore } from '@/store/useMovieStore';
 
 interface FeedbackLog {
@@ -12,7 +13,14 @@ interface FeedbackLog {
 export default function FeedbackPopup() {
     const [isVisible, setIsVisible] = useState(false);
     const [targetMovie, setTargetMovie] = useState<FeedbackLog | null>(null);
+    const [dragX, setDragX] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [showTutorial, setShowTutorial] = useState(true);
     const { userId } = useMovieStore();
+
+    const SWIPE_THRESHOLD = 80;
+    const ROTATION_STRENGTH = 0.15;
 
     useEffect(() => {
         // [테스트용] 콘솔에 f1 입력 시 팝업 노출
@@ -161,26 +169,83 @@ export default function FeedbackPopup() {
         }
 
         setIsVisible(false);
+        setDragX(0);
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (window.innerWidth >= 768) return;
+        setStartX(e.touches[0].clientX);
+        setIsDragging(true);
+        setShowTutorial(false);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging || window.innerWidth >= 768) return;
+        const currentX = e.touches[0].clientX;
+        const diff = currentX - startX;
+        setDragX(diff);
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging || window.innerWidth >= 768) return;
+        setIsDragging(false);
+
+        if (dragX > SWIPE_THRESHOLD) {
+            handleFeedback('good');
+        } else if (dragX < -SWIPE_THRESHOLD) {
+            handleFeedback('bad');
+        } else {
+            setDragX(0);
+        }
     };
 
     if (!targetMovie) return null;
 
     return (
         <div
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{
+                transform: window.innerWidth < 768
+                    ? (dragX !== 0
+                        ? `translate(calc(-50% + ${dragX}px), -23px) rotate(${dragX * ROTATION_STRENGTH}deg) scale(${1 - Math.abs(dragX) / 2000})`
+                        : isVisible ? 'translate(-50%, -23px) scale(1)' : 'translate(-50%, 120%) scale(0.9)')
+                    : (isVisible ? 'translateY(-23px) scale(1)' : 'translateY(120%) scale(0.9)'),
+                opacity: isVisible ? 1 : 0,
+                transition: isDragging ? 'none' : 'transform 0.7s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1)',
+                cursor: window.innerWidth < 768 ? 'grab' : 'default'
+            }}
             className={`
-                fixed z-[100000] w-[calc(100%-48px)] max-w-[300px]
+                fixed z-[100000] w-[calc(100%)] md:w-[calc(100%-48px)] max-w-full md:max-w-[300px]
                 bg-white/95 dark:bg-gray-900/95 backdrop-blur-3xl border border-black/5 dark:border-white/10
-                rounded-[40px] shadow-[0_30px_70px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.45)]
-                transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]
+                rounded-t-[20px] md:rounded-[20px] md:shadow-[0_30px_70px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.45)]
                 overflow-hidden
                 /* 반응형 위치: 모바일 중앙하단, 데스크탑 좌측하단 */
                 bottom-8 
-                left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0
+                left-1/2 md:left-8 md:translate-x-0
                 
-                ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-[120%] opacity-0 scale-90'}
+                ${!isDragging && !isVisible ? 'pointer-events-none' : ''}
             `}
         >
-            <div className="pt-5 pb-8 pr-2 pl-2 flex flex-col items-center gap-3 group">
+            {/* LIKE / DISLIKE 배지 (전체 팝업 중심) */}
+            {dragX !== 0 && (
+                <div
+                    className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
+                    style={{ opacity: Math.min(Math.abs(dragX) / (SWIPE_THRESHOLD / 0.8), 1) }}
+                >
+                    {dragX > 0 ? (
+                        <div className="border-[6px] border-green-500 rounded-xl px-6 py-2 rotate-[-20deg] bg-white/10 backdrop-blur-sm">
+                            <span className="text-green-500 text-5xl font-black uppercase tracking-widest">LIKE</span>
+                        </div>
+                    ) : (
+                        <div className="border-[6px] border-red-500 rounded-xl px-6 py-2 rotate-[20deg] bg-white/10 backdrop-blur-sm">
+                            <span className="text-red-500 text-5xl font-black uppercase tracking-widest">NOPE</span>
+                        </div>
+                    )}
+                </div>
+            )}
+            <div className="pt-5 pb-8 pr-2 pl-2 flex flex-col items-center gap-3 group/popup">
                 {/* 닫기 버튼 */}
                 <button
                     onClick={() => setIsVisible(false)}
@@ -198,8 +263,39 @@ export default function FeedbackPopup() {
 
                 {/* 2. 포스터 및 겹치는 버튼 영역 */}
                 <div className="relative w-full flex flex-col items-center">
-                    {/* 영화 포스터 - 훨씬 더 크게 확대 */}
-                    <div className="w-52 h-72 sm:w-60 sm:h-80 flex-shrink-0 shadow-2xl overflow-hidden border border-black/5 dark:border-white/10 group">
+                    {/* 튜토리얼 오버레이 (Portal을 통해 화면 전체 가리기) */}
+                    {showTutorial && isVisible && !isDragging && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className="md:hidden fixed inset-0 z-[100001] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-[3px] pointer-events-none animate-in fade-in duration-500"
+                        >
+                            <div className="text-white text-center space-y-6 max-w-[280px]">
+                                <div className="relative flex justify-center">
+                                    <div className="w-20 h-20 border-2 border-white/30 rounded-full flex items-center justify-center animate-pulse bg-white/5">
+                                        <svg className="w-10 h-10 text-white fill-current animate-bounce-horizontal" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v10h-2zm0 4h2v2h-2z" />
+                                            <path d="M10 9a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V9z" />
+                                            <rect x="9" y="10" width="6" height="4" rx="1" fill="white" />
+                                            <path d="M12 11c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" fill="black" />
+                                        </svg>
+                                    </div>
+                                    <div className="absolute top-1/2 -left-12 -translate-y-1/2 text-3xl animate-pulse"><CornerLeftDown /></div>
+                                    <div className="absolute top-1/2 -right-12 -translate-y-1/2 text-3xl animate-pulse"><CornerRightDown /></div>
+                                </div>
+                                <p className="text-[16px] font-bold leading-relaxed drop-shadow-xl text-white">
+                                    무비서가 추천해준 영화가 <br />별로였다면&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;마음에 드셨다면<br /><span className="text-red-400"><CornerLeftDown className="inline" /> 왼쪽</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span className="text-green-400">오른쪽<CornerRightDown className="inline" /></span><br />으로 스와이프해주세요!
+                                </p>
+                            </div>
+                        </div>,
+                        document.body
+                    )}
+
+                    {/* 영화 포스터 - 데스크탑 전용 hover 효과 유지 */}
+                    <div
+                        className={`
+                                relative w-52 h-72 sm:w-60 sm:h-80 flex-shrink-0 md:shadow-2xl overflow-hidden border border-black/5 dark:border-white/10 group
+                                z-10
+                            `}
+                    >
                         <img
                             src={targetMovie.posterUrl}
                             alt={targetMovie.title}
@@ -207,34 +303,25 @@ export default function FeedbackPopup() {
                         />
                     </div>
 
-                    {/* 3. 피드백 아이콘 영역 - 호버 시 노출 */}
-                    <div className="absolute -bottom-6 flex items-center justify-center gap-16 px-4 w-full translate-y-10 pointer-events-none group-hover:opacity-100 group-hover:translate-y-[-7px] group-hover:pointer-events-auto transition-all duration-500 ease-out">
+                    {/* 3. 피드백 아이콘 영역 - 데스크탑 전용 */}
+                    <div className="invisible md:visible absolute -bottom-6 flex items-center justify-center gap-20 px-4 w-full translate-y-12 pointer-events-none group-hover/popup:opacity-100 group-hover/popup:translate-y-[-7px] group-hover/popup:pointer-events-auto transition-all duration-500 ease-out">
                         {/* 별로임 */}
                         <button
                             onClick={() => handleFeedback('bad')}
                             className="group flex flex-col items-center gap-1.5"
                         >
-                            <div className="w-14 h-14 rounded-[20px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-gray-100 dark:group-hover:bg-white/5">
-                                <ThumbsDown className="w-8 h-8 stroke-1" />
+                            <div className="w-14 h-14 rounded-[10px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-gray-100 dark:group-hover:bg-white/5">
+                                <ThumbsDown className="w-8 h-8 stroke-1 invisible group-hover/popup:visible group-hover:visible" />
                             </div>
                         </button>
-                        {/* 아직 안 봄 (나중에) */}
-                        {/* <button
-                            onClick={() => handleFeedback('later')}
-                            className="group flex flex-col items-center gap-1.5"
-                        >
-                            <div className="w-14 h-14 rounded-[20px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10">
-                                <Hourglass className="w-8 h-8 stroke-1 text-blue-500" />
-                            </div>
-                        </button> */}
 
                         {/* 좋음 */}
                         <button
                             onClick={() => handleFeedback('good')}
                             className="group flex flex-col items-center gap-1.5"
                         >
-                            <div className="w-14 h-14 rounded-[20px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-red-50 dark:group-hover:bg-red-500/10">
-                                <ThumbsUp className="w-8 h-8 stroke-1" />
+                            <div className="w-14 h-14 rounded-[10px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-red-50 dark:group-hover:bg-red-500/10">
+                                <ThumbsUp className="w-8 h-8 stroke-1 invisible group-hover/popup:visible group-hover:visible" />
                             </div>
                         </button>
                     </div>

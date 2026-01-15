@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { HelpCircle, LogIn, User, LogOut, Moon, Sun, Home } from 'lucide-react';
+import { HelpCircle, User, LogOut, Moon, Sun, Home } from 'lucide-react';
 // import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import LoginModal from "@/services/auth/components/LoginModal/LoginModal";
@@ -93,7 +93,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
         {/* 도움말 */}
         <button
           onClick={() => setHelpOpen(true)}
-          className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
+          className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1 order-1 sm:order-none"
         >
           <HelpCircle size={20} className="sm:hidden" />
           <span className="hidden sm:inline">도움말</span>
@@ -104,79 +104,92 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
           <>
             <button
               onClick={() => setLoginOpen(true)}
-              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
+              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1 order-5 sm:order-none"
             >
-              <LogIn size={20} className="sm:hidden" />
+              <User size={20} className="sm:hidden" />
               <span className="hidden sm:inline">로그인</span>
             </button>
 
-            {/* 홈 아이콘 - 모바일에서만 표시 (3번째 위치) */}
+            {/* 회원가입 (데스크톱에서 보이고, 모바일에서 공간 유지용 투명 박스) */}
+            <button
+              onClick={() => setSignupOpen(true)}
+              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1 order-4 sm:order-none invisible sm:visible"
+            >
+              <User size={20} className="sm:hidden" />
+              <span className="hidden sm:inline">회원가입</span>
+            </button>
+
+            {/* 홈 아이콘 - 모바일에서만 표시 (중앙 3번째 위치) */}
             <button
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('closeChatbot'));
                 navigate('/');
                 resetChatbot();
               }}
-              className="sm:hidden text-blue-400 hover:scale-110 transition-transform"
+              className="sm:hidden text-blue-400 hover:scale-110 transition-transform order-3"
             >
-              <Home size={20} />
+              <Home size={22} />
             </button>
 
-            <button
-              onClick={() => setSignupOpen(true)}
-              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
-            >
-              <User size={20} className="sm:hidden" />
-              <span className="hidden sm:inline">회원가입</span>
-            </button>
+            {/* 공백 (모바일 간격 유지용 - 도움말과 로고 사이) */}
+            <div className="sm:hidden invisible order-2" aria-hidden="true">
+              <HelpCircle size={20} />
+            </div>
           </>
         ) : (
           <>
             <button
               onClick={() => navigate('/mypage')}
-              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
+              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1 order-5 sm:order-none"
             >
               <User size={20} className="sm:hidden" />
               <span className="hidden sm:inline">마이페이지</span>
             </button>
 
-            {/* 홈 아이콘 - 모바일에서만 표시 (3번째 위치) */}
+            {/* 로그아웃 (데스크톱에서 보이고, 모바일에서 공간 유지용 투명 박스) */}
+            <button
+              onClick={handleLogout}
+              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1 order-4 sm:order-none invisible sm:visible"
+            >
+              <LogOut size={20} className="sm:hidden" />
+              <span className="hidden sm:inline">로그아웃</span>
+            </button>
+
+            {/* 홈 아이콘 - 모바일에서만 표시 (중앙 3번째 위치) */}
             <button
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('closeChatbot'));
                 navigate('/');
                 resetChatbot();
               }}
-              className="sm:hidden text-blue-400 hover:scale-110 transition-transform"
+              className="sm:hidden text-blue-400 hover:scale-110 transition-transform order-3"
             >
-              <Home size={20} />
+              <Home size={22} />
             </button>
 
-            <button
-              onClick={handleLogout}
-              className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1"
-            >
-              <LogOut size={20} className="sm:hidden" />
-              <span className="hidden sm:inline">로그아웃</span>
-            </button>
+            {/* 공백 (모바일 간격 유지용 - 도움말과 로고 사이) */}
+            <div className="sm:hidden invisible order-2" aria-hidden="true">
+              <HelpCircle size={20} />
+            </div>
           </>
         )}
 
-        {/* 다크모드 토글 */}
+        {/* 다크모드 토글 - 데스크톱 전용 */}
         <button
           onClick={handleDarkToggle}
-          /* [디자인] 다크모드 토글 버튼 */
-          /* text-lg: 모바일 크기 */
-          /* sm:text-xl: 태블릿 이상 크기 */
-          /* p-1.5: 모바일 내부 여백 */
-          /* sm:p-2: 태블릿 이상 내부 여백 */
-          /* rounded-lg: 모서리를 둥글게 */
-          /* hover:animate-spin: 마우스 올리면 회전 애니메이션 */
-          className="text-lg sm:text-xl p-1.5 sm:p-2 rounded-lg hover:animate-spin text-gray-900 dark:text-white transition-colors"
+          className="hidden sm:flex text-lg sm:text-xl p-1.5 sm:p-2 rounded-lg hover:animate-spin text-gray-900 dark:text-white transition-colors"
         >
-          {isDark ? <Sun size={20} /> : <Moon size={20} />} {/* 다크모드: 달, 라이트모드: 해 */}
+          {isDark ? <Sun size={20} /> : <Moon size={20} />}
         </button>
       </div>
+
+      {/* 모바일 전용 상단 우측 다크모드 버튼 (calc 활용) */}
+      <button
+        onClick={handleDarkToggle}
+        className="sm:hidden fixed top-[1rem] right-[1rem] z-base p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white transition-all active:scale-95"
+      >
+        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
 
       {/* 도움말 모달 */}
       <Modal isOpen={isHelpOpen} onClose={() => setHelpOpen(false)}>

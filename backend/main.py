@@ -33,6 +33,8 @@ app.add_middleware(
         "https://moviesir.cloud",
         "https://demo.moviesir.cloud",
         "https://console.moviesir.cloud",
+        # 임시 터널 (모바일 테스트용)
+        "https://poems-rear-hamilton-device.trycloudflare.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
