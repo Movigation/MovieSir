@@ -311,12 +311,14 @@ export default function Landing() {
                 </>
               )}
             </div>
-            <Link
-              to="/login"
+            <a
+              href="https://demo.moviesir.cloud"
+              target="_blank"
+              rel="noreferrer"
               className="px-6 py-2.5 bg-accent-600 text-white text-base font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all"
             >
               {t('nav.useMoviesir')}
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -509,7 +511,7 @@ export default function Landing() {
 
         {/* Scroll Indicator */}
         <div className="absolute flex flex-col items-center gap-2 -translate-x-1/2 bottom-8 left-1/2">
-          <span className="text-xs text-gray-400">스크롤</span>
+          <span className="text-xs text-gray-400">{t('hero.scroll')}</span>
           <div className="flex justify-center w-6 h-10 pt-2 border-2 rounded-full border-accent-300">
             <div className="w-1 h-2 rounded-full bg-accent-500 animate-bounce" />
           </div>
@@ -522,13 +524,13 @@ export default function Landing() {
         <div className="absolute left-0 right-0 top-44">
           <div className="px-6 mx-auto text-center animate-fade-down max-w-7xl">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-6">
-              연동 플랫폼
+              {t('ott.badge')}
             </span>
             <h2 className="mb-4 text-4xl font-black text-gray-900 md:text-6xl">
-              주요 OTT<span className="text-accent-600"> 연동 지원</span>
+              {t('ott.title1')}<span className="text-accent-600"> {t('ott.title2')}</span>
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              구독 중인 OTT에서 바로 시청 가능한 영화만 추천해드립니다
+              {t('ott.desc')}
             </p>
           </div>
         </div>
@@ -556,14 +558,13 @@ export default function Landing() {
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-20 text-center animate-fade-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              PWA 지원
+              {t('pwa.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              앱처럼 <span className="text-accent-600">사용하세요</span>
+              {t('pwa.title1')} <span className="text-accent-600">{t('pwa.title2')}</span>
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              별도 설치 없이 홈 화면에 추가하면 네이티브 앱처럼 사용할 수
-              있습니다
+              {t('pwa.desc')}
             </p>
           </div>
 
@@ -586,11 +587,10 @@ export default function Landing() {
                 </svg>
               </div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                홈 화면에 추가
+                {t('pwa.addHome')}
               </h3>
               <p className="text-lg text-gray-600">
-                브라우저에서 홈 화면에 추가하면 <br />
-                앱처럼 바로 실행됩니다
+                {t('pwa.addHomeDesc')}
               </p>
             </div>
 
@@ -612,11 +612,10 @@ export default function Landing() {
                 </svg>
               </div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                빠른 로딩 속도
+                {t('pwa.fastLoading')}
               </h3>
               <p className="text-lg text-gray-600">
-                캐싱 기술로 네이티브 앱 수준의 <br />
-                빠른 속도를 제공합니다
+                {t('pwa.fastLoadingDesc')}
               </p>
             </div>
 
@@ -638,11 +637,10 @@ export default function Landing() {
                 </svg>
               </div>
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
-                모든 기기 지원
+                {t('pwa.allDevices')}
               </h3>
               <p className="text-lg text-gray-600">
-                PC, 태블릿, 모바일 어디서든 <br />
-                동일한 경험을 제공합니다
+                {t('pwa.allDevicesDesc')}
               </p>
             </div>
           </div>
@@ -657,14 +655,13 @@ export default function Landing() {
         <div className="relative max-w-6xl px-6 mx-auto">
           <div className="mb-16 text-center animate-scale-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              핵심 기능
+              {t('features.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              무비서만의 <span className="text-accent-600">특별한 추천</span>
+              {t('features.title1')} <span className="text-accent-600">{t('features.title2')}</span>
             </h2>
             <p className="text-xl text-gray-600 whitespace-nowrap">
-              AI 기반 하이브리드 추천 시스템으로 당신에게 딱 맞는 영화를
-              찾아드립니다
+              {t('features.desc')}
             </p>
           </div>
 
@@ -698,13 +695,13 @@ export default function Landing() {
         <div className="max-w-[600px] mx-auto px-6">
           <div className="mb-12 text-center animate-fade-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              추천 결과 미리보기
+              {t('preview.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-5xl">
-              이런 결과를 <span className="text-accent-600">받아보세요</span>
+              {t('preview.title1')} <span className="text-accent-600">{t('preview.title2')}</span>
             </h2>
             <p className="text-xl text-gray-600">
-              영화 정보와 런타임이 한 번에 제공됩니다
+              {t('preview.desc')}
             </p>
           </div>
 
@@ -749,14 +746,14 @@ export default function Landing() {
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span>{movie.runtime}</span>
-                    <span className="font-medium text-green-600">매칭 {movie.score}%</span>
+                    <span className="font-medium text-green-600">{t('preview.matching')} {movie.score}%</span>
                   </div>
                 </div>
               </div>
             ))}
             <div className="p-5 border rounded-2xl bg-accent-50 border-accent-100">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-700">총 러닝타임</span>
+                <span className="font-medium text-gray-700">{t('preview.totalRuntime')}</span>
                 <span className="text-2xl font-black text-accent-600">5시간 17분</span>
               </div>
             </div>
@@ -772,12 +769,12 @@ export default function Landing() {
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-24 text-center animate-fade-down">
             <span className="inline-block px-5 py-2.5 bg-white/10 text-white text-base font-medium rounded-full mb-8">
-              이용 방법
+              {t('steps.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black md:text-6xl">
-              5단계로 완성되는
+              {t('steps.title1')}
               <br />
-              맞춤 추천
+              {t('steps.title2')}
             </h2>
           </div>
 
@@ -879,13 +876,13 @@ export default function Landing() {
         <div className="max-w-5xl px-6 mx-auto text-center">
           <div className="animate-rotate-in">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              팀 소개
+              {t('team.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              Team Movigation
+              {t('team.title')}
             </h2>
             <p className="mb-20 text-xl text-gray-500">
-              스나이퍼팩토리 카카오클라우드 AIaaS 마스터 클래스 2기 3팀
+              {t('team.desc')}
             </p>
           </div>
 
