@@ -16,9 +16,9 @@ ai_model = get_ai_model()
 router = APIRouter(tags=["recommendation"])
 
 
-# ==================== 새로운 API (v2) ====================
+# ==================== ai 코드가 최종적으로 나왔기 때문에 v2 -> v1 변경 ====================
 
-@router.post("/api/v2/recommend", response_model=schema.RecommendationResponseV2)
+@router.post("/api/v1/recommend", response_model=schema.RecommendationResponseV2)
 def recommend_movies_v2(
     req: schema.RecommendationRequest,
     db: Session = Depends(get_db),
@@ -79,7 +79,7 @@ def recommend_movies_v2(
     return result
 
 
-@router.post("/api/v2/recommend/single", response_model=schema.ReRecommendResponse)
+@router.post("/api/v1/recommend/single", response_model=schema.ReRecommendResponse)
 def recommend_single_movie(
     req: schema.ReRecommendRequest,
     db: Session = Depends(get_db),
