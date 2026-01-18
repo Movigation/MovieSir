@@ -11,6 +11,7 @@ import SignupModal from "@/services/auth/components/SignupModal/SignupModal";
 import ForgotPasswordModal from "@/services/auth/components/ForgotPasswordModal/ForgotPasswordModal";
 import type { HeaderProps } from "@/components/layout/Header/header.types";
 import { useAuth } from "@/app/providers/AuthContext";
+import { useUIStore } from "@/store/useUIStore";
 
 export default function Header({ isDark, handleDarkToggle, resetChatbot }: HeaderProps) {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
 
   // AuthContext에서 인증 상태 가져오기
   const { isAuthenticated, logout } = useAuth();
+  const { isChatbotOpen } = useUIStore();
 
   // URL 파라미터로 비밀번호 찾기 모달 열기
   useEffect(() => {
@@ -186,7 +188,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
       {/* 모바일 전용 상단 우측 다크모드 버튼 (calc 활용) */}
       <button
         onClick={handleDarkToggle}
-        className="sm:hidden fixed top-[1rem] right-[1rem] z-base p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white transition-all active:scale-95"
+        className={`sm:hidden fixed top-[1rem] right-[1rem] z-base p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white transition-all active:scale-95 ${isChatbotOpen ? 'invisible opacity-0' : 'visible opacity-100'}`}
       >
         {isDark ? <Sun size={20} /> : <Moon size={20} />}
       </button>

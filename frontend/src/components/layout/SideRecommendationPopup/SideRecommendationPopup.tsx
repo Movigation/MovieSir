@@ -136,7 +136,7 @@ export default function SideRecommendationPopup({
                         setIsOpen(nextOpen);
                     }}
                     className={`
-                        side-reco-trigger absolute left-0 -translate-x-full top-1/2 -translate-y-1/2
+                        side-reco-trigger absolute left-0 -translate-x-full top-[75%] -translate-y-1/2 sm:top-1/2 sm:-translate-y-1/2
                         bg-blue-600/35 hover:bg-blue-600/45 dark:bg-blue-500/55 dark:hover:bg-blue-500/75 text-white w-[36px] h-[150px] rounded-l-xl
                         flex flex-col items-center justify-center gap-2 shadow-lg
                     `}

@@ -1,9 +1,28 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+
+const LANGUAGES = [
+  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+];
 
 export default function Landing() {
+  const { t, i18n } = useTranslation();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [currentLang, setCurrentLang] = useState(() => {
+    return localStorage.getItem('lang') || 'ko';
+  });
+
+  const handleLanguageChange = (code: string) => {
+    setCurrentLang(code);
+    localStorage.setItem('lang', code);
+    i18n.changeLanguage(code);
+    setShowLangDropdown(false);
+  };
 
   // Scroll position tracking for scroll-to-top button
   useEffect(() => {
@@ -54,13 +73,8 @@ export default function Landing() {
           />
         </svg>
       ),
-      title: "시간 기반 추천",
-      desc: (
-        <>
-          이동시간을 입력하면 러닝타임에
-          <br />딱 맞는 영화 조합을 추천해드립니다
-        </>
-      ),
+      titleKey: "features.timeBasedTitle",
+      descKey: "features.timeBasedDesc",
     },
     {
       icon: (
@@ -73,14 +87,8 @@ export default function Landing() {
           />
         </svg>
       ),
-      title: "AI 개인화 추천",
-      desc: (
-        <>
-          두 개의 AI 하이브리드 추천 시스템으로
-          <br />
-          당신의 취향을 파악하고 맞춤 영화를 찾아드립니다
-        </>
-      ),
+      titleKey: "features.aiTitle",
+      descKey: "features.aiDesc",
     },
     {
       icon: (
@@ -93,14 +101,8 @@ export default function Landing() {
           />
         </svg>
       ),
-      title: "OTT 연동",
-      desc: (
-        <>
-          구독 중인 OTT 플렛폼에서
-          <br />
-          바로 시청할 수 있는 영화만 보여드립니다
-        </>
-      ),
+      titleKey: "features.ottTitle",
+      descKey: "features.ottDesc",
     },
     {
       icon: (
@@ -113,22 +115,16 @@ export default function Landing() {
           />
         </svg>
       ),
-      title: "듀얼 트랙 추천",
-      desc: (
-        <>
-          개인 취향 맞춤 추천과 인기 영화 추천을
-          <br />
-          동시에 제공해 선택의 폭을 넓혀드립니다
-        </>
-      ),
+      titleKey: "features.dualTitle",
+      descKey: "features.dualDesc",
     },
   ];
 
   const steps = [
     {
       num: "01",
-      title: "회원가입",
-      desc: "간편한 이메일 인증",
+      titleKey: "steps.step1Title",
+      descKey: "steps.step1Desc",
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -142,8 +138,8 @@ export default function Landing() {
     },
     {
       num: "02",
-      title: "취향 조사",
-      desc: "좋아하는 영화 선택",
+      titleKey: "steps.step2Title",
+      descKey: "steps.step2Desc",
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -157,8 +153,8 @@ export default function Landing() {
     },
     {
       num: "03",
-      title: "조건 설정",
-      desc: "시간, 장르 필터",
+      titleKey: "steps.step3Title",
+      descKey: "steps.step3Desc",
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -172,8 +168,8 @@ export default function Landing() {
     },
     {
       num: "04",
-      title: "AI 추천",
-      desc: "맞춤 영화 추천",
+      titleKey: "steps.step4Title",
+      descKey: "steps.step4Desc",
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -187,8 +183,8 @@ export default function Landing() {
     },
     {
       num: "05",
-      title: "바로 시청",
-      desc: "OTT 원클릭 이동",
+      titleKey: "steps.step5Title",
+      descKey: "steps.step5Desc",
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -209,22 +205,10 @@ export default function Landing() {
   ];
 
   const faqItems = [
-    {
-      q: "무비서는 무료인가요?",
-      a: "네, 무비서는 완전 무료입니다! 회원가입만 하면 모든 기능을 제한 없이 이용할 수 있습니다",
-    },
-    {
-      q: "어떤 OTT를 지원하나요?",
-      a: "현재 Netflix, 티빙, Watcha, Disney+, Apple TV+ 등 주요 OTT 플랫폼을 지원합니다",
-    },
-    {
-      q: "앱을 설치해야 하나요?",
-      a: "아니요! 무비서는 PWA로 제작되어 앱스토어 설치 없이 웹에서 바로 사용할 수 있습니다",
-    },
-    {
-      q: "추천 알고리즘은 어떻게 작동하나요?",
-      a: "SBERT와 LightGCN을 결합한 하이브리드 추천 시스템으로 최적의 영화를 추천합니다",
-    },
+    { qKey: "faq.q1", aKey: "faq.a1" },
+    { qKey: "faq.q2", aKey: "faq.a2" },
+    { qKey: "faq.q3", aKey: "faq.a3" },
+    { qKey: "faq.q4", aKey: "faq.a4" },
   ];
 
   const ottPlatforms = [
@@ -257,58 +241,81 @@ export default function Landing() {
             <li>
               <a
                 href="#features"
-                className="text-base font-medium text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
               >
-                핵심 기능
+                {t('nav.features')}
               </a>
             </li>
             <li>
               <a
                 href="#how-it-works"
-                className="text-base font-medium text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
               >
-                이용 방법
+                {t('nav.howItWorks')}
               </a>
             </li>
             <li>
               <a
                 href="#faq"
-                className="text-base font-medium text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
               >
-                자주 묻는 질문
+                {t('nav.faq')}
               </a>
             </li>
             <li>
               <Link
                 to="/api"
-                className="text-base font-medium text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
               >
-                API
+                {t('nav.api')}
               </Link>
             </li>
           </ul>
           <div className="flex items-center gap-4">
-            {/* 다국어 지원 버튼 */}
-            <button className="flex items-center justify-center w-10 h-10 text-gray-500 transition-all rounded-full hover:text-accent-600 hover:bg-gray-100">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {/* 다국어 지원 드롭다운 */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLangDropdown(!showLangDropdown)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 transition-all rounded-lg hover:text-accent-600 hover:bg-gray-100"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                />
-              </svg>
-            </button>
+                <span className="text-lg">{LANGUAGES.find(l => l.code === currentLang)?.flag}</span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${showLangDropdown ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showLangDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowLangDropdown(false)}
+                  />
+                  <div className="absolute right-0 z-50 mt-2 py-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => handleLanguageChange(lang.code)}
+                        className={`w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${
+                          currentLang === lang.code ? 'text-accent-600 bg-accent-50' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-lg">{lang.flag}</span>
+                        <span className="font-medium">{lang.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <Link
               to="/login"
               className="px-6 py-2.5 bg-accent-600 text-white text-base font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all"
             >
-              무비서 이용하기
+              {t('nav.useMoviesir')}
             </Link>
           </div>
         </div>
@@ -343,27 +350,27 @@ export default function Landing() {
                   <span className="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"></span>
                   <span className="relative inline-flex w-2 h-2 bg-green-500 rounded-full"></span>
                 </span>
-                이동 시간 맞춤형 콘텐츠 추천 서비스
+                {t('hero.badge')}
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-6xl font-black leading-[1.1] mb-6">
-                <span className="block text-gray-900">시간만</span>
-                <span className="block text-gray-900">알려주세요</span>
+                <span className="block text-gray-900">{t('hero.title1')}</span>
+                <span className="block text-gray-900">{t('hero.title2')}</span>
                 <span className="block mt-2 text-accent-600">
-                  영화는 <br />
-                  제가 골라드릴게요
+                  {t('hero.title3')} <br />
+                  {t('hero.title4')}
                 </span>
               </h1>
 
               <p className="max-w-xl mx-auto mb-10 text-lg leading-relaxed text-gray-600 md:text-xl lg:mx-0">
-                AI가 당신의 취향을 분석하고
+                {t('hero.desc1')}
                 <br />
-                구독 중인 OTT에서
+                {t('hero.desc2')}
                 <span className="font-medium text-accent-600">
                   {" "}
-                  바로 볼 수 있는 영화
+                  {t('hero.desc3')}
                 </span>
-                만 추천합니다
+                {t('hero.desc4')}
               </p>
 
               <div className="flex flex-col justify-center gap-4 mb-12 sm:flex-row lg:justify-start">
@@ -373,7 +380,7 @@ export default function Landing() {
                   rel="noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold text-white transition-all rounded-full group bg-accent-600 hover:bg-accent-500 hover:shadow-2xl hover:shadow-accent-500/30"
                 >
-                  <span>무료로 시작하기</span>
+                  <span>{t('hero.startFree')}</span>
                   <svg
                     className="w-5 h-5 transition-transform group-hover:translate-x-1"
                     fill="none"
@@ -392,7 +399,7 @@ export default function Landing() {
                   to="/api"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold text-gray-700 transition-all bg-white border border-gray-200 rounded-full hover:border-accent-300 hover:text-accent-600"
                 >
-                  API 문서 보기
+                  {t('hero.viewApiDocs')}
                 </Link>
               </div>
 
@@ -402,19 +409,19 @@ export default function Landing() {
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     10K+
                   </div>
-                  <div className="mt-1 text-sm text-gray-500">영화 데이터</div>
+                  <div className="mt-1 text-sm text-gray-500">{t('hero.movieData')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    1초
+                    1s
                   </div>
-                  <div className="mt-1 text-sm text-gray-500">추천 속도</div>
+                  <div className="mt-1 text-sm text-gray-500">{t('hero.recSpeed')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
-                    6편
+                    6
                   </div>
-                  <div className="mt-1 text-sm text-gray-500">맞춤 추천</div>
+                  <div className="mt-1 text-sm text-gray-500">{t('hero.customRec')}</div>
                 </div>
               </div>
             </div>
@@ -673,10 +680,10 @@ export default function Landing() {
                   </div>
                   <div>
                     <h3 className="mb-2 text-xl font-bold text-gray-900">
-                      {feature.title}
+                      {t(feature.titleKey)}
                     </h3>
                     <p className="text-base leading-relaxed text-gray-600">
-                      {feature.desc}
+                      {t(feature.descKey)}
                     </p>
                   </div>
                 </div>
@@ -791,9 +798,9 @@ export default function Landing() {
                     </div>
                   </div>
                   <h3 className="mb-3 text-xl font-bold text-white">
-                    {step.title}
+                    {t(step.titleKey)}
                   </h3>
-                  <p className="text-base text-accent-100">{step.desc}</p>
+                  <p className="text-base text-accent-100">{t(step.descKey)}</p>
                 </div>
               ))}
             </div>
@@ -809,13 +816,13 @@ export default function Landing() {
         <div className="max-w-4xl px-6 mx-auto">
           <div className="mb-20 text-center animate-blur-in">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
-              자주 묻는 질문
+              {t('faq.badge')}
             </span>
             <h2 className="mb-6 text-4xl font-black text-gray-900 md:text-6xl">
-              FAQ
+              {t('faq.title')}
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              무비서 이용에 대해 궁금한 점을 확인하세요
+              {t('faq.desc')}
             </p>
           </div>
 
@@ -830,7 +837,7 @@ export default function Landing() {
                   className="flex items-center justify-between w-full px-8 py-6 text-left"
                 >
                   <span className="text-xl font-semibold text-gray-900">
-                    {item.q}
+                    {t(item.qKey)}
                   </span>
                   <div
                     className={`w-10 h-10 bg-accent-50 rounded-full flex items-center justify-center transition-transform ${
@@ -858,7 +865,7 @@ export default function Landing() {
                   }`}
                 >
                   <p className="px-8 pb-6 text-lg leading-relaxed text-gray-600">
-                    {item.a}
+                    {t(item.aKey)}
                   </p>
                 </div>
               </div>
@@ -910,14 +917,14 @@ export default function Landing() {
         <div className="relative z-10 max-w-5xl px-6 mx-auto text-center">
           <div className="animate-bounce-up">
             <h2 className="mb-8 text-5xl font-black text-white md:text-7xl">
-              지금 바로
+              {t('cta.title1')}
               <br />
-              시작하세요
+              {t('cta.title2')}
             </h2>
             <p className="max-w-2xl mx-auto mb-16 text-2xl leading-relaxed text-white/80">
-              더 이상 뭘 볼지 고민하지 마세요
+              {t('cta.desc1')}
               <br />
-              무비서가 최적의 영화를 찾아드립니다
+              {t('cta.desc2')}
             </p>
           </div>
           <div className="flex flex-col justify-center gap-6 animate-fade-up sm:flex-row">
@@ -927,7 +934,7 @@ export default function Landing() {
               rel="noreferrer"
               className="inline-flex items-center gap-3 px-12 py-6 text-xl font-bold transition-all bg-white rounded-full text-accent-600 hover:scale-105 hover:shadow-2xl"
             >
-              무료로 시작하기
+              {t('cta.startFree')}
               <svg
                 className="w-7 h-7"
                 fill="none"
@@ -942,12 +949,12 @@ export default function Landing() {
                 />
               </svg>
             </a>
-            <Link
-              to="/login"
+            <a
+              href="https://console.moviesir.cloud/login"
               className="inline-flex items-center gap-3 px-12 py-6 text-xl font-bold text-white transition-all bg-transparent border-2 border-white rounded-full hover:bg-white/10"
             >
-              B2B 콘솔 접속
-            </Link>
+              {t('cta.b2bConsole')}
+            </a>
           </div>
         </div>
       </section>
@@ -962,21 +969,21 @@ export default function Landing() {
                 <span className="text-xl font-bold">무비서</span>
               </div>
               <p className="max-w-md leading-relaxed text-gray-400">
-                AI 기반 하이브리드 추천 시스템으로 <br />
-                당신에게 딱 맞는 영화를 찾아드립니다
+                {t('footer.desc1')} <br />
+                {t('footer.desc2')}
                 <br />
-                무비서와 함께 새로운 영화 발견의 여정을 시작하세요
+                {t('footer.desc3')}
               </p>
             </div>
             <div>
-              <h4 className="mb-4 font-semibold">제품</h4>
+              <h4 className="mb-4 font-semibold">{t('footer.product')}</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
                   <a
                     href="#features"
                     className="transition-colors hover:text-white"
                   >
-                    핵심 기능
+                    {t('nav.features')}
                   </a>
                 </li>
                 <li>
@@ -984,7 +991,7 @@ export default function Landing() {
                     href="#how-it-works"
                     className="transition-colors hover:text-white"
                   >
-                    이용 방법
+                    {t('nav.howItWorks')}
                   </a>
                 </li>
                 <li>
@@ -992,25 +999,25 @@ export default function Landing() {
                     to="/api"
                     className="transition-colors hover:text-white"
                   >
-                    API
+                    {t('nav.api')}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="mb-4 font-semibold">리소스</h4>
+              <h4 className="mb-4 font-semibold">{t('footer.resources')}</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
                   <Link
                     to="/login"
                     className="transition-colors hover:text-white"
                   >
-                    콘솔
+                    {t('footer.console')}
                   </Link>
                 </li>
                 <li>
                   <a href="#faq" className="transition-colors hover:text-white">
-                    자주 묻는 질문
+                    {t('nav.faq')}
                   </a>
                 </li>
                 <li>
@@ -1029,10 +1036,10 @@ export default function Landing() {
 
           <div className="flex flex-col items-center justify-between gap-4 pt-8 border-t border-gray-800 md:flex-row">
             <p className="text-sm text-gray-500">
-              2025 Team Movigation. All rights reserved.
+              {t('footer.copyright')}
             </p>
             <p className="text-sm text-gray-500">
-              스나이퍼팩토리 카카오클라우드 AIaaS 마스터 클래스 2기 3팀
+              {t('footer.teamDesc')}
             </p>
           </div>
         </div>

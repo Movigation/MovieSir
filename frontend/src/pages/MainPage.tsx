@@ -29,11 +29,12 @@ import OnboardingReminderModal from '@/services/onboarding/components/Onboarding
 import MovieDetailModal from '@/services/chatbot/MovieDetailModal/MovieDetailModal';
 import SideRecommendationPopup from '@/components/layout/SideRecommendationPopup/SideRecommendationPopup';
 import FeedbackPopup from '@/components/layout/FeedbackPopup/FeedbackPopup';
+import { useUIStore } from '@/store/useUIStore';
 // import GradientText from '@/components/ui/GradientText';
 
 export default function MainPage() {
     const { isAuthenticated, user } = useAuth();
-    const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+    const { isChatbotOpen, setIsChatbotOpen } = useUIStore();
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showOnboardingReminder, setShowOnboardingReminder] = useState(false);
     const [isTutorialActive, setIsTutorialActive] = useState(false);
@@ -90,6 +91,14 @@ export default function MainPage() {
         console.log('🎉 모달 표시! (온보딩 미완료 + 24시간 경과)');
         setShowOnboardingReminder(true);
     }, [isAuthenticated, user]);
+
+    // 메인 페이지 진입 시 온보딩 플래그 정리 (비정상 종료 시 잔류 방지)
+    useEffect(() => {
+        if (!showOnboardingReminder) {
+            sessionStorage.removeItem('onboarding_in_progress');
+            sessionStorage.removeItem('onboarding_from_reminder');
+        }
+    }, [showOnboardingReminder]);
 
     // 튜토리얼 체크 및 자동 종료 (온보딩 리마인더가 안 나올 때만 자동 시작/종료)
     useEffect(() => {
