@@ -24,7 +24,7 @@ export default function MenuItem({ label, icon, onClick }: MenuItemProps) {
             /* transition-colors: 색상 변화 애니메이션 */
             /* rounded-lg: 모서리를 둥글게 */
             /* group: 자식 요소에서 부모의 hover 상태를 감지할 수 있게 함 */
-            className="w-full flex items-center justify-between px-4 py-4 bg-gray-700 dark:bg-gray-700 hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors rounded-lg group"
+            className="w-full flex items-center justify-between px-4 py-4 bg-gray-50 border border-gray-200 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-lg group"
         >
             <div
                 /* [디자인] 왼쪽 영역 (아이콘 + 텍스트) */
@@ -36,7 +36,7 @@ export default function MenuItem({ label, icon, onClick }: MenuItemProps) {
                         /* [디자인] 아이콘 색상 */
                         /* text-gray-400: 기본 회색 아이콘 */
                         /* group-hover:text-gray-300: 버튼에 마우스 올리면 조금 밝은 회색으로 변경 */
-                        className="text-gray-400 group-hover:text-gray-300"
+                        className="text-black dark:text-gray-400 dark:group-hover:text-gray-300"
                     >
                         {icon}
                     </span>
@@ -45,7 +45,7 @@ export default function MenuItem({ label, icon, onClick }: MenuItemProps) {
                     /* [디자인] 메뉴 텍스트 */
                     /* text-white: 흰색 텍스트 */
                     /* font-medium: 중간 굵기 */
-                    className="text-white font-medium"
+                    className="text-black dark:text-white font-medium"
                 >
                     {label}
                 </span>

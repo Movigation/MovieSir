@@ -215,6 +215,7 @@ export default function SideRecommendationPopup({
                                         key={activeTab}
                                         containerClassName="h-[380px]"
                                         cardWidthClassName="w-[250px]"
+                                        arrowClassName="bg-blue-500/10 hover:bg-blue-500/20 dark:bg-blue-400/10 dark:hover:bg-blue-400/20 border-blue-500/30 dark:border-blue-400/30 text-blue-600 dark:text-blue-400"
                                     >
                                         {currentTrackMovies.map((movie) => (
                                             <MovieCard

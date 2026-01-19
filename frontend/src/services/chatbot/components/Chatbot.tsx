@@ -61,6 +61,7 @@ export default function Chatbot({
     // 조건: 이전에 열려있었고(true), 지금 닫혔다면(false)
     if (prevIsOpenRef.current === true && isOpen === false) {
       setIsTeleporting(true);
+      setIsRecommended(false); // 닫힐 때 추천 상태 초기화 (재오픈 시 위치 오류 방지)
 
       // 500ms 후 다시 보이게 처리
       const timer = setTimeout(() => {

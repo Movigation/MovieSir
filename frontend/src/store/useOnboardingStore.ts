@@ -77,7 +77,8 @@ export const useOnboardingStore = create<OnboardingState>()(
             partialize: (state) => ({
                 provider_ids: state.provider_ids,
                 movie_ids: state.movie_ids,
-                movies: state.movies,
+                // [최적화] movies(줄거리 포함 전체 정보)는 저장하지 않음. 
+                // 필요시 id를 기반으로 다시 로드하거나 세션용으로만 사용.
             }),
         }
     )

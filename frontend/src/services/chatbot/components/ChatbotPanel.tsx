@@ -217,7 +217,7 @@ export default function ChatbotPanel({
       <div
         className={`
           fixed
-          top-0 sm:top-[70px] left-0 right-0 bottom-0
+          top-0 sm:top-[70px] left-0 right-0 bottom-[64px]
           z-chatbot-backdrop
           transition-opacity duration-300
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
@@ -249,7 +249,7 @@ export default function ChatbotPanel({
           top-0 sm:top-[70px]
           left-0
           right-0
-          h-[calc(100dvh-65px)] sm:h-[calc(100vh-70px)]
+          h-[calc(100dvh-64px)] sm:h-[calc(100vh-70px)]
           bg-transparent
           z-chatbot-panel
           flex flex-col
