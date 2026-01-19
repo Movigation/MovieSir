@@ -16,6 +16,7 @@ interface MovieCardProps {
     onReRecommend?: () => void;
     showReRecommend?: boolean;
     shouldAnimate?: boolean;
+    isPeeking?: boolean;
 }
 
 export default function MovieCard({
@@ -26,7 +27,8 @@ export default function MovieCard({
     onClick,
     onReRecommend,
     showReRecommend = false,
-    shouldAnimate = false
+    shouldAnimate = false,
+    isPeeking = false
 }: MovieCardProps) {
     const [isRemoving, setIsRemoving] = useState(false);
     const [isWatched] = useState(movie.watched || false);
@@ -76,8 +78,9 @@ export default function MovieCard({
     };
 
     // 인터랙션 핸들러
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleClick = (_e: React.MouseEvent) => {
+        if (isPeeking) return; // 사이드 카드는 내부 클릭 로직 무시 (버블링만 허용)
+
         const isDesktop = window.innerWidth >= 1024;
 
         if (!isDesktop) {
@@ -94,14 +97,14 @@ export default function MovieCard({
     };
 
     const handleMouseEnter = () => {
-        if (window.innerWidth >= 1024) {
+        if (window.innerWidth >= 1024 && !isPeeking) {
             setIsHovered(true);
             onExpand();
         }
     };
 
     const handleMouseLeave = () => {
-        if (window.innerWidth >= 1024) {
+        if (window.innerWidth >= 1024 && !isPeeking) {
             setIsHovered(false);
             onCollapse();
         }
@@ -124,6 +127,8 @@ export default function MovieCard({
             </div>
         );
     }
+
+    const showContent = (isHovered || isExpanded) && !isPeeking;
 
     return (
         <div
@@ -169,7 +174,7 @@ export default function MovieCard({
                     absolute inset-0 w-full h-[200%] pointer-events-none
                     bg-gradient-to-t from-black via-black/30 via-black/20 to-transparent
                     transition-transform duration-[1200ms] ease-[cubic-bezier(0.19,1,0.22,1)]
-                    ${(isHovered || isExpanded) ? 'translate-y-[-50%]' : 'translate-y-0'}
+                    ${showContent ? 'translate-y-[-50%]' : 'translate-y-0'}
                 `}
             />
 
@@ -178,7 +183,7 @@ export default function MovieCard({
                 className={`
                     absolute inset-0 flex flex-col justify-end p-3 sm:p-5
                     transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]
-                    ${(isHovered || isExpanded) ? 'translate-y-0' : 'translate-y-[calc(100%-4.5rem)] sm:translate-y-[calc(100%-5rem)]'}
+                    ${showContent ? 'translate-y-0' : 'translate-y-[calc(100%-4.5rem)] sm:translate-y-[calc(100%-5rem)]'}
                 `}
             >
                 {/* 제목 (항상 노출되는 베이스) */}
@@ -190,7 +195,7 @@ export default function MovieCard({
                 <div
                     className={`
                         flex flex-col gap-2 transition-all duration-700 ease-out
-                        ${(isHovered || isExpanded) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+                        ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
                     `}
                 >
                     {/* 평점 */}

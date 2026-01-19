@@ -55,12 +55,23 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
         try {
             setIsLoading(true);
             setDeleteError('');
+
+            // 1. 서버에 탈퇴 요청
             await deleteUser(deletePassword);
+
+            // 2. 알림 표시
             alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
-            await logout(); // 로컬 상태 정리
+
+            // 3. 로그아웃 처리 (로컬 상태 및 토큰 정리)
+            await logout();
+
+            // 4. 메인 페이지로 강제 이동 및 페이지 새로고침 (클린업 완료를 위해)
+            window.location.href = '/';
+
         } catch (error: any) {
             console.error('회원 탈퇴 실패:', error);
-            setDeleteError(error.message || '회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.');
+            const errorMsg = error.response?.data?.detail || error.message || '회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.';
+            setDeleteError(errorMsg);
         } finally {
             setIsLoading(false);
         }
