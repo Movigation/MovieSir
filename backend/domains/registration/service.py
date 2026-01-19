@@ -84,7 +84,7 @@ def request_signup(
     )
     redis.expire(key, SIGNUP_CODE_TTL)
 
-    # 메일 발송 (SMTP 환경변수 없으면 콘솔에만 출력)
+    # 메일 발송 (RESEND_API_KEY 환경변수 없으면 콘솔에만 출력)
     send_signup_code_email(payload.email, code)
 
     return SignupRequestResponse(email=payload.email, expires_in=SIGNUP_CODE_TTL)

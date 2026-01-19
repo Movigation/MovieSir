@@ -122,6 +122,18 @@ jobs:
             sudo rm -rf /var/www/console/*
             sudo cp -r /tmp/console-build/* /var/www/console/
             sudo chown -R www-data:www-data /var/www/console/
+
+            echo "📌 Landing 페이지 배포 (/var/www/landing)"
+            sudo mkdir -p /var/www/landing
+            sudo rm -rf /var/www/landing/*
+            sudo cp -r /tmp/console-build/* /var/www/landing/
+            sudo chown -R www-data:www-data /var/www/landing/
+
+            echo "📌 API 문서 페이지 배포 (/var/www/api)"
+            sudo mkdir -p /var/www/api
+            sudo rm -rf /var/www/api/*
+            sudo cp -r /tmp/console-build/* /var/www/api/
+            sudo chown -R www-data:www-data /var/www/api/
             rm -rf /tmp/console-build
 
             echo "📌 Nginx 설정 업데이트"
@@ -131,5 +143,6 @@ jobs:
             echo "📌 배포된 파일:"
             echo "Demo: $(ls /var/www/demo/assets/ | grep -E 'index-.*\.js$' | head -1)"
             echo "Console: $(ls /var/www/console/assets/ | grep -E 'index-.*\.js$' | head -1)"
+            echo "Landing: $(ls /var/www/landing/assets/ | grep -E 'index-.*\.js$' | head -1)"
 
             echo "✅ 프론트엔드 배포 완료"

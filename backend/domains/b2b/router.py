@@ -1,6 +1,7 @@
 """
 B2B 도메인 API 라우터
 - /b2b/* 엔드포인트
+- 2025.01.15: 플랜 기반 일일 한도 동적 적용, API 키 삭제 기능 추가
 """
 from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -10,8 +11,9 @@ from typing import List, Optional
 from backend.core.db import get_db
 from .schemas import (
     CompanyRegister, CompanyLogin, TokenResponse,
-    ApiKeyCreate, ApiKeyResponse,
-    DashboardResponse, LogEntry
+    ApiKeyCreate, ApiKeyResponse, UpdateApiKeyRequest,
+    DashboardResponse, LogEntry, OAuthCallback,
+    ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest
 )
 from . import service
 
@@ -88,6 +90,91 @@ def login(
         raise HTTPException(status_code=401, detail=str(e))
 
 
+@router.post("/auth/google/callback", response_model=TokenResponse)
+async def google_callback(
+    data: OAuthCallback,
+    db: Session = Depends(get_db)
+):
+    """
+    Google OAuth 콜백
+    - code: Google로부터 받은 인증 코드
+    """
+    try:
+        redirect_uri = data.redirect_uri or "https://console.moviesir.cloud/auth/google/callback"
+        company, token = await service.google_oauth_callback(db, data.code, redirect_uri)
+        return TokenResponse(
+            access_token=token,
+            company=service.company_to_response(company)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/github/callback", response_model=TokenResponse)
+async def github_callback(
+    data: OAuthCallback,
+    db: Session = Depends(get_db)
+):
+    """
+    GitHub OAuth 콜백
+    - code: GitHub로부터 받은 인증 코드
+    """
+    try:
+        redirect_uri = data.redirect_uri or "https://console.moviesir.cloud/auth/github/callback"
+        company, token = await service.github_oauth_callback(db, data.code, redirect_uri)
+        return TokenResponse(
+            access_token=token,
+            company=service.company_to_response(company)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    비밀번호 변경
+    - current_password: 현재 비밀번호
+    - new_password: 새 비밀번호 (8자 이상)
+    """
+    try:
+        service.change_password(
+            db,
+            company.company_id,
+            data.current_password,
+            data.new_password
+        )
+        return {"success": True, "message": "비밀번호가 변경되었습니다"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/forgot-password")
+def forgot_password(
+    data: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    비밀번호 찾기 - 임시 비밀번호 발급
+    - email: 가입한 이메일
+
+    등록된 이메일로 임시 비밀번호를 발송합니다.
+    보안상 이메일 존재 여부와 관계없이 동일한 응답을 반환합니다.
+    """
+    try:
+        service.forgot_password(db, data.email)
+        return {
+            "success": True,
+            "message": "등록된 이메일로 임시 비밀번호를 발송했습니다."
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # ==================== API Key Endpoints ====================
 
 @router.get("/api-keys", response_model=List[ApiKeyResponse])
@@ -97,9 +184,16 @@ def list_api_keys(
 ):
     """
     API 키 목록 조회
+    - daily_limit은 회사 플랜 기준으로 반환
     """
     api_keys = service.get_api_keys(db, company.company_id)
-    return [service.api_key_to_response(k) for k in api_keys]
+    # 플랜 기준 일일 한도 적용
+    plan_limit = service.PLAN_LIMITS.get(company.plan_type, 1000)
+    result = []
+    for k in api_keys:
+        k.daily_limit = plan_limit  # 플랜 기준 한도로 설정
+        result.append(service.api_key_to_response(k))
+    return result
 
 
 @router.post("/api-keys", response_model=ApiKeyResponse)
@@ -116,24 +210,66 @@ def create_api_key(
     """
     try:
         api_key, raw_key = service.create_api_key(db, company.company_id, data)
+        # 플랜 기준 일일 한도 적용
+        plan_limit = service.PLAN_LIMITS.get(company.plan_type, 1000)
+        api_key.daily_limit = plan_limit
         return service.api_key_to_response(api_key, raw_key)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/api-keys/{key_id}")
+@router.patch("/api-keys/{key_id}/deactivate")
 def deactivate_api_key(
     key_id: int,
     company=Depends(get_current_company),
     db: Session = Depends(get_db)
 ):
     """
-    API 키 비활성화
+    API 키 비활성화 (소프트 삭제)
     """
     success = service.deactivate_api_key(db, company.company_id, key_id)
     if not success:
         raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
     return {"success": True, "message": "API 키가 비활성화되었습니다"}
+
+
+@router.delete("/api-keys/{key_id}")
+def delete_api_key(
+    key_id: int,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 키 완전 삭제
+    """
+    success = service.delete_api_key(db, company.company_id, key_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
+    return {"success": True, "message": "API 키가 삭제되었습니다"}
+
+
+@router.patch("/api-keys/{key_id}")
+def update_api_key(
+    key_id: int,
+    data: UpdateApiKeyRequest,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 키 이름 수정
+    - name: 새로운 키 이름
+    """
+    api_key = service.update_api_key(db, company.company_id, key_id, data.name)
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
+    # 플랜 기준 일일 한도 적용
+    plan_limit = service.PLAN_LIMITS.get(company.plan_type, 1000)
+    api_key.daily_limit = plan_limit
+    return {
+        "success": True,
+        "message": "API 키 이름이 수정되었습니다",
+        "api_key": service.api_key_to_response(api_key)
+    }
 
 
 # ==================== Dashboard Endpoints ====================
@@ -172,6 +308,50 @@ def get_logs(
     return service.get_recent_logs(db, company.company_id, limit)
 
 
+# ==================== Usage Endpoints ====================
+
+@router.get("/usage")
+def get_usage(
+    period: str = Query(default="7d", description="조회 기간 (7d 또는 30d)"),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 사용량 조회
+    - period: 7d (7일) 또는 30d (30일)
+    """
+    days = 30 if period == "30d" else 7
+    return service.get_usage_data(db, company.company_id, days)
+
+
+@router.get("/usage/endpoints")
+def get_endpoint_stats(
+    period: str = Query(default="7d", description="조회 기간 (7d 또는 30d)"),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    엔드포인트별 호출 통계
+    - period: 7d (7일) 또는 30d (30일)
+    """
+    days = 30 if period == "30d" else 7
+    return service.get_endpoint_stats(db, company.company_id, days)
+
+
+@router.get("/usage/response-time")
+def get_response_time_stats(
+    period: str = Query(default="7d", description="조회 기간 (7d 또는 30d)"),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    응답 시간 통계 (avg, p50, p95, p99)
+    - period: 7d (7일) 또는 30d (30일)
+    """
+    days = 30 if period == "30d" else 7
+    return service.get_response_time_stats(db, company.company_id, days)
+
+
 # ==================== Company Info Endpoints ====================
 
 @router.get("/me")
@@ -182,3 +362,30 @@ def get_company_info(
     현재 로그인된 회사 정보 조회
     """
     return service.company_to_response(company)
+
+
+@router.patch("/me")
+def update_company_info(
+    data: UpdateCompanyRequest,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    회사 정보 수정
+    - name: 회사명 (선택)
+    - email: 이메일 (선택, OAuth 사용자는 변경 불가)
+    """
+    try:
+        updated = service.update_company(
+            db,
+            company.company_id,
+            name=data.name,
+            email=data.email
+        )
+        return {
+            "success": True,
+            "message": "회사 정보가 수정되었습니다",
+            "company": service.company_to_response(updated)
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

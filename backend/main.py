@@ -1,5 +1,5 @@
 # backend/main.py
-# deploy trigger: 2026-01-14
+# deploy trigger: 2025-01-14 v6 - External API에 api_usage 집계 추가 (Dashboard 연동)
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
@@ -17,6 +17,7 @@ from backend.domains.onboarding.router import router as onboarding_router
 from backend.domains.recommendation.router import router as recommendation_router
 from backend.domains.mypage.router import router as mypage_router
 from backend.domains.b2b.router import router as b2b_router
+from backend.domains.b2b.external_router import router as external_router
 
 app = FastAPI()
 
@@ -32,6 +33,8 @@ app.add_middleware(
         "https://moviesir.cloud",
         "https://demo.moviesir.cloud",
         "https://console.moviesir.cloud",
+        # 임시 터널 (모바일 테스트용)
+        "https://poems-rear-hamilton-device.trycloudflare.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],  # 모든 HTTP 메서드 허용
@@ -45,6 +48,7 @@ app.include_router(onboarding_router)
 app.include_router(recommendation_router)
 app.include_router(mypage_router)
 app.include_router(b2b_router)
+app.include_router(external_router)
 
 
 @app.get("/")

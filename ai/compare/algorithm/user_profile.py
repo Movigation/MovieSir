@@ -19,16 +19,16 @@ import sys
 import time
 import numpy as np
 from pathlib import Path
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Optional
 from dotenv import load_dotenv
 from sklearn.metrics import ndcg_score
 from sklearn.preprocessing import MinMaxScaler
 from scipy import stats
 
-# 상위 디렉토리 임포트를 위한 경로 추가
-sys.path.append(str(Path(__file__).parent.parent))
+# 상위 디렉토리 임포트를 위한 경로 추가 (ai/ 폴더)
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from inference.db_conn_movie_reco_v3 import HybridRecommenderV3, DatabaseConnection
+from inference.recommendation_model import HybridRecommender
 
 
 def set_seed(seed=42):
@@ -39,24 +39,24 @@ def set_seed(seed=42):
     print(f"🔒 Random seed fixed: {seed}")
 
 
-class MaxSimilarityRecommenderV3(HybridRecommenderV3):
-    """최대 유사도 방식 추천 시스템 (V3 상속)
-    
+class MaxSimilarityRecommender(HybridRecommender):
+    """최대 유사도 방식 추천 시스템 (현재 버전 상속)
+
     개별 영화 임베딩 유지 → 각 후보 영화와 개별 유사도 계산 → 최대값
     """
 
     def __init__(self, db_config: dict = None, lightgcn_model_path: str = None,
-                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommenderV3 = None):
+                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
         """
-        V3와 동일하지만 명시적으로 최대 유사도 방식 사용
+        현재 버전과 동일하지만 명시적으로 최대 유사도 방식 사용
 
         Args:
-            base_recommender: 기존 HybridRecommenderV3 인스턴스 (데이터 재사용)
+            base_recommender: 기존 HybridRecommender 인스턴스 (데이터 재사용)
             db_config, lightgcn_model_path, lightgcn_data_path: base_recommender 없을 때 사용
         """
         if base_recommender is not None:
             # 기존 인스턴스의 데이터 재사용
-            print("  → Reusing data from existing HybridRecommenderV3 instance")
+            print("  → Reusing data from existing HybridRecommender instance")
             self._copy_from_base(base_recommender)
         else:
             # 새로 초기화
@@ -64,7 +64,7 @@ class MaxSimilarityRecommenderV3(HybridRecommenderV3):
 
         print("  → Using MAXIMUM SIMILARITY method")
 
-    def _copy_from_base(self, base: HybridRecommenderV3):
+    def _copy_from_base(self, base: HybridRecommender):
         """기존 인스턴스로부터 모든 데이터 복사"""
         self.db = base.db
         self.device = base.device
@@ -87,26 +87,126 @@ class MaxSimilarityRecommenderV3(HybridRecommenderV3):
         self.non_adult_movies = base.non_adult_movies
         self.movie_ott_map = base.movie_ott_map
 
-    # _get_user_profile과 _get_top_movies는 부모 클래스(V3)의 것을 그대로 사용
-    # (이미 최대 유사도 방식으로 구현되어 있음)
+    # _get_user_profile은 부모 클래스의 것을 그대로 사용
+    # 현재 버전: 개별 임베딩 행렬 반환 (N, dim) - 평균 유사도 방식
+
+    def _get_top_movies(
+        self,
+        user_sbert_profile: np.ndarray,
+        user_gcn_profile: np.ndarray,
+        filtered_ids: List[int],
+        sbert_weight: float,
+        lightgcn_weight: float,
+        top_k: int = 300,
+        exclude_ids: Optional[List[int]] = None,
+        preferred_genres: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """상위 영화 선정 - 최대 유사도 계산"""
+        exclude_ids = exclude_ids or []
+        exclude_set = set(exclude_ids)
+
+        # 필터된 영화들의 인덱스
+        filtered_indices = []
+        for mid in filtered_ids:
+            idx = self.movie_id_to_idx.get(mid)
+            if idx is not None:
+                filtered_indices.append((mid, idx))
+
+        if not filtered_indices:
+            return []
+
+        # 최대 유사도 계산: (M, dim) @ (dim, N) = (M, N) → max(axis=1)
+        indices = [idx for _, idx in filtered_indices]
+
+        # SBERT 유사도: 각 후보 영화와 사용자 영화들 중 최대 유사도
+        sbert_similarities = self.target_sbert_norm[indices] @ user_sbert_profile.T  # (M, N)
+        sbert_scores = np.max(sbert_similarities, axis=1)  # (M,) - 최대값 사용
+
+        # LightGCN 유사도: 각 후보 영화와 사용자 영화들 중 최대 유사도
+        lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T  # (M, N)
+        lightgcn_scores = np.max(lightgcn_similarities, axis=1)  # (M,) - 최대값 사용
+
+        # 나머지는 부모 클래스와 동일 (MinMax 정규화, 최종 점수 계산)
+        scaler = MinMaxScaler()
+
+        # 평점 점수 조회
+        filtered_rating = np.array([self.rating_scores.get(mid, 0.0) for mid, _ in filtered_indices])
+
+        if len(sbert_scores) > 1:
+            norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
+            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
+            norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
+        else:
+            norm_sbert = sbert_scores
+            norm_lightgcn = lightgcn_scores
+            norm_rating = filtered_rating
+
+        # LightGCN 있는 영화 ID 집합
+        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
+
+        # 최종 점수 계산
+        movie_scores = []
+        for i, (mid, _) in enumerate(filtered_indices):
+            if mid in exclude_set:
+                continue
+
+            # 가중치 재조정
+            if mid in lightgcn_ids:
+                model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+                rec_type = "hybrid"
+            else:
+                model_score = norm_sbert[i]
+                rec_type = "sbert_only"
+
+            rating_score = norm_rating[i] if isinstance(norm_rating, np.ndarray) else norm_rating
+            final_score = model_score * 0.7 + rating_score * 0.3
+
+            # 장르 부스트 (Track A only)
+            meta = self.metadata_map.get(mid, {})
+            if preferred_genres and len(preferred_genres) > 1:
+                movie_genres = set(meta.get('genres', []))
+                overlap = len(movie_genres & set(preferred_genres))
+                if overlap > 0:
+                    genre_weight = overlap / len(preferred_genres)
+                    genre_boost = genre_weight * 0.15  # 최대 15% 부스트
+                    final_score = final_score * (1 + genre_boost)
+
+            movie_scores.append({
+                'movie_id': mid,
+                'tmdb_id': meta.get('tmdb_id'),
+                'title': meta.get('title', 'Unknown'),
+                'runtime': meta.get('runtime', 0),
+                'genres': meta.get('genres', []),
+                'vote_average': meta.get('vote_average', 0),
+                'vote_count': meta.get('vote_count', 0),
+                'overview': meta.get('overview', ''),
+                'release_date': meta.get('release_date', ''),
+                'poster_path': meta.get('poster_path', ''),
+                'score': final_score,
+                'recommendation_type': rec_type
+            })
+
+        # 점수순 정렬 후 상위 top_k
+        movie_scores.sort(key=lambda x: x['score'], reverse=True)
+        return movie_scores[:top_k]
 
 
 
-class AveragedRecommenderV3(HybridRecommenderV3):
-    """평균 임베딩 방식 추천 시스템 (V3 상속)"""
+class AveragedRecommender(HybridRecommender):
+    """평균 임베딩 방식 추천 시스템 (현재 버전 상속)"""
 
     def __init__(self, db_config: dict = None, lightgcn_model_path: str = None,
-                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommenderV3 = None):
+                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
         """
-        V3와 동일하지만 평균 임베딩 방식 사용
+        현재 버전과 동일하지만 평균 임베딩 방식 사용
 
         Args:
-            base_recommender: 기존 HybridRecommenderV3 인스턴스 (데이터 재사용)
+            base_recommender: 기존 HybridRecommender 인스턴스 (데이터 재사용)
             db_config, lightgcn_model_path, lightgcn_data_path: base_recommender 없을 때 사용
         """
         if base_recommender is not None:
             # 기존 인스턴스의 데이터 재사용 (초기화 스킵)
-            print("  → Reusing data from existing HybridRecommenderV3 instance")
+            print("  → Reusing data from existing HybridRecommender instance")
             self._copy_from_base(base_recommender)
         else:
             # 새로 초기화
@@ -114,7 +214,7 @@ class AveragedRecommenderV3(HybridRecommenderV3):
 
         print("  → Using AVERAGED EMBEDDING method")
 
-    def _copy_from_base(self, base: HybridRecommenderV3):
+    def _copy_from_base(self, base: HybridRecommender):
         """기존 인스턴스로부터 모든 데이터 복사"""
         # DB 연결
         self.db = base.db
@@ -193,10 +293,14 @@ class AveragedRecommenderV3(HybridRecommenderV3):
         filtered_ids: List[int],
         sbert_weight: float,
         lightgcn_weight: float,
-        top_k: int,
-        exclude_ids: List[int]
+        top_k: int = 300,
+        exclude_ids: Optional[List[int]] = None,
+        preferred_genres: Optional[List[str]] = None
     ):
         """상위 영화 선정 - 평균 임베딩 유사도 계산"""
+        exclude_ids = exclude_ids or []
+        exclude_set = set(exclude_ids)
+
         # 필터된 영화들의 인덱스
         filtered_indices = []
         for mid in filtered_ids:
@@ -234,7 +338,7 @@ class AveragedRecommenderV3(HybridRecommenderV3):
         # 최종 점수 계산
         movie_scores = []
         for i, (mid, _) in enumerate(filtered_indices):
-            if mid in exclude_ids:
+            if mid in exclude_set:
                 continue
 
             # 가중치 재조정
@@ -269,34 +373,34 @@ class AveragedRecommenderV3(HybridRecommenderV3):
         return movie_scores[:top_k]
 
 
-class MeanSimilarityRecommenderV3(HybridRecommenderV3):
-    """평균 유사도 방식 추천 시스템 (V3 상속)
-    
+class MeanSimilarityRecommender(HybridRecommender):
+    """평균 유사도 방식 추천 시스템 (현재 버전 상속) = 현재 프로덕션 버전!
+
     개별 영화 임베딩 유지 → 각 후보 영화와 개별 유사도 계산 → 평균
     """
 
     def __init__(self, db_config: dict = None, lightgcn_model_path: str = None,
-                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommenderV3 = None):
+                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
         """
-        V3와 동일하지만 평균 유사도 방식 사용
+        현재 버전과 동일 (평균 유사도 방식)
 
         Args:
-            base_recommender: 기존 HybridRecommenderV3 인스턴스 (데이터 재사용)
+            base_recommender: 기존 HybridRecommender 인스턴스 (데이터 재사용)
             db_config, lightgcn_model_path, lightgcn_data_path: base_recommender 없을 때 사용
         """
         if base_recommender is not None:
             # 기존 인스턴스의 데이터 재사용
-            print("  → Reusing data from existing HybridRecommenderV3 instance")
+            print("  → Reusing data from existing HybridRecommender instance")
             self._copy_from_base(base_recommender)
         else:
             # 새로 초기화
             super().__init__(db_config, lightgcn_model_path, lightgcn_data_path, device)
 
-        print("  → Using MEAN SIMILARITY method")
+        print("  → Using MEAN SIMILARITY method (현재 프로덕션 버전)")
 
-    def _copy_from_base(self, base: HybridRecommenderV3):
+    def _copy_from_base(self, base: HybridRecommender):
         """기존 인스턴스로부터 모든 데이터 복사"""
-        # AveragedRecommenderV3와 동일
+        # AveragedRecommender와 동일
         self.db = base.db
         self.device = base.device
         self.metadata_map = base.metadata_map
@@ -317,6 +421,9 @@ class MeanSimilarityRecommenderV3(HybridRecommenderV3):
         self.adult_movies = base.adult_movies
         self.non_adult_movies = base.non_adult_movies
         self.movie_ott_map = base.movie_ott_map
+
+    # _get_user_profile과 _get_top_movies는 부모 클래스의 것을 그대로 사용
+    # 현재 버전: 개별 임베딩 행렬 반환 (N, dim) + 평균 유사도 계산
 
     def _get_user_profile(self, user_movie_ids: List[int]):
         """사용자 프로필 벡터 생성 - 개별 임베딩 행렬 반환 (평균 유사도 계산용)"""
@@ -363,10 +470,14 @@ class MeanSimilarityRecommenderV3(HybridRecommenderV3):
         filtered_ids: List[int],
         sbert_weight: float,
         lightgcn_weight: float,
-        top_k: int,
-        exclude_ids: List[int]
+        top_k: int = 300,
+        exclude_ids: Optional[List[int]] = None,
+        preferred_genres: Optional[List[str]] = None
     ):
         """상위 영화 선정 - 평균 유사도 계산"""
+        exclude_ids = exclude_ids or []
+        exclude_set = set(exclude_ids)
+
         # 필터된 영화들의 인덱스
         filtered_indices = []
         for mid in filtered_ids:
@@ -388,7 +499,7 @@ class MeanSimilarityRecommenderV3(HybridRecommenderV3):
         lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T  # (M, N)
         lightgcn_scores = np.mean(lightgcn_similarities, axis=1)  # (M,)
 
-        # 나머지는 V3와 동일 (MinMax 정규화, 최종 점수 계산)
+        # 나머지는 현재 버전과 동일 (MinMax 정규화, 최종 점수 계산)
         scaler = MinMaxScaler()
 
         # 평점 점수 조회
@@ -409,7 +520,7 @@ class MeanSimilarityRecommenderV3(HybridRecommenderV3):
         # 최종 점수 계산
         movie_scores = []
         for i, (mid, _) in enumerate(filtered_indices):
-            if mid in exclude_ids:
+            if mid in exclude_set:
                 continue
 
             # 가중치 재조정
@@ -450,12 +561,12 @@ class RecommenderEvaluator:
 
     def __init__(self, db_config: Dict):
         self.db_config = db_config
-        self.db = DatabaseConnection(**db_config)
+        # 현재 버전에서는 DB 연결을 HybridRecommender가 직접 관리
 
     def get_test_users_from_ratings_csv(
         self,
         ratings_csv_path: str,
-        recommender: HybridRecommenderV3,
+        recommender: HybridRecommender,
         min_ratings: int = 20,
         num_users: int = 100
     ) -> List[Tuple[int, List[int], List[int]]]:
@@ -577,7 +688,7 @@ class RecommenderEvaluator:
     def filter_valid_movies(
         self,
         movie_ids: List[int],
-        recommender: HybridRecommenderV3
+        recommender: HybridRecommender
     ) -> Tuple[List[int], Dict[str, int]]:
         """
         DB에 존재하고 추천 가능한 영화만 필터링
@@ -684,7 +795,7 @@ class RecommenderEvaluator:
 
     def evaluate_recommender(
         self,
-        recommender: HybridRecommenderV3,
+        recommender: HybridRecommender,
         test_users: List[Tuple[str, List[int], List[int]]],
         method_name: str,
         k: int = 10
@@ -840,8 +951,8 @@ def main():
         'password': os.getenv("DATABASE_PASSWORD", "moviesir123")
     }
 
-    # 모델 경로
-    current_dir = Path(__file__).parent.parent
+    # 모델 경로 (ai/ 폴더 기준)
+    current_dir = Path(__file__).parent.parent.parent  # ai/ 폴더
     LIGHTGCN_MODEL_PATH = str(current_dir / "training/lightgcn_model/best_model.pt")
     LIGHTGCN_DATA_PATH = str(current_dir / "training/lightgcn_data")
     RATINGS_CSV_PATH = str(current_dir / "training/original_data/ratings.csv")
@@ -856,7 +967,7 @@ def main():
     print("📦 추천 시스템 데이터 초기화 중...")
     print("="*60)
 
-    base_recommender = HybridRecommenderV3(
+    base_recommender = HybridRecommender(
         db_config=DB_CONFIG,
         lightgcn_model_path=LIGHTGCN_MODEL_PATH,
         lightgcn_data_path=LIGHTGCN_DATA_PATH
@@ -887,7 +998,7 @@ def main():
     print("1️⃣ 최대 유사도 방식 평가 시작...")
     print("="*60)
 
-    recommender_max = MaxSimilarityRecommenderV3(base_recommender=base_recommender)
+    recommender_max = MaxSimilarityRecommender(base_recommender=base_recommender)
 
     results_max = evaluator.evaluate_recommender(
         recommender=recommender_max,
@@ -901,7 +1012,7 @@ def main():
     print("2️⃣ 평균 임베딩 방식 평가 시작...")
     print("="*60)
 
-    recommender_avg = AveragedRecommenderV3(base_recommender=base_recommender)
+    recommender_avg = AveragedRecommender(base_recommender=base_recommender)
 
     results_avg = evaluator.evaluate_recommender(
         recommender=recommender_avg,
@@ -910,17 +1021,17 @@ def main():
         k=10
     )
 
-    # 5. 평균 유사도 방식 평가
+    # 5. 평균 유사도 방식 평가 (현재 프로덕션 버전)
     print("\n" + "="*60)
-    print("3️⃣ 평균 유사도 방식 평가 시작...")
+    print("3️⃣ 평균 유사도 방식 평가 시작 (현재 프로덕션 버전)...")
     print("="*60)
 
-    recommender_mean = MeanSimilarityRecommenderV3(base_recommender=base_recommender)
+    recommender_mean = MeanSimilarityRecommender(base_recommender=base_recommender)
 
     results_mean = evaluator.evaluate_recommender(
         recommender=recommender_mean,
         test_users=test_users,
-        method_name="평균 유사도 방식 (Mean Similarity)",
+        method_name="평균 유사도 방식 (Mean Similarity - 현재)",
         k=10
     )
 

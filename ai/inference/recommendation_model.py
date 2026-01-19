@@ -27,7 +27,8 @@ class DatabaseConnection:
             'port': port,
             'database': database,
             'user': user,
-            'password': password
+            'password': password,
+            'options': '-c search_path=public,b2c,b2b'
         }
         self.conn = None
 
@@ -50,7 +51,7 @@ class DatabaseConnection:
             return cursor.fetchall()
 
 
-class HybridRecommenderV5:
+class HybridRecommender:
     def __init__(
         self,
         db_config: dict,
@@ -70,7 +71,7 @@ class HybridRecommenderV5:
         # DB 연결
         self.db = DatabaseConnection(**db_config)
 
-        print("Initializing Hybrid Recommender V5 (Noise-based Diversity)...")
+        print("Initializing Hybrid Recommender (Noise-based Diversity)...")
 
         # 1. 데이터 로드 (DB에서)
         self._load_metadata_from_db()
@@ -617,6 +618,78 @@ class HybridRecommenderV5:
 
         return None
 
+    def _apply_negative_penalty(
+        self,
+        candidates: List[Dict[str, Any]],
+        negative_movie_ids: List[int],
+        penalty_strength: float = 0.5
+    ) -> List[Dict[str, Any]]:
+        """
+        부정 피드백 영화와 유사한 영화의 점수를 낮춤
+        
+        Args:
+            candidates: 후보 영화 리스트 (score 포함)
+            negative_movie_ids: 부정 피드백 영화 ID 리스트
+            penalty_strength: 페널티 강도 (0~1, 기본 0.5)
+        
+        Returns:
+            페널티 적용된 후보 영화 리스트
+        """
+        if not negative_movie_ids or not candidates:
+            return candidates
+        
+        # 부정 영화의 SBERT 벡터 가져오기
+        negative_vectors = []
+        for movie_id in negative_movie_ids:
+            if movie_id in self.sbert_movie_to_idx:
+                idx = self.sbert_movie_to_idx[movie_id]
+                negative_vectors.append(self.sbert_embeddings[idx])
+        
+        if not negative_vectors:
+            print("[Negative Penalty] No negative movies found in SBERT embeddings")
+            return candidates
+        
+        negative_matrix = np.array(negative_vectors)  # (K, dim)
+        negative_matrix = negative_matrix / (np.linalg.norm(negative_matrix, axis=1, keepdims=True) + 1e-10)
+        
+        # 각 후보 영화와 부정 영화의 유사도 계산
+        penalized_candidates = []
+        for candidate in candidates:
+            movie_id = candidate['movie_id']
+            
+            if movie_id not in self.sbert_movie_to_idx:
+                penalized_candidates.append(candidate)
+                continue
+            
+            # 후보 영화의 SBERT 벡터
+            idx = self.sbert_movie_to_idx[movie_id]
+            candidate_vec = self.sbert_embeddings[idx]
+            candidate_vec = candidate_vec / (np.linalg.norm(candidate_vec) + 1e-10)
+            
+            # 부정 영화들과의 최대 유사도
+            similarities = np.dot(negative_matrix, candidate_vec)  # (K,)
+            max_similarity = np.max(similarities)
+            
+            # 유사도가 높을수록 페널티 적용
+            # penalty_factor = 1 - (similarity * penalty_strength)
+            penalty_factor = 1 - (max_similarity * penalty_strength)
+            penalty_factor = max(penalty_factor, 0.1)  # 최소 0.1 (90% 감소 제한)
+            
+            # 점수에 페널티 적용
+            penalized_candidate = candidate.copy()
+            original_score = candidate.get('score', 0)
+            penalized_candidate['score'] = original_score * penalty_factor
+            
+            penalized_candidates.append(penalized_candidate)
+        
+        # 페널티 적용 통계
+        avg_penalty = 1 - np.mean([c.get('score', 0) / max(candidates[i].get('score', 1), 0.001) 
+                                    for i, c in enumerate(penalized_candidates)])
+        print(f"[Negative Penalty] Applied to {len(negative_movie_ids)} movies, avg penalty: {avg_penalty:.2f}")
+        
+        return penalized_candidates
+
+
 
     def recommend(
         self,
@@ -626,7 +699,8 @@ class HybridRecommenderV5:
         preferred_otts: Optional[List[str]] = None,
         allow_adult: bool = False,
         excluded_ids_a: Optional[List[int]] = None,
-        excluded_ids_b: Optional[List[int]] = None
+        excluded_ids_b: Optional[List[int]] = None,
+        negative_movie_ids: Optional[List[int]] = None  # NEW
     ) -> Dict[str, Any]:
         """
         초기 추천 - 영화 조합 반환
@@ -639,6 +713,7 @@ class HybridRecommenderV5:
             excluded_ids_a: Track A 제외할 영화 ID (같은 장르 이전 추천)
             excluded_ids_b: Track B 제외할 영화 ID (전체 이전 추천)
             allow_adult: 성인물 허용 여부
+            negative_movie_ids: 부정 피드백 영화 ID (유사도 페널티)
 
         Returns:
             {
@@ -649,12 +724,14 @@ class HybridRecommenderV5:
         """
         excluded_ids_a = excluded_ids_a or []
         excluded_ids_b = excluded_ids_b or []
+        negative_movie_ids = negative_movie_ids or []
 
         print(f"\n=== Recommend ===")
         print(f"Available time: {available_time} min")
         print(f"Genres: {preferred_genres}")
         print(f"OTTs: {preferred_otts}")
         print(f"Excluded A: {len(excluded_ids_a)}, B: {len(excluded_ids_b)}")
+        print(f"Negative feedback: {len(negative_movie_ids)} movies")
 
         start_time = time.time()
 
@@ -662,7 +739,7 @@ class HybridRecommenderV5:
         user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
         
         # 사용자 프로필 구성 영화 출력 (영화 제목 포함)
-        print(f"\n📊 User Profile Composition ({len(user_movie_ids)} movies):")
+        print(f"\n📊 User Profile ({len(user_movie_ids)} movies from positive feedback + onboarding):")
         for i, mid in enumerate(user_movie_ids[:10], 1):  # 최대 10개만 출력
             meta = self.metadata_map.get(mid, {})
             title = meta.get('title', 'Unknown')
@@ -694,6 +771,10 @@ class HybridRecommenderV5:
             preferred_genres=preferred_genres  # ← Track A는 장르 가중치 적용
         )
         print(f"Track A top candidates: {len(top_candidates_a)} movies")
+        
+        # 부정 피드백 페널티 적용
+        if negative_movie_ids:
+            top_candidates_a = self._apply_negative_penalty(top_candidates_a, negative_movie_ids)
 
         combo_a = self._find_combination(top_candidates_a, available_time)
 
@@ -764,6 +845,10 @@ class HybridRecommenderV5:
             exclude_ids=exclude_b,
             preferred_genres=None  # ← Track B는 장르 가중치 없음
         )
+        
+        # 부정 피드백 페널티 적용
+        if negative_movie_ids:
+            top_candidates_b = self._apply_negative_penalty(top_candidates_b, negative_movie_ids)
 
         combo_b = self._find_combination(top_candidates_b, available_time)
 
@@ -798,7 +883,8 @@ class HybridRecommenderV5:
         track: str = 'a',
         preferred_genres: Optional[List[str]] = None,
         preferred_otts: Optional[List[str]] = None,
-        allow_adult: bool = False
+        allow_adult: bool = False,
+        negative_movie_ids: Optional[List[int]] = None  # NEW
     ) -> Optional[Dict[str, Any]]:
         """
         개별 영화 재추천 - 단일 영화 반환
@@ -815,10 +901,13 @@ class HybridRecommenderV5:
         Returns:
             { 'tmdb_id': int, 'title': str, 'runtime': int, ... } 또는 None
         """
+        negative_movie_ids = negative_movie_ids or []
+        
         print(f"\n=== Recommend Single ===")
         print(f"Target runtime: {target_runtime} min")
         print(f"Track: {track}")
         print(f"Excluded: {len(excluded_ids)} movies")
+        print(f"Negative feedback: {len(negative_movie_ids)} movies")
         if excluded_ids:
             print(f"  First 5 excluded IDs: {excluded_ids[:5]}")
 
@@ -827,6 +916,10 @@ class HybridRecommenderV5:
         print(f"  Excluded set size: {len(excluded_set)}")
 
         start_time = time.time()
+        
+        # 사용자 프로필 생성
+        user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
+        print(f"📊 User Profile: {len(user_movie_ids)} movies (positive feedback + onboarding)")
 
         # 런타임 범위: 대체할 영화와 비슷한 길이
         # target_runtime의 100%를 초과하지 않으면 전체 시간도 초과 안 됨

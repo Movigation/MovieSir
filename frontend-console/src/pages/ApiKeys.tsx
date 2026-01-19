@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -17,7 +18,19 @@ export default function ApiKeys() {
   const [newKeyName, setNewKeyName] = useState('')
   const [creating, setCreating] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null)
+  const [editingKeyName, setEditingKeyName] = useState('')
   const { token } = useAuthStore()
+  const navigate = useNavigate()
+
+  // 원본 키인지 확인 (마스킹되지 않은 키)
+  const isRawKey = (key: string) => key.startsWith('sk-moviesir-') && !key.includes('*')
+
+  // Playground에서 테스트
+  const testInPlayground = (key: string) => {
+    sessionStorage.setItem('playground_api_key_temp', key)
+    navigate('/console/playground')
+  }
 
   const loadKeys = async () => {
     try {
@@ -54,8 +67,42 @@ export default function ApiKeys() {
     if (!confirm('이 API 키를 비활성화하시겠습니까?')) return
 
     try {
+      await api.patch(`/b2b/api-keys/${id}/deactivate`)
+      loadKeys()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const deleteKey = async (id: string) => {
+    if (!confirm('이 API 키를 완전히 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return
+
+    try {
       await api.delete(`/b2b/api-keys/${id}`)
       loadKeys()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const startEditKey = (key: ApiKey) => {
+    setEditingKeyId(key.id)
+    setEditingKeyName(key.name)
+  }
+
+  const cancelEditKey = () => {
+    setEditingKeyId(null)
+    setEditingKeyName('')
+  }
+
+  const updateKeyName = async (id: string) => {
+    if (!editingKeyName.trim()) return
+
+    try {
+      await api.patch(`/b2b/api-keys/${id}`, { name: editingKeyName.trim() })
+      setKeys(keys.map(k => k.id === id ? { ...k, name: editingKeyName.trim() } : k))
+      setEditingKeyId(null)
+      setEditingKeyName('')
     } catch (err) {
       console.error(err)
     }
@@ -144,7 +191,50 @@ export default function ApiKeys() {
                 {keys.map((key) => (
                   <tr key={key.id}>
                     <td className="py-3 lg:py-4">
-                      <span className="text-xs lg:text-sm font-medium text-white">{key.name}</span>
+                      {editingKeyId === key.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={editingKeyName}
+                            onChange={(e) => setEditingKeyName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') updateKeyName(key.id)
+                              if (e.key === 'Escape') cancelEditKey()
+                            }}
+                            className="w-24 lg:w-32 px-2 py-1 bg-white/5 border border-white/20 rounded text-xs lg:text-sm text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => updateKeyName(key.id)}
+                            className="p-1 text-green-400 hover:text-green-300"
+                            title="저장"
+                          >
+                            <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={cancelEditKey}
+                            className="p-1 text-gray-400 hover:text-gray-300"
+                            title="취소"
+                          >
+                            <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditKey(key)}
+                          className="text-xs lg:text-sm font-medium text-white hover:text-blue-400 transition-colors flex items-center gap-1 group"
+                          title="클릭하여 이름 수정"
+                        >
+                          {key.name}
+                          <svg className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      )}
                     </td>
                     <td className="py-3 lg:py-4">
                       <div className="flex items-center gap-1.5 lg:gap-2">
@@ -159,6 +249,7 @@ export default function ApiKeys() {
                               ? 'text-green-400'
                               : 'text-gray-500 hover:text-white'
                           }`}
+                          title="복사"
                         >
                           {copiedId === key.id ? (
                             <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,6 +261,17 @@ export default function ApiKeys() {
                             </svg>
                           )}
                         </button>
+                        {isRawKey(key.key) && (
+                          <button
+                            onClick={() => testInPlayground(key.key)}
+                            className="p-1 lg:p-1.5 rounded transition-colors flex-shrink-0 text-blue-400 hover:text-blue-300"
+                            title="Playground에서 테스트"
+                          >
+                            <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 lg:py-4 text-xs lg:text-sm text-gray-400 hidden sm:table-cell whitespace-nowrap">
@@ -193,11 +295,17 @@ export default function ApiKeys() {
                         {key.is_active && (
                           <button
                             onClick={() => deactivateKey(key.id)}
-                            className="text-[10px] lg:text-xs text-red-400 hover:text-red-300 hidden sm:inline"
+                            className="text-[10px] lg:text-xs text-yellow-400 hover:text-yellow-300 hidden sm:inline"
                           >
                             비활성화
                           </button>
                         )}
+                        <button
+                          onClick={() => deleteKey(key.id)}
+                          className="text-[10px] lg:text-xs text-red-400 hover:text-red-300 hidden sm:inline"
+                        >
+                          삭제
+                        </button>
                       </div>
                     </td>
                   </tr>

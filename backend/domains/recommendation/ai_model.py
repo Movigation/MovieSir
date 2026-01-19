@@ -1,6 +1,7 @@
 # backend/domains/recommendation/ai_model.py
 """
-AI 추천 모델 어댑터 v2 - GPU Server HTTP 호출
+AI 추천 모델 어댑터 v3 - B2B External API 호출
+B2C 무비서도 B2B API Key를 사용하여 추천 서비스 호출 (Dog Fooding)
 """
 
 import os
@@ -10,13 +11,17 @@ from typing import List, Optional, Dict, Any
 
 class AIModelAdapter:
     """
-    GPU Server의 AI Service를 HTTP로 호출하는 어댑터 (v2)
+    B2B External API를 통해 AI 추천 서비스를 호출하는 어댑터 (v3)
+    B2C 무비서가 B2B API의 고객으로서 동작
     """
 
     def __init__(self):
-        self.ai_service_url = os.getenv("AI_SERVICE_URL", "http://10.0.35.62:8001")
+        # B2B External API URL
+        self.api_base_url = os.getenv("B2B_API_URL", "http://localhost:8000")
+        # B2C용 API Key (B2B Console에서 발급받은 키)
+        self.api_key = os.getenv("B2C_API_KEY", "")
         self.is_loaded = True
-        
+
         # 캐싱 변수
         self._popular_movies_cache = None  # 인기 영화 목록 (24시간 TTL)
         self._cache_timestamp = None  # 캐시 생성 시각
@@ -195,9 +200,124 @@ class AIModelAdapter:
         
         return []
 
+    def _get_positive_feedback_movies(self, user_id: str) -> List[int]:
+        """긍정 피드백 영화 조회"""
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+
+            db = SessionLocal()
+            try:
+                result = db.execute(
+                    text("""
+                        SELECT movie_id 
+                        FROM b2c.user_movie_feedback 
+                        WHERE user_id = :uid 
+                          AND feedback_type = 'satisfaction_positive'
+                        ORDER BY created_at DESC
+                        LIMIT 20
+                    """),
+                    {"uid": user_id}
+                ).fetchall()
+
+                return [row[0] for row in result] if result else []
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            print(f"[AI Model] Error fetching positive feedback: {e}")
+
+        return []
+
+    def _get_negative_feedback_movies(self, user_id: str) -> List[int]:
+        """부정 피드백 영화 조회"""
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+
+            db = SessionLocal()
+            try:
+                result = db.execute(
+                    text("""
+                        SELECT movie_id 
+                        FROM b2c.user_movie_feedback 
+                        WHERE user_id = :uid 
+                          AND feedback_type = 'satisfaction_negative'
+                        ORDER BY created_at DESC
+                        LIMIT 20
+                    """),
+                    {"uid": user_id}
+                ).fetchall()
+
+                return [row[0] for row in result] if result else []
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            print(f"[AI Model] Error fetching negative feedback: {e}")
+
+        return []
+
+    def _get_all_feedback_movies(self, user_id: str) -> List[int]:
+        """모든 피드백 영화 조회 (긍정 + 부정)"""
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+
+            db = SessionLocal()
+            try:
+                result = db.execute(
+                    text("""
+                        SELECT DISTINCT movie_id 
+                        FROM b2c.user_movie_feedback 
+                        WHERE user_id = :uid
+                    """),
+                    {"uid": user_id}
+                ).fetchall()
+
+                return [row[0] for row in result] if result else []
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            print(f"[AI Model] Error fetching all feedback: {e}")
+
+        return []
+
+    def _get_onboarding_movies(self, user_id: str) -> List[int]:
+        """온보딩 영화 조회"""
+        try:
+            from sqlalchemy import text
+            from backend.core.db import SessionLocal
+
+            db = SessionLocal()
+            try:
+                result = db.execute(
+                    text("""
+                        SELECT movie_id 
+                        FROM b2c.user_onboarding_answers 
+                        WHERE user_id = :uid
+                        ORDER BY created_at
+                    """),
+                    {"uid": user_id}
+                ).fetchall()
+
+                return [row[0] for row in result] if result else []
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            print(f"[AI Model] Error fetching onboarding movies: {e}")
+
+        return []
+
     def _get_user_movie_ids(self, user_id: str, force_refresh: bool = False) -> List[int]:
         """
-        사용자 영화 ID 조회 (세션 캐싱)
+        사용자 영화 ID 조회 (피드백 + 온보딩 + 시청 기록)
         
         Args:
             user_id: 사용자 ID
@@ -205,31 +325,43 @@ class AIModelAdapter:
                           False면 캐시 사용 (재추천용)
         
         Returns:
-            사용자 영화 ID 리스트 (시청 기록 > 온보딩 > 인기 영화)
+            사용자 선호 영화 ID 리스트 (긍정 피드백 > 온보딩 > 시청 기록)
         """
         import time
         
-        # 1. DB에서 시청 기록 조회
-        user_movie_ids = self._get_user_watched_movies(user_id)
-        
-        if user_movie_ids:
-            # 시청 기록 있으면 캐시 갱신 후 반환
-            self._user_profile_cache[user_id] = (user_movie_ids, time.time())
-            return user_movie_ids
-        
-        # 2. 시청 기록 없음 - 캐시 확인 (force_refresh=False일 때만)
+        # 캐시 확인 (force_refresh=False일 때만)
         if not force_refresh and user_id in self._user_profile_cache:
             cached_ids, cached_time = self._user_profile_cache[user_id]
-            # 5분 이내 캐시면 재사용
             if time.time() - cached_time < 300:  # 5분
                 print(f"[AI Model] Using cached profile for {user_id[:8]}...")
                 return cached_ids
         
-        # 3. 인기 영화 사용 (5개)
-        print(f"[AI Model] No history for {user_id[:8]}... - using 5 popular movies")
-        popular_movies = self._get_popular_movies(limit=5)
+        user_movie_ids = []
         
-        # 캐시 저장 (5분 TTL)
+        # 1. 긍정 피드백 영화 조회
+        positive_feedback = self._get_positive_feedback_movies(user_id)
+        user_movie_ids.extend(positive_feedback)
+        
+        # 2. 온보딩 영화 조회
+        onboarding_movies = self._get_onboarding_movies(user_id)
+        user_movie_ids.extend(onboarding_movies)
+        
+        # 3. 시청 기록 조회 (선택적)
+        watch_history = self._get_user_watched_movies(user_id)
+        user_movie_ids.extend(watch_history)
+        
+        # 중복 제거 (순서 유지)
+        user_movie_ids = list(dict.fromkeys(user_movie_ids))
+        
+        if user_movie_ids:
+            # 캐시 저장
+            self._user_profile_cache[user_id] = (user_movie_ids, time.time())
+            print(f"[AI Model] User profile: {len(positive_feedback)} feedback + {len(onboarding_movies)} onboarding + {len(watch_history)} watch history")
+            return user_movie_ids
+        
+        # 4. Fallback: 인기 영화
+        print(f"[AI Model] No user data for {user_id[:8]}... - using popular movies")
+        popular_movies = self._get_popular_movies(limit=5)
         self._user_profile_cache[user_id] = (popular_movies, time.time())
         return popular_movies
 
@@ -245,7 +377,7 @@ class AIModelAdapter:
         excluded_ids_b: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
-        초기 추천 - 영화 조합 반환 (v2)
+        초기 추천 - 영화 조합 반환 (v3 - 피드백 반영)
 
         Returns:
             {
@@ -262,12 +394,17 @@ class AIModelAdapter:
             recent_recommended = self._get_recent_recommended_movies(user_id, session_limit=3)
             print(f"[AI Model] Recent recommendations to exclude: {len(recent_recommended)} movies from last 3 sessions")
             
-            # excluded_ids에 최근 추천 영화 추가
+            # 피드백 데이터 조회
+            all_feedback = self._get_all_feedback_movies(user_id)  # 긍정 + 부정 모두
+            negative_feedback = self._get_negative_feedback_movies(user_id)  # 부정만
+            print(f"[AI Model] Feedback: {len(all_feedback)} total ({len(negative_feedback)} negative)")
+            
+            # excluded_ids에 최근 추천 영화 + 모든 피드백 영화 추가
             excluded_ids_a = excluded_ids_a or []
-            excluded_ids_a = list(set(excluded_ids_a + recent_recommended))
+            excluded_ids_a = list(set(excluded_ids_a + recent_recommended + all_feedback))
             
             excluded_ids_b = excluded_ids_b or []
-            excluded_ids_b = list(set(excluded_ids_b + recent_recommended))
+            excluded_ids_b = list(set(excluded_ids_b + recent_recommended + all_feedback))
             
             # OTT 구독 정보 없으면 전체 OTT 사용
             if not preferred_otts:
@@ -282,21 +419,31 @@ class AIModelAdapter:
                 "preferred_otts": preferred_otts,
                 "allow_adult": allow_adult,
                 "excluded_ids_a": excluded_ids_a,
-                "excluded_ids_b": excluded_ids_b
+                "excluded_ids_b": excluded_ids_b,
+                "negative_movie_ids": negative_feedback  # NEW: 부정 피드백 전달
             }
 
-            print(f"[AI Model] Calling recommend: {self.ai_service_url}/recommend")
-            print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}, excluded_a={len(excluded_ids_a)}, excluded_b={len(excluded_ids_b)}")
+            print(f"[AI Model] Calling B2B API: {self.api_base_url}/v1/recommend")
+            print(f"[AI Model] Payload: time={available_time}, genres={preferred_genres}, excluded_a={len(excluded_ids_a)}, excluded_b={len(excluded_ids_b)}, negative={len(negative_feedback)}")
+
+            headers = {"X-API-Key": self.api_key} if self.api_key else {}
 
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
-                    f"{self.ai_service_url}/recommend",
-                    json=payload
+                    f"{self.api_base_url}/v1/recommend",
+                    json=payload,
+                    headers=headers
                 )
                 response.raise_for_status()
-                result = response.json()
+                api_result = response.json()
 
-            print(f"[AI Model] Response received")
+            # External API 응답에서 data 추출
+            if api_result.get("success") and "data" in api_result:
+                result = api_result["data"]
+            else:
+                result = api_result
+
+            print(f"[AI Model] Response received from B2B API")
             return result
 
         except httpx.HTTPError as e:
@@ -332,8 +479,13 @@ class AIModelAdapter:
             recent_recommended = self._get_recent_recommended_movies(user_id, session_limit=3)
             print(f"[AI Model] Recent recommendations to exclude: {len(recent_recommended)} movies from last 3 sessions")
             
-            # excluded_ids에 최근 추천 영화 추가
-            excluded_ids = list(set(excluded_ids + recent_recommended))
+            # 피드백 데이터 조회
+            all_feedback = self._get_all_feedback_movies(user_id)
+            negative_feedback = self._get_negative_feedback_movies(user_id)
+            print(f"[AI Model] Feedback: {len(all_feedback)} total ({len(negative_feedback)} negative)")
+            
+            # excluded_ids에 최근 추천 영화 + 모든 피드백 영화 추가
+            excluded_ids = list(set(excluded_ids + recent_recommended + all_feedback))
             
             # OTT 구독 정보 없으면 전체 OTT 사용
             if not preferred_otts:
@@ -348,19 +500,29 @@ class AIModelAdapter:
                 "track": track,
                 "preferred_genres": preferred_genres,
                 "preferred_otts": preferred_otts,
-                "allow_adult": allow_adult
+                "allow_adult": allow_adult,
+                "negative_movie_ids": negative_feedback  # NEW
             }
 
-            print(f"[AI Model] Calling recommend_single: {self.ai_service_url}/recommend_single")
-            print(f"[AI Model] Payload: runtime={target_runtime}, track={track}, excluded={len(excluded_ids)}")
+            print(f"[AI Model] Calling B2B API: {self.api_base_url}/v1/recommend_single")
+            print(f"[AI Model] Payload: runtime={target_runtime}, track={track}, excluded={len(excluded_ids)}, negative={len(negative_feedback)}")
+
+            headers = {"X-API-Key": self.api_key} if self.api_key else {}
 
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(
-                    f"{self.ai_service_url}/recommend_single",
-                    json=payload
+                    f"{self.api_base_url}/v1/recommend_single",
+                    json=payload,
+                    headers=headers
                 )
                 response.raise_for_status()
-                result = response.json()
+                api_result = response.json()
+
+            # External API 응답에서 data 추출
+            if api_result.get("success") and "data" in api_result:
+                result = api_result["data"]
+            else:
+                result = api_result
 
             if result:
                 print(f"[AI Model] Single movie: {result.get('title')} ({result.get('runtime')}min)")

@@ -152,8 +152,8 @@ export default function MovieCarousel({
                                     absolute ${cardWidthClassName}
                                     transition-all duration-700 ease-out
                                     ${position === 'center' ? 'z-10 opacity-100' : ''}
-                                    ${position === 'left-1' ? 'z-5 opacity-100 pointer-events-none' : ''}
-                                    ${position === 'right-1' ? 'z-5 opacity-100 pointer-events-none' : ''}
+                                    ${position === 'left-1' ? 'z-5 opacity-100' : ''}
+                                    ${position === 'right-1' ? 'z-5 opacity-100' : ''}
                                     ${position === 'hidden' ? 'opacity-0 pointer-events-none' : ''}
                                 `}
                                 style={{
@@ -166,12 +166,17 @@ export default function MovieCarousel({
                                                     : 'translateX(0) scale(0.8)',
                                     cursor: position === 'center' ? 'default' : 'pointer'
                                 }}
-                                onClick={() => position !== 'center' && setCurrentIndex(index)}
+                                onClick={() => {
+                                    if (position !== 'center') {
+                                        setCurrentIndex(index);
+                                    }
+                                }}
                             >
                                 {React.cloneElement(child as React.ReactElement<any>, {
                                     isExpanded: position === 'center' ? (child as React.ReactElement<any>).props.isExpanded : false,
                                     onExpand: position === 'center' ? (child as React.ReactElement<any>).props.onExpand : () => { },
                                     onCollapse: position === 'center' ? (child as React.ReactElement<any>).props.onCollapse : () => { },
+                                    isPeeking: position !== 'center',
                                 })}
                             </div>
                         );

@@ -5,6 +5,8 @@ B2B 도메인 서비스 레이어
 import os
 import secrets
 import hashlib
+import httpx
+import resend
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -12,6 +14,17 @@ from sqlalchemy import func, and_
 from jose import jwt
 
 from backend.utils.password import hash_password, verify_password
+
+# Resend 설정
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "noreply@moviesir.cloud")
+RESEND_FROM_NAME = os.getenv("RESEND_FROM_NAME", "MovieSir")
+
+# OAuth 설정
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
 from .models import Company, ApiKey, ApiLog, ApiUsage
 from .schemas import (
     CompanyRegister, CompanyResponse, ApiKeyCreate, ApiKeyResponse,
@@ -123,6 +136,31 @@ def get_company_by_id(db: Session, company_id: int) -> Optional[Company]:
     return db.query(Company).filter(Company.company_id == company_id).first()
 
 
+def change_password(db: Session, company_id: int, current_password: str, new_password: str) -> bool:
+    """비밀번호 변경"""
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+
+    if not company:
+        raise ValueError("회사를 찾을 수 없습니다")
+
+    # OAuth 사용자는 비밀번호 변경 불가
+    if company.oauth_provider:
+        raise ValueError("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다")
+
+    # 현재 비밀번호 확인
+    if not company.password_hash:
+        raise ValueError("비밀번호가 설정되지 않은 계정입니다")
+
+    if not verify_password(current_password, company.password_hash):
+        raise ValueError("현재 비밀번호가 올바르지 않습니다")
+
+    # 새 비밀번호로 업데이트
+    company.password_hash = hash_password(new_password)
+    db.commit()
+
+    return True
+
+
 def company_to_response(company: Company) -> CompanyResponse:
     """Company 모델을 응답 스키마로 변환"""
     return CompanyResponse(
@@ -131,6 +169,39 @@ def company_to_response(company: Company) -> CompanyResponse:
         email=company.manager_email,
         plan=company.plan_type,
     )
+
+
+def update_company(db: Session, company_id: int, name: Optional[str] = None, email: Optional[str] = None) -> Company:
+    """회사 정보 수정"""
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+
+    if not company:
+        raise ValueError("회사를 찾을 수 없습니다")
+
+    # 이름 변경
+    if name is not None:
+        company.name = name
+
+    # 이메일 변경
+    if email is not None:
+        # OAuth 사용자는 이메일 변경 불가
+        if company.oauth_provider:
+            raise ValueError("소셜 로그인 사용자는 이메일을 변경할 수 없습니다")
+
+        # 이메일 중복 체크
+        existing = db.query(Company).filter(
+            Company.manager_email == email,
+            Company.company_id != company_id
+        ).first()
+        if existing:
+            raise ValueError("이미 사용 중인 이메일입니다")
+
+        company.manager_email = email
+
+    db.commit()
+    db.refresh(company)
+
+    return company
 
 
 # ==================== API Key Service ====================
@@ -179,6 +250,35 @@ def deactivate_api_key(db: Session, company_id: int, key_id: int) -> bool:
     api_key.is_active = False
     db.commit()
     return True
+
+
+def delete_api_key(db: Session, company_id: int, key_id: int) -> bool:
+    """API 키 완전 삭제"""
+    api_key = db.query(ApiKey).filter(
+        and_(ApiKey.key_id == key_id, ApiKey.company_id == company_id)
+    ).first()
+
+    if not api_key:
+        return False
+
+    db.delete(api_key)
+    db.commit()
+    return True
+
+
+def update_api_key(db: Session, company_id: int, key_id: int, name: str) -> Optional[ApiKey]:
+    """API 키 이름 수정"""
+    api_key = db.query(ApiKey).filter(
+        and_(ApiKey.key_id == key_id, ApiKey.company_id == company_id)
+    ).first()
+
+    if not api_key:
+        return None
+
+    api_key.key_name = name
+    db.commit()
+    db.refresh(api_key)
+    return api_key
 
 
 def api_key_to_response(api_key: ApiKey, raw_key: Optional[str] = None) -> ApiKeyResponse:
@@ -268,8 +368,122 @@ def get_dashboard_data(db: Session, company_id: int) -> DashboardResponse:
         total=total_count,
         daily_limit=daily_limit,
         plan=company.plan_type,
+        api_key_count=len(api_keys),
         chart_data=chart_data,
     )
+
+
+# ==================== Usage Service ====================
+
+def get_usage_data(db: Session, company_id: int, days: int = 7) -> List[dict]:
+    """기간별 API 사용량 조회"""
+    # 회사의 모든 API 키
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    today = datetime.utcnow().date()
+    result = []
+
+    for i in range(days - 1, -1, -1):
+        date = today - timedelta(days=i)
+        date_str = date.strftime("%m/%d")
+
+        if key_ids:
+            usage = db.query(ApiUsage).filter(
+                and_(
+                    ApiUsage.key_id.in_(key_ids),
+                    ApiUsage.usage_date == date
+                )
+            ).all()
+
+            day_count = sum(u.request_count or 0 for u in usage)
+            day_error = sum(u.error_count or 0 for u in usage)
+            day_success = day_count - day_error
+        else:
+            day_count = 0
+            day_success = 0
+            day_error = 0
+
+        result.append({
+            "date": date_str,
+            "count": day_count,
+            "success": day_success,
+            "error": day_error,
+        })
+
+    return result
+
+
+def get_endpoint_stats(db: Session, company_id: int, days: int = 7) -> List[dict]:
+    """엔드포인트별 호출 통계"""
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    if not key_ids:
+        return []
+
+    # 최근 N일간 로그
+    since_date = datetime.utcnow() - timedelta(days=days)
+
+    logs = db.query(ApiLog.endpoint, func.count(ApiLog.log_id).label("count")).filter(
+        and_(
+            ApiLog.key_id.in_(key_ids),
+            ApiLog.created_at >= since_date
+        )
+    ).group_by(ApiLog.endpoint).order_by(func.count(ApiLog.log_id).desc()).limit(5).all()
+
+    if not logs:
+        return []
+
+    total = sum(log.count for log in logs)
+    result = []
+
+    for log in logs:
+        percent = round((log.count / total) * 100) if total > 0 else 0
+        result.append({
+            "endpoint": log.endpoint or "/v1/recommend",
+            "calls": log.count,
+            "percent": percent,
+        })
+
+    return result
+
+
+def get_response_time_stats(db: Session, company_id: int, days: int = 7) -> dict:
+    """응답 시간 통계 (avg, p50, p95, p99)"""
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    if not key_ids:
+        return {"avg": 0, "p50": 0, "p95": 0, "p99": 0}
+
+    # 최근 N일간 응답 시간
+    since_date = datetime.utcnow() - timedelta(days=days)
+
+    times = db.query(ApiLog.process_time_ms).filter(
+        and_(
+            ApiLog.key_id.in_(key_ids),
+            ApiLog.created_at >= since_date,
+            ApiLog.process_time_ms.isnot(None)
+        )
+    ).all()
+
+    if not times:
+        return {"avg": 0, "p50": 0, "p95": 0, "p99": 0}
+
+    # 응답 시간 리스트 추출 및 정렬
+    time_values = sorted([t[0] for t in times if t[0] is not None])
+    n = len(time_values)
+
+    if n == 0:
+        return {"avg": 0, "p50": 0, "p95": 0, "p99": 0}
+
+    avg = round(sum(time_values) / n)
+    p50 = time_values[int(n * 0.5)] if n > 0 else 0
+    p95 = time_values[int(n * 0.95)] if n > 0 else 0
+    p99 = time_values[min(int(n * 0.99), n - 1)] if n > 0 else 0
+
+    return {"avg": avg, "p50": p50, "p95": p95, "p99": p99}
 
 
 # ==================== Logs Service ====================
@@ -294,9 +508,12 @@ def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEn
         endpoint = log.endpoint or "/v1/recommend"
         method = "POST" if "recommend" in endpoint else "GET"
 
+        # UTC → KST 변환 (+9시간)
+        kst_time = (log.created_at + timedelta(hours=9)) if log.created_at else None
+
         result.append(LogEntry(
             id=str(log.log_id),
-            time=log.created_at.strftime("%H:%M:%S") if log.created_at else "",
+            time=kst_time.strftime("%H:%M:%S") if kst_time else "",
             method=method,
             endpoint=endpoint,
             status=log.status_code or 200,
@@ -304,3 +521,283 @@ def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEn
         ))
 
     return result
+
+
+# ==================== OAuth Service ====================
+
+async def google_oauth_callback(db: Session, code: str, redirect_uri: str) -> Tuple[Company, str]:
+    """Google OAuth 콜백 처리"""
+    # 1. code를 access token으로 교환
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+
+        if token_response.status_code != 200:
+            raise ValueError("Google 인증에 실패했습니다")
+
+        token_data = token_response.json()
+        access_token = token_data.get("access_token")
+
+        # 2. access token으로 사용자 정보 조회
+        user_response = await client.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        if user_response.status_code != 200:
+            raise ValueError("Google 사용자 정보를 가져올 수 없습니다")
+
+        user_data = user_response.json()
+        email = user_data.get("email")
+        name = user_data.get("name", email.split("@")[0])
+
+    # 3. 기존 회원인지 확인
+    company = db.query(Company).filter(Company.manager_email == email).first()
+
+    if company:
+        # 기존 회원 - 로그인
+        if not company.is_active:
+            raise ValueError("비활성화된 계정입니다")
+        token = create_access_token(company.company_id)
+        return company, token
+    else:
+        # 신규 회원 - 회원가입
+        company = Company(
+            name=name,
+            manager_email=email,
+            password_hash=None,  # OAuth 사용자는 비밀번호 없음
+            plan_type="BASIC",
+            is_active=True,
+            oauth_provider="google",
+        )
+        db.add(company)
+        db.commit()
+        db.refresh(company)
+
+        token = create_access_token(company.company_id)
+        return company, token
+
+
+async def github_oauth_callback(db: Session, code: str, redirect_uri: str) -> Tuple[Company, str]:
+    """GitHub OAuth 콜백 처리"""
+    # 1. code를 access token으로 교환
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://github.com/login/oauth/access_token",
+            data={
+                "code": code,
+                "client_id": GITHUB_CLIENT_ID,
+                "client_secret": GITHUB_CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+            },
+            headers={"Accept": "application/json"},
+        )
+
+        if token_response.status_code != 200:
+            raise ValueError("GitHub 인증에 실패했습니다")
+
+        token_data = token_response.json()
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            error = token_data.get("error_description", "알 수 없는 오류")
+            raise ValueError(f"GitHub 인증 실패: {error}")
+
+        # 2. access token으로 사용자 정보 조회
+        user_response = await client.get(
+            "https://api.github.com/user",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/vnd.github.v3+json",
+            },
+        )
+
+        if user_response.status_code != 200:
+            raise ValueError("GitHub 사용자 정보를 가져올 수 없습니다")
+
+        user_data = user_response.json()
+
+        # 이메일 가져오기 (public이 아닐 수 있음)
+        email = user_data.get("email")
+        if not email:
+            # 이메일 API 별도 호출
+            email_response = await client.get(
+                "https://api.github.com/user/emails",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github.v3+json",
+                },
+            )
+            if email_response.status_code == 200:
+                emails = email_response.json()
+                primary_email = next((e for e in emails if e.get("primary")), None)
+                email = primary_email.get("email") if primary_email else None
+
+        if not email:
+            raise ValueError("GitHub 이메일을 가져올 수 없습니다. GitHub 설정에서 이메일을 공개로 설정해주세요.")
+
+        name = user_data.get("name") or user_data.get("login", email.split("@")[0])
+
+    # 3. 기존 회원인지 확인
+    company = db.query(Company).filter(Company.manager_email == email).first()
+
+    if company:
+        # 기존 회원 - 로그인
+        if not company.is_active:
+            raise ValueError("비활성화된 계정입니다")
+        token = create_access_token(company.company_id)
+        return company, token
+    else:
+        # 신규 회원 - 회원가입
+        company = Company(
+            name=name,
+            manager_email=email,
+            password_hash=None,  # OAuth 사용자는 비밀번호 없음
+            plan_type="BASIC",
+            is_active=True,
+            oauth_provider="github",
+        )
+        db.add(company)
+        db.commit()
+        db.refresh(company)
+
+        token = create_access_token(company.company_id)
+        return company, token
+
+
+# ==================== Password Reset Service ====================
+
+def generate_temp_password(length: int = 12) -> str:
+    """임시 비밀번호 생성 (영문+숫자 조합)"""
+    alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def _get_reset_email_html(temp_password: str) -> str:
+    """비밀번호 재설정 이메일 HTML 템플릿"""
+    return f"""
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f5f5f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <tr>
+                        <td style="padding:40px 40px 30px; text-align:center; border-bottom:1px solid #f0f0f0;">
+                            <h1 style="margin:0; font-size:28px; font-weight:700; color:#2563EB;">MovieSir API</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:40px;">
+                            <h2 style="margin:0 0 20px; font-size:22px; font-weight:600; color:#333333;">
+                                임시 비밀번호 발급
+                            </h2>
+                            <p style="margin:0 0 30px; font-size:16px; line-height:1.6; color:#666666;">
+                                비밀번호 찾기 요청에 따라 임시 비밀번호를 발급해 드립니다.<br>
+                                아래 임시 비밀번호로 로그인 후 반드시 비밀번호를 변경해 주세요.
+                            </p>
+                            <div style="background-color:#f0f7ff; border:2px solid #2563EB; border-radius:8px; padding:25px; text-align:center; margin:0 0 30px;">
+                                <p style="margin:0 0 10px; font-size:14px; color:#999999;">임시 비밀번호</p>
+                                <p style="margin:0; font-size:28px; font-weight:700; letter-spacing:2px; color:#2563EB;">
+                                    {temp_password}
+                                </p>
+                            </div>
+                            <p style="margin:0; font-size:14px; line-height:1.6; color:#999999;">
+                                보안을 위해 로그인 후 <strong>Settings</strong>에서 비밀번호를 변경해 주세요.<br>
+                                본인이 요청하지 않았다면 이 메일을 무시하고, 즉시 비밀번호를 변경해 주세요.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:30px 40px; background-color:#fafafa; border-radius:0 0 12px 12px; text-align:center;">
+                            <p style="margin:0 0 10px; font-size:12px; color:#999999;">
+                                본 메일은 발신 전용이며, 회신되지 않습니다.
+                            </p>
+                            <p style="margin:0; font-size:12px; color:#cccccc;">
+                                &copy; 2025 MovieSir. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+
+def _get_reset_email_text(temp_password: str) -> str:
+    """비밀번호 재설정 이메일 플레인 텍스트"""
+    return f"""MovieSir API 임시 비밀번호 발급
+
+비밀번호 찾기 요청에 따라 임시 비밀번호를 발급해 드립니다.
+아래 임시 비밀번호로 로그인 후 반드시 비밀번호를 변경해 주세요.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+임시 비밀번호: {temp_password}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+보안을 위해 로그인 후 Settings에서 비밀번호를 변경해 주세요.
+본인이 요청하지 않았다면 이 메일을 무시하고, 즉시 비밀번호를 변경해 주세요.
+
+---
+본 메일은 발신 전용이며, 회신되지 않습니다.
+(C) 2025 MovieSir. All rights reserved.
+"""
+
+
+def send_reset_password_email(to_email: str, temp_password: str) -> None:
+    """임시 비밀번호 이메일 발송"""
+    if not RESEND_API_KEY:
+        print(f"[DEV][RESET] to={to_email}, temp_password={temp_password}")
+        return
+
+    resend.api_key = RESEND_API_KEY
+
+    resend.Emails.send({
+        "from": f"{RESEND_FROM_NAME} <{RESEND_FROM_EMAIL}>",
+        "to": [to_email],
+        "subject": "[MovieSir API] 임시 비밀번호가 발급되었습니다",
+        "html": _get_reset_email_html(temp_password),
+        "text": _get_reset_email_text(temp_password),
+    })
+
+
+def forgot_password(db: Session, email: str) -> bool:
+    """비밀번호 찾기 - 임시 비밀번호 발급 및 이메일 발송"""
+    company = db.query(Company).filter(Company.manager_email == email).first()
+
+    if not company:
+        # 보안상 이메일 존재 여부를 알려주지 않음
+        return True
+
+    # OAuth 사용자는 비밀번호 찾기 불가
+    if company.oauth_provider:
+        raise ValueError(f"{company.oauth_provider.capitalize()} 로그인 사용자입니다. 소셜 로그인을 이용해 주세요.")
+
+    if not company.is_active:
+        raise ValueError("비활성화된 계정입니다. 관리자에게 문의하세요.")
+
+    # 임시 비밀번호 생성 및 저장
+    temp_password = generate_temp_password()
+    company.password_hash = hash_password(temp_password)
+    db.commit()
+
+    # 이메일 발송
+    send_reset_password_email(email, temp_password)
+
+    return True

@@ -87,6 +87,10 @@ ai/training/sbert_data/index/*
 ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
+# 성능 비교 데이터
+ai/compare/cbf/inner_results/*.npz
+ai/compare/cbf/inner_results/movies_list.csv
+
 # DB
 *.sql
 *.rdb
@@ -136,3 +140,5 @@ backend/data/
 database/init/movigation.sql
 # 마이그레이션 SQL은 예외
 !database/migrations/**/*.sql
+# 초기 스키마 파일은 예외 (로컬 개발용)
+!database/init/01_init_schemas.sql

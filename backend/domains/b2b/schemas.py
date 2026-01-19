@@ -22,6 +22,29 @@ class CompanyLogin(BaseModel):
     password: str
 
 
+class OAuthCallback(BaseModel):
+    """OAuth 콜백 요청"""
+    code: str = Field(..., description="OAuth 인증 코드")
+    redirect_uri: Optional[str] = Field(None, description="OAuth redirect URI (선택)")
+
+
+class ChangePasswordRequest(BaseModel):
+    """비밀번호 변경 요청"""
+    current_password: str = Field(..., description="현재 비밀번호")
+    new_password: str = Field(..., min_length=8, description="새 비밀번호 (8자 이상)")
+
+
+class ForgotPasswordRequest(BaseModel):
+    """비밀번호 찾기 요청"""
+    email: EmailStr = Field(..., description="가입한 이메일")
+
+
+class UpdateCompanyRequest(BaseModel):
+    """회사 정보 수정 요청"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="회사명")
+    email: Optional[EmailStr] = Field(None, description="이메일")
+
+
 class CompanyResponse(BaseModel):
     """회사 정보 응답"""
     id: str
@@ -44,6 +67,11 @@ class TokenResponse(BaseModel):
 
 class ApiKeyCreate(BaseModel):
     """API 키 생성 요청"""
+    name: str = Field(..., min_length=1, max_length=50, description="키 이름")
+
+
+class UpdateApiKeyRequest(BaseModel):
+    """API 키 수정 요청"""
     name: str = Field(..., min_length=1, max_length=50, description="키 이름")
 
 
@@ -76,6 +104,7 @@ class DashboardResponse(BaseModel):
     total: int
     daily_limit: int
     plan: str
+    api_key_count: int
     chart_data: List[ChartDataPoint]
 
 

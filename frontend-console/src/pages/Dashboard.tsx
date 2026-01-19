@@ -19,6 +19,7 @@ interface DashboardData {
   total: number
   daily_limit: number
   plan: string
+  api_key_count: number
   chart_data: { date: string; count: number; success: number; error: number }[]
 }
 
@@ -152,7 +153,7 @@ export default function Dashboard() {
               148%
             </div>
           </div>
-          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{(data.total / 1000).toFixed(1)}k</p>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{data.total >= 1000 ? `${(data.total / 1000).toFixed(1)}k` : data.total.toLocaleString()}</p>
           <p className="text-xs lg:text-sm text-gray-500 mt-1">총 호출</p>
         </div>
 
@@ -220,7 +221,7 @@ export default function Dashboard() {
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">API 키</p>
-              <p className="font-semibold text-white text-sm lg:text-base">2개</p>
+              <p className="font-semibold text-white text-sm lg:text-base">{data.api_key_count}개</p>
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">사용률</p>
@@ -354,7 +355,7 @@ export default function Dashboard() {
               <h2 className="text-sm font-medium text-white">Live Logs</h2>
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
             </div>
-            <button className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+            <button onClick={() => navigate('/console/logs')} className="text-xs text-blue-400 hover:text-blue-300">View all</button>
           </div>
           <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
             {logs.map((log) => (
