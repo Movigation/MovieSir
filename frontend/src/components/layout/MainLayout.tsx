@@ -23,7 +23,7 @@ export default function MainLayout() {
                 <Header isDark={isDark} handleDarkToggle={toggleTheme} resetChatbot={() => { }} />
 
                 {/* main 태그: 시맨틱 HTML5 - 페이지의 주요 콘텐츠 영역 */}
-                <main className="flex-1 min-h-screen sm:min-h-0 pb-20 sm:pb-0">
+                <main className="flex-1 min-h-screen sm:min-h-0 pb-[64px] sm:pb-0">
                     <Outlet />
                 </main>
             </div>

@@ -92,6 +92,22 @@
 </head>
 
 <body>
+  <!-- 이미지 최적화를 위한 보이지 않는 SVG 필터 -->
+  <!-- 사용법 필터를 적용할 위치에 poster-optimize 를 붙인다.-->
+  <svg style="position: absolute; width: 0; height: 0; pointer-events: none;">
+    <filter id="poster-optimize-filter">
+      <!-- 1. Denoise: 미세한 가우시안 블러로 노이즈 완화 -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.2" result="denoised" />
+      <!-- 2. Sharpen: Convolution Matrix를 이용한 선명화 (4: Sharp) -->
+      <feConvolveMatrix in="denoised" order="3" preserveAlpha="true" kernelMatrix="0 -1 0 -1 5 -1 0 -1 0"
+        result="sharpened" />
+      <!-- 3. Color correction: 채도와 대비 미세 조정 -->
+      <feColorMatrix in="sharpened" type="matrix" values="1.05 0 0 0 -0.02
+                                                          0 1.05 0 0 -0.02
+                                                          0 0 1.05 0 -0.02
+                                                          0 0 0 1 0" />
+    </filter>
+  </svg>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

@@ -71,16 +71,19 @@ const saveLastRecommendations = (trackA: Movie[], trackB: Movie[], filters: Filt
   }
 
   try {
+    // [최적화] 용량을 많이 차지하는 description(줄거리) 필드 제외
+    const filterMovieData = (movies: Movie[]) => movies.map(({ description, ...rest }) => rest);
+
     const data = {
-      trackA,
-      trackB,
+      trackA: filterMovieData(trackA),
+      trackB: filterMovieData(trackB),
       filters,
-      sessionId, // 추천 세션 ID 저장 (피드백용)
+      sessionId,
       timestamp: Date.now()
     };
     const key = `last_recommendations_${userId}`;
     localStorage.setItem(key, JSON.stringify(data));
-    console.log(`💾 [Storage] [User ${userId}] 추천 결과 저장 완료 (Key: ${key}, Session: ${sessionId})`, data);
+    console.log(`💾 [Storage] [User ${userId}] 추천 결과 저장 완료 (Key: ${key}, Session: ${sessionId}, Data Diet Applied)`);
   } catch (e) {
     console.error('❌ [Storage] localStorage 저장 실패:', e);
   }

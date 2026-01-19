@@ -25,14 +25,14 @@ export default function UserProfile({ userName = 'User' }: UserProfileProps) {
                 /* dark:bg-purple-300: 다크모드에서 조금 더 밝은 보라색 */
                 /* flex items-center justify-center: 아이콘을 중앙에 배치 */
                 /* mb-3: 아래 여백 */
-                className="w-20 h-20 rounded-full bg-purple-200 dark:bg-purple-300 flex items-center justify-center mb-3"
+                className="w-20 h-20 rounded-full bg-blue-300 dark:bg-gray-300 flex items-center justify-center mb-3"
             >
                 <User
                     size={40} /* 아이콘 크기 40px (배경 크기에 맞춰 조절 가능) */
                     /* [디자인] 아이콘 색상 */
                     /* text-purple-600: 진한 보라색 아이콘 (라이트 모드) */
                     /* dark:text-purple-700: 다크모드에서 더 진한 보라색 */
-                    className="text-purple-600 dark:text-purple-700"
+                    className="text-black dark:text-white"
                 />
             </div>
 
@@ -47,7 +47,7 @@ export default function UserProfile({ userName = 'User' }: UserProfileProps) {
                     /* text-white: 흰색 텍스트 */
                     /* font-medium: 중간 굵기 */
                     /* text-lg: 큰 글씨 크기 */
-                    className="text-white font-medium text-lg"
+                    className="text-black dark:text-white font-medium text-lg"
                 >
                     {userName}
                 </span>

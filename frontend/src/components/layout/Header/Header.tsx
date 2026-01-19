@@ -69,7 +69,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
       /* [디자인] 헤더 컨테이너 */
       /* 모바일: 하단 고정 네비게이션 바 (모든 버튼 균등 배치) */
       /* 데스크톱: 상단 헤더 */
-      className="w-full max-w-screen-lg mx-auto px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav-high select-none overscroll-none"
+      className="w-full max-w-screen-lg mx-auto px-4 py-4 sm:px-5 sm:py-3 flex items-center fixed bottom-0 left-0 right-0 h-[64px] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-t-0 sm:justify-between z-nav-high select-none overscroll-none"
     >
       {/* 데스크톱 전용 로고 */}
       <div className="hidden sm:block">
