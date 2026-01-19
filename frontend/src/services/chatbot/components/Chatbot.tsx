@@ -11,6 +11,7 @@ export default function Chatbot({
   isTutorialActive,
   tutorialStep
 }: ChatbotProps & { onLoginRequired?: () => void }) {
+  const prevIsOpenRef = useRef(isOpen);
   const { isAuthenticated } = useAuth();
   const isDark = document.documentElement.classList.contains("dark");
 
@@ -25,23 +26,13 @@ export default function Chatbot({
   // [챗봇 버튼 클릭 핸들러] 토글
   const handleChatbotButtonClick = () => {
     if (isOpen) {
-      // 이미 열려있으면 닫기
-      setIsTeleporting(true); // 순간이동 시작
+      // setIsTeleporting(true)와 setTimeout 로직은 제거해도 됩니다.
       setIsOpen?.(false);
-      setIsRecommended(false);  // 추천 상태 초기화
-
-      // 애니메이션(500ms) 완료 후 다시 보이게
-      setTimeout(() => {
-        setIsTeleporting(false);
-      }, 500);
+      setIsRecommended(false);
     } else if (!isAuthenticated) {
-      // 비로그인 시 로그인 모달 표시
       onLoginRequired?.();
     } else {
-      // 로그인 상태면 챗봇 열기
       setIsOpen?.(true);
-      // 100ms 뒤에 혹시 모를 잔상을 위해 상태 초기화 (여기서는 실질적으로 애니메이션만 작동)
-      setIsTeleporting(false);
     }
   };
 
@@ -66,12 +57,22 @@ export default function Chatbot({
     return () => button.removeEventListener('wheel', handleWheel);
   }, [isOpen]);
 
-  // 챗봇 닫힐 때 추천 상태 초기화
   useEffect(() => {
-    if (!isOpen) {
-      setIsRecommended(false);
+    // 조건: 이전에 열려있었고(true), 지금 닫혔다면(false)
+    if (prevIsOpenRef.current === true && isOpen === false) {
+      setIsTeleporting(true);
+
+      // 500ms 후 다시 보이게 처리
+      const timer = setTimeout(() => {
+        setIsTeleporting(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+
+    // 매 렌더링 끝에 현재 상태를 Ref에 업데이트
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]); // isOpen이 바뀔 때마다 실행
 
   return (
     <>
@@ -87,11 +88,10 @@ export default function Chatbot({
               ${isTeleporting ? "duration-0 opacity-0 scale-0" : "duration-500 opacity-100 scale-100"}
             ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
             ${!isOpen
-              ? "relative translate-y-[200px] sm:translate-y-[150px]"
+              ? "relative translate-y-[200px] sm:translate-y-[150px] sm:translate-x-0"
               : isRecommended
-                // 추천 상태일 때는 버튼이 화면 중앙 아래에 고정 (모바일)
-                ? "fixed bottom-[-25px] sm:top-[12%] xl:top-[8%] 2xl:top-[4%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-[calc(50%-365px)] sm:translate-x-0 lg:left-[calc(50%-480px)] xl:left-[calc(50%-480px)] 2xl:left-[calc(50%-480px)]"
-                : "fixed bottom-[-25px] sm:top-[15%] xl:top-[8%] 2xl:top-[4%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-[calc(50%-356px)] sm:translate-x-0 lg:left-[calc(50%-356px)] xl:left-[calc(50%-356px)] 2xl:left-[calc(50%-356px)]"
+                ? "fixed bottom-[-25px] left-1/2 -translate-x-1/2 z-chatbot-btn sm:relative sm:top-0 sm:bottom-auto sm:left-auto sm:translate-x-[-306px] sm:translate-y-[-20px] xl:translate-x-[-600px] xl:translate-y-[-20px] 2xl:translate-y-[-20px]"
+                : "fixed bottom-[-25px] left-1/2 -translate-x-1/2 z-chatbot-btn sm:relative sm:top-0 sm:bottom-auto sm:left-auto sm:translate-x-[-306px] sm:translate-y-[-20px] xl:translate-x-[-306px] xl:translate-y-[-20px] 2xl:translate-y-[-20px]"
             }
           `}
         >
