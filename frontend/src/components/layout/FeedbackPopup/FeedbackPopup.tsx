@@ -359,7 +359,7 @@ export default function FeedbackPopup() {
                     </div>
 
                     {/* 3. 데스크탑용 클릭 버튼 영역 (Hover 시에만 아래에서 스윽 올라옴) */}
-                    <div className="invisible md:visible absolute -bottom-6 flex items-center justify-center gap-20 px-4 w-full translate-y-12 pointer-events-none group-hover/popup:opacity-100 group-hover/popup:translate-y-[-7px] group-hover/popup:pointer-events-auto transition-all duration-500 ease-out">
+                    <div className="z-20 invisible md:visible absolute -bottom-6 flex items-center justify-center gap-20 px-4 w-full translate-y-12 pointer-events-none group-hover/popup:opacity-100 group-hover/popup:translate-y-[-7px] group-hover/popup:pointer-events-auto transition-all duration-500 ease-out">
                         {/* 별로예요 버튼 */}
                         <button
                             onClick={() => handleFeedback('bad')}
