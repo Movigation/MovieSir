@@ -25,8 +25,18 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 // 도메인에 따라 루트 경로 동작 결정
 function RootRoute() {
-  const isConsoleDomain = window.location.hostname === 'console.moviesir.cloud'
-  return isConsoleDomain ? <Navigate to="/login" replace /> : <Landing />
+  const hostname = window.location.hostname
+
+  // api.moviesir.cloud → Api 페이지
+  if (hostname === 'api.moviesir.cloud') {
+    return <Api />
+  }
+  // console.moviesir.cloud → 로그인 페이지로 리다이렉트
+  if (hostname === 'console.moviesir.cloud') {
+    return <Navigate to="/login" replace />
+  }
+  // 그 외 (moviesir.cloud, localhost 등) → Landing 페이지
+  return <Landing />
 }
 
 function App() {

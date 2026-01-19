@@ -263,12 +263,12 @@ export default function Landing() {
               </a>
             </li>
             <li>
-              <Link
-                to="/api"
+              <a
+                href="https://api.moviesir.cloud"
                 className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
               >
                 {t('nav.api')}
-              </Link>
+              </a>
             </li>
           </ul>
           <div className="flex items-center gap-4">
@@ -397,12 +397,12 @@ export default function Landing() {
                     />
                   </svg>
                 </a>
-                <Link
-                  to="/api"
+                <a
+                  href="https://api.moviesir.cloud"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold text-gray-700 transition-all bg-white border border-gray-200 rounded-full hover:border-accent-300 hover:text-accent-600"
                 >
                   {t('hero.viewApiDocs')}
-                </Link>
+                </a>
               </div>
 
               {/* Stats */}
@@ -1012,12 +1012,12 @@ export default function Landing() {
                   </a>
                 </li>
                 <li>
-                  <Link
-                    to="/api"
+                  <a
+                    href="https://api.moviesir.cloud"
                     className="transition-colors hover:text-white"
                   >
                     {t('nav.api')}
-                  </Link>
+                  </a>
                 </li>
               </ul>
             </div>

@@ -33,21 +33,21 @@ export default function Docs() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-6">
-            <Link to="/api" className="flex items-center gap-2">
+            <a href="https://api.moviesir.cloud" className="flex items-center gap-2">
               <img src="/favicon.svg" alt="무비서" className="w-8 h-8" />
               <span className="font-bold text-gray-900">무비서</span>
               <span className="text-xs font-medium text-blue-600 border border-blue-200 bg-blue-50 px-1.5 py-0.5 rounded">
                 Docs
               </span>
-            </Link>
+            </a>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              to="/api"
+            <a
+              href="https://api.moviesir.cloud"
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
             >
               API 홈
-            </Link>
+            </a>
             <Link
               to="/login"
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-colors"
