@@ -1,27 +1,32 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 const LANGUAGES = [
-  { code: 'ko', label: '한국어', flag: '🇰🇷' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'zh', label: '中文', flag: '🇨🇳' },
+  { code: 'ko', label: '한국어', flag: 'KR' },
+  { code: 'en', label: 'English', flag: 'EN' },
+  { code: 'zh', label: '中文', flag: 'ZH' },
 ];
 
 export default function Landing() {
   const { t, i18n } = useTranslation();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [currentLang, setCurrentLang] = useState(() => {
     return localStorage.getItem('lang') || 'ko';
   });
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isTransitioning, setIsTransitioning] = useState(true);
 
-  const handleLanguageChange = (code: string) => {
-    setCurrentLang(code);
-    localStorage.setItem('lang', code);
-    i18n.changeLanguage(code);
-    setShowLangDropdown(false);
+  const cycleLanguage = () => {
+    const currentIndex = LANGUAGES.findIndex(l => l.code === currentLang);
+    const nextIndex = (currentIndex + 1) % LANGUAGES.length;
+    const nextLang = LANGUAGES[nextIndex].code;
+    setCurrentLang(nextLang);
+    localStorage.setItem('lang', nextLang);
+    i18n.changeLanguage(nextLang);
   };
 
   // Scroll position tracking for scroll-to-top button
@@ -60,6 +65,7 @@ export default function Landing() {
 
     return () => observer.disconnect();
   }, []);
+
 
   const features = [
     {
@@ -219,29 +225,100 @@ export default function Landing() {
     { name: "Apple TV+", logo: "/logos/Apple_TV_logo.svg" },
   ];
 
-  const posterColors = [
-    "from-accent-600 to-accent-400",
-    "from-accent-700 to-accent-500",
-    "from-accent-500 to-accent-300",
-    "from-accent-700 to-accent-600",
-    "from-accent-600 to-accent-500",
-    "from-accent-700 to-accent-400",
+  // Hero 섹션 영화 포스터 - 최신 영화들 (Preview 섹션과 겹치지 않음)
+  const heroPosters = [
+    { title: "듄", year: 2021, runtime: "2시간 35분", poster: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg" },
+    { title: "에브리씽 에브리웨어", year: 2022, runtime: "2시간 19분", poster: "https://image.tmdb.org/t/p/w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg" },
+    { title: "탑건: 매버릭", year: 2022, runtime: "2시간 11분", poster: "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg" },
+    { title: "더 배트맨", year: 2022, runtime: "2시간 56분", poster: "https://image.tmdb.org/t/p/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg" },
+    { title: "스파이더맨: 노 웨이 홈", year: 2021, runtime: "2시간 28분", poster: "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg" },
+    { title: "아바타: 물의 길", year: 2022, runtime: "3시간 12분", poster: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg" },
   ];
+  const mainPoster = { title: "오펜하이머", year: 2023, runtime: "3시간", poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" };
+
+  // Hero 포스터 자동 스와이프
+  const allPosters = [mainPoster, ...heroPosters];
+  // 무한 루프를 위해 포스터 3배로 복제
+  const infinitePosters = [...allPosters, ...allPosters, ...allPosters];
+  const totalOriginal = allPosters.length;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => prev + 1);
+    }, 3000); // 3초마다 자동 스와이프
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 무한 루프: 끝에 도달하면 처음으로 리셋 (애니메이션 없이)
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (currentSlide >= totalOriginal * 2) {
+      // 애니메이션 완료 후(550ms) 리셋
+      timeoutId = setTimeout(() => {
+        // flushSync로 트랜지션 끄기를 즉시 렌더링
+        flushSync(() => {
+          setIsTransitioning(false);
+        });
+        // 트랜지션이 꺼진 상태에서 위치 변경
+        flushSync(() => {
+          setCurrentSlide(currentSlide - totalOriginal);
+        });
+        // 다음 프레임에서 transition 복원
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      }, 550);
+    } else if (currentSlide < totalOriginal) {
+      timeoutId = setTimeout(() => {
+        flushSync(() => {
+          setIsTransitioning(false);
+        });
+        flushSync(() => {
+          setCurrentSlide(currentSlide + totalOriginal);
+        });
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      }, 550);
+    }
+
+    return () => clearTimeout(timeoutId);
+  }, [currentSlide, totalOriginal]);
+
+  // 초기 위치를 중간으로 설정
+  useLayoutEffect(() => {
+    flushSync(() => {
+      setIsTransitioning(false);
+    });
+    flushSync(() => {
+      setCurrentSlide(totalOriginal);
+    });
+    requestAnimationFrame(() => {
+      setIsTransitioning(true);
+    });
+  }, [totalOriginal]);
+
+
 
   return (
     <div className="min-h-screen overflow-x-hidden text-gray-900 bg-white">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-7xl">
-          <a href="/" className="flex items-center gap-3">
+        <div className="grid grid-cols-3 items-center px-6 py-4 mx-auto max-w-7xl">
+          {/* 로고 - 왼쪽 */}
+          <a href="/" className="flex items-center gap-3 justify-self-start">
             <img src="/favicon.svg" alt={t('nav.brand')} className="w-10 h-10" />
             <span className="text-2xl font-bold text-gray-900">{t('nav.brand')}</span>
           </a>
-          <ul className="hidden gap-8 md:flex">
+
+          {/* 네비게이션 메뉴 - 중앙 */}
+          <ul className="hidden gap-6 justify-self-center lg:flex">
             <li>
               <a
                 href="#features"
-                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600 whitespace-nowrap"
               >
                 {t('nav.features')}
               </a>
@@ -249,7 +326,7 @@ export default function Landing() {
             <li>
               <a
                 href="#how-it-works"
-                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600 whitespace-nowrap"
               >
                 {t('nav.howItWorks')}
               </a>
@@ -257,7 +334,7 @@ export default function Landing() {
             <li>
               <a
                 href="#faq"
-                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600 whitespace-nowrap"
               >
                 {t('nav.faq')}
               </a>
@@ -265,57 +342,29 @@ export default function Landing() {
             <li>
               <a
                 href="https://api.moviesir.cloud"
-                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600"
+                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600 whitespace-nowrap"
               >
                 {t('nav.api')}
               </a>
             </li>
           </ul>
-          <div className="flex items-center gap-4">
-            {/* 다국어 지원 드롭다운 */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLangDropdown(!showLangDropdown)}
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 transition-all rounded-lg hover:text-accent-600 hover:bg-gray-100"
-              >
-                <span className="text-lg">{LANGUAGES.find(l => l.code === currentLang)?.flag}</span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${showLangDropdown ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {showLangDropdown && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowLangDropdown(false)}
-                  />
-                  <div className="absolute right-0 z-50 mt-2 py-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100">
-                    {LANGUAGES.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => handleLanguageChange(lang.code)}
-                        className={`w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-                          currentLang === lang.code ? 'text-accent-600 bg-accent-50' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="text-lg">{lang.flag}</span>
-                        <span className="font-medium">{lang.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+
+          {/* 오른쪽 영역 */}
+          <div className="flex items-center gap-3 justify-self-end">
+            {/* 언어 변경 버튼 */}
+            <button
+              onClick={cycleLanguage}
+              className="flex items-center gap-1.5 px-2 py-1.5 text-gray-600 transition-all rounded-lg hover:text-accent-600 hover:bg-gray-100"
+              title={LANGUAGES.find(l => l.code === currentLang)?.label}
+            >
+              <span className="px-1.5 py-0.5 text-xs font-bold bg-gray-100 rounded">{LANGUAGES.find(l => l.code === currentLang)?.flag}</span>
+              <span className="hidden text-sm font-medium sm:inline">{LANGUAGES.find(l => l.code === currentLang)?.label}</span>
+            </button>
             <a
               href="https://demo.moviesir.cloud"
               target="_blank"
               rel="noreferrer"
-              className="px-6 py-2.5 bg-accent-600 text-white text-base font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all"
+              className="px-5 py-2 bg-accent-600 text-white text-sm font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all whitespace-nowrap"
             >
               {t('nav.useMoviesir')}
             </a>
@@ -324,26 +373,141 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] relative pt-20 overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-accent-50 via-white to-white" />
-          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-accent-100/50 rounded-full blur-[150px] animate-pulse" />
+      <section className="min-h-screen relative pt-20 overflow-hidden">
+        {/* Film Strip Background - 앞뒤 원근감 */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* 베이스 + 멀티 글로우 효과 */}
           <div
-            className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-accent-200/30 rounded-full blur-[150px] animate-pulse"
-            style={{ animationDelay: "1s" }}
+            className="absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(ellipse 70% 60% at 80% 10%, rgba(165, 180, 252, 0.7) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 50% at 15% 85%, rgba(199, 210, 254, 0.5) 0%, transparent 45%),
+                radial-gradient(ellipse 60% 40% at 50% 50%, rgba(224, 231, 255, 0.35) 0%, transparent 50%),
+                linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(248, 250, 252) 50%, rgb(255, 255, 255) 100%)
+              `
+            }}
+          />
+
+          {/* 뒤쪽 필름 스트립 - 작고 흐릿하게 (상단) */}
+          <div
+            className="absolute top-16 -left-10 w-[200%] opacity-60"
+            style={{
+              transform: 'rotate(-8deg)',
+              zIndex: 1,
+            }}
+          >
+            <div className="relative bg-gray-800 py-3 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+              {/* 필름 구멍 - 상단 */}
+              <div className="absolute top-0.5 left-0 right-0 h-2.5 flex gap-2 px-1">
+                {Array.from({ length: 200 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-gray-600 rounded-sm flex-shrink-0" />
+                ))}
+              </div>
+
+              {/* 포스터들 - 작은 사이즈 (2023-2024 최신 영화 - 앞쪽 필름과 중복 없음) */}
+              <div className="flex gap-2 px-3 py-1.5">
+                {[
+                  "https://image.tmdb.org/t/p/w300/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg", // 아바타: 물의 길
+                  "https://image.tmdb.org/t/p/w300/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", // 스파이더맨: 어크로스 더 스파이더버스
+                  "https://image.tmdb.org/t/p/w300/sv1xJUazXeYqALzczSZ3O6nkH75.jpg", // 블랙 팬서: 와칸다 포에버
+                  "https://image.tmdb.org/t/p/w300/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg", // 스파이더맨: 노 웨이 홈
+                  "https://image.tmdb.org/t/p/w300/d5NXSklXo0qyIYkgV94XAgMIckC.jpg", // 듄 2
+                  "https://image.tmdb.org/t/p/w300/74xTEgt7R36Fpooo50r9T25onhq.jpg", // 더 배트맨
+                  "https://image.tmdb.org/t/p/w300/vZloFAK7NmvMGKE7VkF5UHaz0I.jpg", // 존 윅 4
+                  "https://image.tmdb.org/t/p/w300/mBaXZ95R2OxueZhvQbcEWy2DqyO.jpg", // 가디언즈 Vol. 3
+                  "https://image.tmdb.org/t/p/w300/r2J02Z2OpNTctfOSN1Ydgii51I3.jpg", // 바비
+                  "https://image.tmdb.org/t/p/w300/pThyQovXQrw2m0s9x82twj48Jq4.jpg", // 나이브스 아웃
+                  "https://image.tmdb.org/t/p/w300/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg", // 타이타닉
+                  "https://image.tmdb.org/t/p/w300/gPbM0MK8CP8A174rmUwGsADNYKD.jpg", // 스즈메의 문단속
+                  "https://image.tmdb.org/t/p/w300/fiVW06jE7z9YnO4trhaMEdclSiC.jpg", // 록키 vs 드라고
+                  "https://image.tmdb.org/t/p/w300/4m1Au3YkjqsxF8iwQy0fPYSxE0h.jpg", // 슈렉
+                  "https://image.tmdb.org/t/p/w300/k68nPLbIST6NP96JmTxmZijEvCA.jpg", // 테넷
+                  "https://image.tmdb.org/t/p/w300/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", // 인터스텔라
+                  "https://image.tmdb.org/t/p/w300/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", // 오징어 게임 시즌2
+                  "https://image.tmdb.org/t/p/w300/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg", // 어벤져스: 인피니티 워
+                  "https://image.tmdb.org/t/p/w300/gGEsBPAijhVUFoiNpgZXqRVWJt2.jpg", // 코코
+                  "https://image.tmdb.org/t/p/w300/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", // 조커
+                  "https://image.tmdb.org/t/p/w300/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg", // 토이 스토리 4
+                  "https://image.tmdb.org/t/p/w300/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // 겨울왕국 2
+                  "https://image.tmdb.org/t/p/w300/tnAuB8q5vv7Ax9UAEje5Xi4BXik.jpg", // 주토피아
+                  "https://image.tmdb.org/t/p/w300/hziiv14OpD73u9gAak4XDDfBKa2.jpg", // 인크레더블 2
+                ].map((poster, i) => (
+                  <div key={i} className="w-16 md:w-20 aspect-[2/3] overflow-hidden rounded flex-shrink-0">
+                    <img src={poster} alt="" className="object-cover w-full h-full" />
+                  </div>
+                ))}
+              </div>
+
+              {/* 필름 구멍 - 하단 */}
+              <div className="absolute bottom-0.5 left-0 right-0 h-2.5 flex gap-2 px-1">
+                {Array.from({ length: 200 }).map((_, i) => (
+                  <div key={i} className="w-2 h-2 bg-gray-600 rounded-sm flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 앞쪽 필름 스트립 - 크고 선명하게 (중앙~하단) */}
+          <div
+            className="absolute top-[35%] -left-20 w-[200%]"
+            style={{
+              transform: 'rotate(-15deg)',
+              zIndex: 2,
+            }}
+          >
+            <div className="relative bg-gray-900 py-5 flex items-center shadow-[0_15px_50px_rgba(0,0,0,0.5)]">
+              {/* 필름 구멍 - 상단 */}
+              <div className="absolute top-1.5 left-0 right-0 h-4 flex gap-3 px-2">
+                {Array.from({ length: 150 }).map((_, i) => (
+                  <div key={i} className="w-3 h-3 bg-gray-700 rounded-sm flex-shrink-0" />
+                ))}
+              </div>
+
+              {/* 포스터들 - 큰 사이즈 (2024-2025 최신 영화 - 뒤쪽 필름/히어로와 중복 없음) */}
+              <div className="flex gap-3 px-6 py-3">
+                {[
+                  "https://image.tmdb.org/t/p/w300/hhiR6uUbTYYvKoACkdAIQPS5c6f.jpg", // 크레이븐 더 헌터 (2024)
+                  "https://image.tmdb.org/t/p/w300/5gzzkR7y3hnY8AD1wXjCnVlHba5.jpg", // 아가일 (2024)
+                  "https://image.tmdb.org/t/p/w300/wWba3TaojhK7NdycRhoQpsG0FaH.jpg", // 퓨리오사 (2024)
+                  "https://image.tmdb.org/t/p/w300/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", // 오징어 게임 시즌2 (2024)
+                  "https://image.tmdb.org/t/p/w300/kKgQzkUCnQmeTPkyIwHly2t6ZFI.jpg", // 비틀쥬스 비틀쥬스 (2024)
+                  "https://image.tmdb.org/t/p/w300/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg", // 어벤져스: 엔드게임 (2019)
+                  "https://image.tmdb.org/t/p/w300/pnXLFioDeftqjlCVlRmXvIdMsdP.jpg", // 캡틴 아메리카: 브레이브 뉴 월드 (2025)
+                  "https://image.tmdb.org/t/p/w300/wTnV3PCVW5O92JMrFvvrRcV39RU.jpg", // 어바웃 타임 (2013)
+                  "https://image.tmdb.org/t/p/w300/npHNjldbeTHdKKw28bJKs7lzqzj.jpg", // 라따뚜이
+                  "https://image.tmdb.org/t/p/w300/pjnD08FlMAIXsfOLKQbvmO0f0MD.jpg", // 트위스터스 (2024)
+                  "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg", // 위키드 (2024)
+                  "https://image.tmdb.org/t/p/w300/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg", // 라이온 킹 (2024)
+                ].map((poster, i) => (
+                  <div key={i} className="w-28 md:w-36 aspect-[2/3] overflow-hidden rounded-md flex-shrink-0 shadow-lg">
+                    <img src={poster} alt="" className="object-cover w-full h-full" />
+                  </div>
+                ))}
+              </div>
+
+              {/* 필름 구멍 - 하단 */}
+              <div className="absolute bottom-1.5 left-0 right-0 h-4 flex gap-3 px-2">
+                {Array.from({ length: 150 }).map((_, i) => (
+                  <div key={i} className="w-3 h-3 bg-gray-700 rounded-sm flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 오버레이 - 왼쪽 텍스트 가독성 + 글로우 */}
+          <div
+            className="absolute inset-0 pointer-events-none z-10"
+            style={{
+              background: `
+                linear-gradient(to right, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.9) 40%, rgba(255,255,255,0.55) 55%, transparent 70%),
+                radial-gradient(ellipse 50% 70% at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)
+              `
+            }}
           />
         </div>
 
-        {/* Floating Movie Posters Background */}
-        <div className="absolute inset-0 overflow-hidden opacity-30">
-          <div className="absolute top-20 left-[5%] w-32 h-48 rounded-xl bg-gradient-to-br from-accent-600 to-accent-400 transform rotate-[-15deg] shadow-2xl" />
-          <div className="absolute top-40 right-[10%] w-28 h-42 rounded-xl bg-gradient-to-br from-accent-700 to-accent-500 transform rotate-[10deg] shadow-2xl" />
-          <div className="absolute bottom-40 left-[15%] w-24 h-36 rounded-xl bg-gradient-to-br from-accent-500 to-accent-300 transform rotate-[5deg] shadow-2xl" />
-          <div className="absolute bottom-20 right-[20%] w-32 h-48 rounded-xl bg-gradient-to-br from-accent-700 to-accent-600 transform rotate-[-8deg] shadow-2xl" />
-        </div>
-
-        <div className="relative z-10 px-6 mx-auto max-w-7xl">
+        <div className="relative z-30 px-6 mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-80px)]">
             {/* Left Content */}
             <div className="pt-10 text-center lg:text-left lg:pt-0">
@@ -380,22 +544,9 @@ export default function Landing() {
                   href="https://demo.moviesir.cloud"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold text-white transition-all rounded-full group bg-accent-600 hover:bg-accent-500 hover:shadow-2xl hover:shadow-accent-500/30"
+                  className="inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all rounded-full bg-accent-600 hover:bg-accent-500 hover:shadow-2xl hover:shadow-accent-500/30"
                 >
-                  <span>{t('hero.startFree')}</span>
-                  <svg
-                    className="w-5 h-5 transition-transform group-hover:translate-x-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 7l5 5m0 0l-5 5m5-5H6"
-                    />
-                  </svg>
+                  {t('hero.startFree')}
                 </a>
                 <a
                   href="https://api.moviesir.cloud"
@@ -411,106 +562,119 @@ export default function Landing() {
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     {t('hero.movieDataValue')}
                   </div>
-                  <div className="mt-1 text-sm text-gray-500">{t('hero.movieData')}</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-500">{t('hero.movieData')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     {t('hero.recSpeedValue')}
                   </div>
-                  <div className="mt-1 text-sm text-gray-500">{t('hero.recSpeed')}</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-500">{t('hero.recSpeed')}</div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     {t('hero.customRecValue')}
                   </div>
-                  <div className="mt-1 text-sm text-gray-500">{t('hero.customRec')}</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-500">{t('hero.customRec')}</div>
                 </div>
               </div>
             </div>
 
-            {/* Right - Movie Poster Grid */}
-            <div className="relative hidden lg:block">
-              <div className="relative w-full h-[600px]">
-                {/* Main Poster */}
-                <div className="absolute z-20 w-48 transition-transform transform -translate-x-1/2 -translate-y-1/2 shadow-2xl top-1/2 left-1/2 h-72 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 shadow-accent-500/40 hover:scale-105">
-                  <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <div className="w-20 h-2 mb-2 rounded bg-white/30" />
-                      <div className="h-2 rounded w-14 bg-white/20" />
+            {/* Right - Movie Poster Carousel */}
+            <div className="relative hidden lg:flex items-center justify-center">
+              <div className="relative w-[650px]">
+                {/* AI 영화 추천 헤더 박스 */}
+                <div className="bg-white/80 backdrop-blur-xl rounded-3xl pt-6 pb-4 px-2 shadow-2xl shadow-gray-400/30 border border-white/50">
+                  {/* 헤더 */}
+                  <div className="flex items-center gap-3 mb-5 px-4">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-500 shadow-lg shadow-accent-500/30">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{t('hero.aiRec')}</h3>
+                      <p className="text-sm text-gray-500">AI가 추천하는 영화</p>
                     </div>
                   </div>
-                  {/* AI Badge */}
-                  <div className="absolute px-3 py-1 text-xs font-bold text-white rounded-full shadow-lg -top-3 -right-3 bg-accent-500">
-                    {t('hero.aiRec')}
+
+                  {/* 포스터 캐러셀 */}
+                  <div
+                    ref={carouselRef}
+                    className="overflow-hidden py-4 scrollbar-hide"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    <div
+                      className="flex gap-4 ease-out pl-4"
+                      style={{
+                        transform: `translateX(-${currentSlide * (192 + 16)}px)`,
+                        transitionProperty: 'transform',
+                        transitionDuration: !isTransitioning ? '0ms' : '500ms',
+                        transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)'
+                      }}
+                    >
+                    {infinitePosters.map((movie, i) => {
+                      // 같은 영화의 모든 복제본에 동일한 스타일 적용 (깜빡임 방지)
+                      const isActive = (i % totalOriginal) === (currentSlide % totalOriginal);
+                      return (
+                      <div
+                        key={i}
+                        onClick={() => setCurrentSlide(i)}
+                        className={`relative flex-shrink-0 w-48 h-72 overflow-hidden rounded-2xl cursor-pointer select-none ${
+                          isActive ? 'scale-100 ring-4 ring-blue-500 animate-ring-glow' : 'scale-90 opacity-60'
+                        }`}
+                        style={{
+                          transition: isTransitioning ? 'transform 500ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 400ms ease-out, box-shadow 400ms ease-out' : 'none'
+                        }}
+                      >
+                        <img
+                          src={movie.poster}
+                          alt={movie.title}
+                          className="object-cover w-full h-full pointer-events-none"
+                          draggable={false}
+                        />
+                        {/* 영화 정보 - 하단 그라데이션 */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 pb-3 px-3">
+                          <p className="text-sm font-bold text-white truncate">{movie.title}</p>
+                          <p className="text-xs text-white/80">{movie.year} • {movie.runtime}</p>
+                        </div>
+                        {/* AI Badge - 현재 활성화된 포스터에만 */}
+                        {isActive && (
+                          <div className="absolute px-3 py-1.5 text-xs font-bold text-white rounded-full shadow-lg top-3 right-3 bg-accent-500 animate-pulse">
+                            AI 추천
+                          </div>
+                        )}
+                      </div>
+                      );
+                    })}
+                    </div>
+                  </div>
+
+                  {/* 슬라이드 인디케이터 */}
+                  <div className="flex items-center justify-center gap-2 mt-2 px-4">
+                    {allPosters.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentSlide(totalOriginal + i)}
+                        className={`transition-all duration-300 rounded-full ${
+                          currentSlide % totalOriginal === i
+                            ? 'w-6 h-2.5 bg-accent-500 shadow-sm'
+                            : 'w-2.5 h-2.5 bg-gray-400/60 hover:bg-gray-500/80 border border-gray-400/30'
+                        }`}
+                        aria-label={`슬라이드 ${i + 1}`}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                {/* Surrounding Posters */}
-                {[
-                  {
-                    top: "5%",
-                    left: "10%",
-                    rotate: "-12deg",
-                    color: posterColors[0],
-                  },
-                  {
-                    top: "10%",
-                    right: "15%",
-                    rotate: "8deg",
-                    color: posterColors[1],
-                  },
-                  {
-                    bottom: "15%",
-                    left: "5%",
-                    rotate: "6deg",
-                    color: posterColors[2],
-                  },
-                  {
-                    bottom: "10%",
-                    right: "10%",
-                    rotate: "-10deg",
-                    color: posterColors[3],
-                  },
-                  {
-                    top: "40%",
-                    left: "0%",
-                    rotate: "-5deg",
-                    color: posterColors[4],
-                  },
-                  {
-                    top: "35%",
-                    right: "0%",
-                    rotate: "12deg",
-                    color: posterColors[5],
-                  },
-                ].map((pos, i) => (
-                  <div
-                    key={i}
-                    className={`absolute w-32 h-48 rounded-xl bg-gradient-to-br ${pos.color} shadow-xl opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-pointer`}
-                    style={{
-                      top: pos.top,
-                      left: pos.left,
-                      right: pos.right,
-                      bottom: pos.bottom,
-                      transform: `rotate(${pos.rotate})`,
-                    }}
-                  >
-                    <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    </div>
-                  </div>
-                ))}
-
-                {/* Glow Effects */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-accent-200/50 rounded-full blur-[100px]" />
+                {/* Glow Effect */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent-300/20 rounded-full blur-[120px] -z-10" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute flex flex-col items-center gap-2 -translate-x-1/2 bottom-8 left-1/2">
+        <div className="absolute flex flex-col items-center gap-2 -translate-x-1/2 bottom-8 left-1/2 z-30">
           <span className="text-xs text-gray-400">{t('hero.scroll')}</span>
           <div className="flex justify-center w-6 h-10 pt-2 border-2 rounded-full border-accent-300">
             <div className="w-1 h-2 rounded-full bg-accent-500 animate-bounce" />
@@ -519,42 +683,38 @@ export default function Landing() {
       </section>
 
       {/* OTT Platforms - stagger-scale 애니메이션 */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] relative bg-white">
-        {/* 헤더 - 상단 고정 */}
-        <div className="absolute left-0 right-0 top-44">
-          <div className="px-6 mx-auto text-center animate-fade-down max-w-7xl">
-            <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-6">
-              {t('ott.badge')}
-            </span>
-            <h2 className="mb-4 text-4xl font-black text-gray-900 md:text-6xl">
-              {t('ott.title1')}<span className="text-accent-600"> {t('ott.title2')}</span>
-            </h2>
-            <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              {t('ott.desc')}
-            </p>
-          </div>
+      <section className="min-h-screen flex flex-col items-center justify-center py-16 md:py-24 bg-white">
+        {/* 헤더 */}
+        <div className="px-6 mx-auto text-center animate-fade-down max-w-7xl mb-12">
+          <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-6">
+            {t('ott.badge')}
+          </span>
+          <h2 className="mb-4 text-4xl font-black text-gray-900 md:text-6xl">
+            {t('ott.title1')}<span className="text-accent-600"> {t('ott.title2')}</span>
+          </h2>
+          <p className="max-w-2xl mx-auto text-xl text-gray-600">
+            {t('ott.desc')}
+          </p>
         </div>
-        {/* OTT 카드 - 중앙 배치 */}
-        <div className="flex items-center justify-center h-full pt-28">
-          <div className="flex items-center justify-center gap-5 stagger-scale md:gap-6">
-            {ottPlatforms.map((platform) => (
-              <div
-                key={platform.name}
-                className="flex items-center justify-center w-40 h-40 transition-all border border-gray-100 cursor-default md:w-52 md:h-52 bg-gray-50 rounded-2xl hover:border-accent-300 hover:shadow-2xl hover:bg-white hover:scale-105"
-              >
-                <img
-                  src={platform.logo}
-                  alt={platform.name}
-                  className="object-contain w-24 h-auto md:w-32"
-                />
-              </div>
-            ))}
-          </div>
+        {/* OTT 카드 */}
+        <div className="flex flex-wrap items-center justify-center gap-4 px-6 stagger-scale md:gap-6">
+          {ottPlatforms.map((platform) => (
+            <div
+              key={platform.name}
+              className="flex items-center justify-center w-32 h-32 transition-all border border-gray-100 cursor-default sm:w-40 sm:h-40 md:w-48 md:h-48 bg-gray-50 rounded-2xl hover:border-accent-300 hover:shadow-2xl hover:bg-white hover:scale-105"
+            >
+              <img
+                src={platform.logo}
+                alt={platform.name}
+                className="object-contain w-20 h-auto sm:w-24 md:w-28"
+              />
+            </div>
+          ))}
         </div>
       </section>
 
       {/* PWA Section - stagger-up 애니메이션 */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-gray-50">
+      <section className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-gray-50">
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-20 text-center animate-fade-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
@@ -650,7 +810,7 @@ export default function Landing() {
       {/* Features Section - stagger-sides 애니메이션 */}
       <section
         id="features"
-        className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-20 relative bg-white"
+        className="min-h-screen flex items-center justify-center py-20 relative bg-white"
       >
         <div className="relative max-w-6xl px-6 mx-auto">
           <div className="mb-16 text-center animate-scale-up">
@@ -691,7 +851,7 @@ export default function Landing() {
       </section>
 
       {/* Recommendation Preview Section */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-20 bg-gray-50">
+      <section className="min-h-screen flex items-center justify-center py-16 md:py-20 bg-gray-50">
         <div className="max-w-2xl px-6 mx-auto">
           <div className="mb-8 text-center animate-fade-up">
             <span className="inline-block px-4 py-2 bg-accent-50 border border-accent-100 text-accent-600 text-sm font-medium rounded-full mb-6">
@@ -784,7 +944,7 @@ export default function Landing() {
       {/* How It Works Section - stagger-rotate 애니메이션 */}
       <section
         id="how-it-works"
-        className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-gradient-to-br from-accent-600 to-accent-700 text-white"
+        className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-gradient-to-br from-accent-600 to-accent-700 text-white"
       >
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-24 text-center animate-fade-down">
@@ -828,7 +988,7 @@ export default function Landing() {
       {/* FAQ Section - animate-flip-up 애니메이션 */}
       <section
         id="faq"
-        className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-accent-50/50"
+        className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-accent-50/50"
       >
         <div className="max-w-4xl px-6 mx-auto">
           <div className="mb-20 text-center animate-blur-in">
@@ -892,7 +1052,7 @@ export default function Landing() {
       </section>
 
       {/* Team Section - animate-blur-in + stagger-scale 애니메이션 */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 bg-gray-50">
+      <section className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-gray-50">
         <div className="max-w-5xl px-6 mx-auto text-center">
           <div className="animate-rotate-in">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
@@ -928,7 +1088,7 @@ export default function Landing() {
       </section>
 
       {/* CTA Section - animate-bounce-up 애니메이션 */}
-      <section className="h-screen max-h-[1080px] min-h-[800px] flex items-center justify-center py-32 relative overflow-hidden">
+      <section className="min-h-screen flex items-center justify-center py-16 md:py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-accent-600 to-accent-700" />
 
         <div className="relative z-10 max-w-5xl px-6 mx-auto text-center">
