@@ -37,7 +37,11 @@ export default function OTTSelectionPage() {
     useEffect(() => {
         // 온보딩 플로우 시작 플래그 설정
         sessionStorage.setItem('onboarding_in_progress', 'true');
-        console.log('🎬 온보딩 플로우 시작');
+
+        // OTT 선택 페이지로 진입했다는 것은 '전체 플로우'를 의미하므로 리마인더 전용 플래그는 제거
+        sessionStorage.removeItem('onboarding_from_reminder');
+
+        console.log('🎬 온보딩 플로우 시작 (Full Flow)');
 
         if (location.state?.resetOnEntry) {
             console.log("🔄 온보딩 재요청 감지: 데이터 초기화");
