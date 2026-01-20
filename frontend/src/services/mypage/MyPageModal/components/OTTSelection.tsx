@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { authAxiosInstance } from '@/api/axiosInstance';
+import SettingItem from './SettingItem';
 
 // OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
@@ -113,9 +114,10 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                 ) : (
                     <div className="space-y-3">
                         {OTT_PLATFORMS.map((platform) => (
-                            <label
+                            <SettingItem
                                 key={platform.provider_id}
-                                className="flex items-center gap-4 p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors"
+                                as="label"
+                                className="flex items-center gap-4"
                             >
                                 <input
                                     type="checkbox"
@@ -126,8 +128,8 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                                 <div className="w-12 h-8 flex items-center justify-center">
                                     <img src={platform.logo} alt={platform.name} className={`${platform.logoSize} w-auto object-contain`} />
                                 </div>
-                                <span className="text-white font-medium">{platform.name}</span>
-                            </label>
+                                <span className="text-black dark:text-white font-medium">{platform.name}</span>
+                            </SettingItem>
                         ))}
                     </div>
                 )}

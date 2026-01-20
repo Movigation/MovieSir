@@ -6,6 +6,7 @@ import { ArrowLeft, Film, Star, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthContext';
 import { getUserStats } from '@/api/movieApi';
 import type { UserStats as UserStatsType } from '@/api/movieApi.type';
+import SettingItem from './SettingItem';
 
 type UserStatsProps = {
     onBack: () => void;
@@ -93,19 +94,19 @@ export default function UserStats({ onBack }: UserStatsProps) {
                         </div>
 
                         {/* 장르별 시청 횟수 */}
-                        <div className="p-4 bg-gray-700 rounded-lg">
-                            <h3 className="text-white font-medium mb-3">장르별 시청 횟수</h3>
+                        <SettingItem>
+                            <h3 className="text-black dark:text-white font-medium mb-3">장르별 시청 횟수</h3>
                             <div className="space-y-2">
                                 {Object.entries(stats.watchedByGenre).length === 0 ? (
-                                    <p className="text-gray-400 text-sm">데이터가 없습니다</p>
+                                    <p className="text-gray-500 dark:text-gray-400 text-sm">데이터가 없습니다</p>
                                 ) : (
                                     Object.entries(stats.watchedByGenre)
                                         .sort(([, a], [, b]) => b - a)
                                         .map(([genre, count]) => (
                                             <div key={genre} className="flex justify-between items-center">
-                                                <span className="text-gray-300">{genre}</span>
+                                                <span className="text-gray-700 dark:text-gray-300">{genre}</span>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-32 h-2 bg-gray-600 rounded-full overflow-hidden">
+                                                    <div className="w-32 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
                                                         <div
                                                             className="h-full bg-blue-500 rounded-full"
                                                             style={{
@@ -113,13 +114,13 @@ export default function UserStats({ onBack }: UserStatsProps) {
                                                             }}
                                                         />
                                                     </div>
-                                                    <span className="text-gray-400 text-sm w-8 text-right">{count}편</span>
+                                                    <span className="text-gray-600 dark:text-gray-400 text-sm w-8 text-right">{count}편</span>
                                                 </div>
                                             </div>
                                         ))
                                 )}
                             </div>
-                        </div>
+                        </SettingItem>
                     </div>
                 )}
             </div>
