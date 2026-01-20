@@ -47,7 +47,7 @@ export default function Dashboard() {
           api.get('/b2b/logs?limit=10'),
         ])
         setData(dashboardRes.data)
-        setLogs(logsRes.data)
+        setLogs(logsRes.data.logs)
       } catch (err) {
         console.error(err)
       } finally {
@@ -62,7 +62,7 @@ export default function Dashboard() {
     const fetchLogs = async () => {
       try {
         const { data } = await api.get('/b2b/logs?limit=10')
-        setLogs(data)
+        setLogs(data.logs)
       } catch (err) {
         console.error('Failed to fetch logs:', err)
       }
@@ -206,7 +206,7 @@ export default function Dashboard() {
             </div>
           </div>
           <button
-            onClick={() => navigate('/console/docs')}
+            onClick={() => navigate('/api-docs')}
             className="w-full py-2 bg-blue-500 text-white rounded-lg text-xs lg:text-sm font-medium hover:bg-blue-400 transition-colors mb-4"
           >
             API 문서 보기
@@ -358,7 +358,7 @@ export default function Dashboard() {
               <h2 className="text-sm font-medium text-white">Live Logs</h2>
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
             </div>
-            <button onClick={() => navigate('/console/logs')} className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+            <button onClick={() => navigate('/logs')} className="text-xs text-blue-400 hover:text-blue-300">View all</button>
           </div>
           <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
             {logs.map((log) => (

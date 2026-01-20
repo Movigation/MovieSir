@@ -57,7 +57,7 @@ export default function Register() {
         password: form.password,
       })
       login(data.company, data.access_token)
-      navigate('/console/dashboard')
+      navigate('/dashboard')
     } catch (err: any) {
       const message = err.response?.data?.detail || '회원가입 중 오류가 발생했습니다'
       setError(message)

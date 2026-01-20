@@ -43,7 +43,7 @@ export default function Login() {
         password: form.password,
       })
       login(data.company, data.access_token)
-      navigate('/console/dashboard')
+      navigate('/dashboard')
     } catch (err: any) {
       const message = err.response?.data?.detail || '이메일 또는 비밀번호를 확인해주세요'
       setError(message)

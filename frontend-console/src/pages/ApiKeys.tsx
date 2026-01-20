@@ -29,7 +29,7 @@ export default function ApiKeys() {
   // Playground에서 테스트
   const testInPlayground = (key: string) => {
     sessionStorage.setItem('playground_api_key_temp', key)
-    navigate('/console/playground')
+    navigate('/playground')
   }
 
   const loadKeys = async () => {

@@ -39,7 +39,7 @@ export default function OAuthCallback({ provider }: OAuthCallbackProps) {
           redirect_uri: redirectUri
         })
         login(data.company, data.access_token)
-        navigate('/console/dashboard')
+        navigate('/dashboard')
       } catch (err: any) {
         const message = err.response?.data?.detail || `${provider} 로그인에 실패했습니다.`
         setError(message)
