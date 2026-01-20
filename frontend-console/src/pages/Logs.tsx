@@ -33,6 +33,28 @@ export default function Logs() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const startDateRef = useRef<HTMLInputElement | null>(null)
   const endDateRef = useRef<HTMLInputElement | null>(null)
+  const [startPickerOpen, setStartPickerOpen] = useState(false)
+  const [endPickerOpen, setEndPickerOpen] = useState(false)
+
+  const handleStartDateToggle = () => {
+    if (startPickerOpen) {
+      startDateRef.current?.blur()
+      setStartPickerOpen(false)
+    } else {
+      startDateRef.current?.showPicker()
+      setStartPickerOpen(true)
+    }
+  }
+
+  const handleEndDateToggle = () => {
+    if (endPickerOpen) {
+      endDateRef.current?.blur()
+      setEndPickerOpen(false)
+    } else {
+      endDateRef.current?.showPicker()
+      setEndPickerOpen(true)
+    }
+  }
 
   const fetchLogs = useCallback(async (reset = false) => {
     if (reset) {
@@ -164,12 +186,13 @@ export default function Logs() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                onBlur={() => setStartPickerOpen(false)}
                 max={endDate || today}
                 className="px-2 py-1.5 pr-8 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:ring-2 focus:ring-blue-500 [&::-webkit-calendar-picker-indicator]:hidden"
               />
               <button
                 type="button"
-                onClick={() => startDateRef.current?.showPicker()}
+                onClick={handleStartDateToggle}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,13 +207,14 @@ export default function Logs() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                onBlur={() => setEndPickerOpen(false)}
                 min={startDate}
                 max={today}
                 className="px-2 py-1.5 pr-8 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:ring-2 focus:ring-blue-500 [&::-webkit-calendar-picker-indicator]:hidden"
               />
               <button
                 type="button"
-                onClick={() => endDateRef.current?.showPicker()}
+                onClick={handleEndDateToggle}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
