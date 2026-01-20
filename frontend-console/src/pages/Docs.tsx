@@ -1,7 +1,95 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-type Section = 'intro' | 'features' | 'getting-started' | 'auth' | 'recommend' | 'errors' | 'rate-limit'
+type Section = 'intro' | 'features' | 'getting-started' | 'auth' | 'recommend' | 'recommend-single' | 'errors' | 'rate-limit'
+
+// 각 섹션별 서브 목차 정의
+const sectionToc: Record<Section, { id: string; label: string }[]> = {
+  'intro': [
+    { id: 'intro-overview', label: '개요' },
+    { id: 'intro-algorithm', label: '추천 알고리즘' },
+    { id: 'intro-spec', label: 'API 스펙' },
+  ],
+  'features': [],
+  'getting-started': [],
+  'auth': [
+    { id: 'auth-header', label: 'API Key 헤더' },
+    { id: 'auth-format', label: 'API Key 형식' },
+    { id: 'auth-security', label: '보안 주의사항' },
+  ],
+  'recommend': [
+    { id: 'recommend-endpoint', label: 'Endpoint' },
+    { id: 'recommend-params', label: 'Request Parameters' },
+    { id: 'recommend-genres', label: '지원 장르' },
+    { id: 'recommend-example', label: '예시' },
+    { id: 'recommend-response', label: 'Response Fields' },
+  ],
+  'recommend-single': [
+    { id: 'single-endpoint', label: 'Endpoint' },
+    { id: 'single-params', label: 'Request Parameters' },
+    { id: 'single-example', label: '예시' },
+    { id: 'single-response', label: 'Response Fields' },
+  ],
+  'errors': [
+    { id: 'errors-table', label: '에러 코드 목록' },
+    { id: 'errors-format', label: '에러 응답 형식' },
+  ],
+  'rate-limit': [
+    { id: 'rate-plans', label: '플랜별 호출 한도' },
+    { id: 'rate-headers', label: '응답 헤더' },
+    { id: 'rate-exceeded', label: '한도 초과 시' },
+  ],
+}
+
+// 코드 복사 버튼 컴포넌트
+function CopyButton({ text, light = false }: { text: string; light?: boolean }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={`absolute top-3 right-3 p-1.5 rounded-md transition-colors ${
+        light
+          ? 'hover:bg-gray-200 text-gray-400 hover:text-gray-600'
+          : 'hover:bg-white/10 text-gray-400 hover:text-white'
+      }`}
+      title="복사"
+    >
+      {copied ? (
+        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+// 코드 블록 컴포넌트
+function CodeBlock({ code, language, showLineNumbers = false }: { code: string; language?: string; showLineNumbers?: boolean }) {
+  return (
+    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-900">
+      {language && (
+        <div className="px-4 py-2 border-b border-gray-800 flex items-center justify-between bg-gray-900">
+          <span className="text-xs text-gray-500 font-medium">{language}</span>
+        </div>
+      )}
+      <pre className={`p-4 overflow-x-auto ${showLineNumbers ? 'pl-12' : ''}`}>
+        <code className="text-sm font-mono text-gray-300 leading-relaxed whitespace-pre">{code}</code>
+      </pre>
+      <CopyButton text={code} />
+    </div>
+  )
+}
 
 export default function Docs() {
   const [searchParams] = useSearchParams()
@@ -10,22 +98,26 @@ export default function Docs() {
 
   useEffect(() => {
     const section = searchParams.get('section')
-    if (section && ['intro', 'features', 'getting-started', 'auth', 'recommend', 'errors', 'rate-limit'].includes(section)) {
+    if (section && ['intro', 'features', 'getting-started', 'auth', 'recommend', 'recommend-single', 'errors', 'rate-limit'].includes(section)) {
       setActiveSection(section as Section)
     }
   }, [searchParams])
 
   const navigation = [
-    { id: 'intro', label: '무비서 API란', category: 'API 소개' },
-    { id: 'features', label: '주요 기능', category: 'API 소개' },
-    { id: 'getting-started', label: '시작하기', category: 'API 소개' },
-    { id: 'auth', label: '인증', category: 'API Reference' },
-    { id: 'recommend', label: '/recommend', category: 'API Reference' },
-    { id: 'errors', label: '에러 코드', category: 'API Reference' },
-    { id: 'rate-limit', label: 'Rate Limit', category: 'API Reference' },
+    { id: 'intro', label: '무비서 API란', category: 'API 소개', method: null },
+    { id: 'features', label: '주요 기능', category: 'API 소개', method: null },
+    { id: 'getting-started', label: '시작하기', category: 'API 소개', method: null },
+    { id: 'auth', label: '인증', category: 'API Reference', method: null },
+    { id: 'recommend', label: '/recommend', category: 'Endpoints', method: 'POST' },
+    { id: 'recommend-single', label: '/recommend_single', category: 'Endpoints', method: 'POST' },
+    { id: 'errors', label: '에러 코드', category: 'API Reference', method: null },
+    { id: 'rate-limit', label: 'Rate Limit', category: 'API Reference', method: null },
   ]
 
-  const categories = ['API 소개', 'API Reference']
+  const categories = ['API 소개', 'Endpoints', 'API Reference']
+
+  // 현재 섹션의 서브 TOC
+  const currentToc = useMemo(() => sectionToc[activeSection] || [], [activeSection])
 
   return (
     <div className="min-h-screen bg-white">
@@ -59,7 +151,7 @@ export default function Docs() {
       </header>
 
       <div className="flex pt-16">
-        {/* Sidebar */}
+        {/* Left Sidebar - Navigation */}
         <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] bg-gray-50 border-r border-gray-200 overflow-y-auto">
           <nav className="p-4">
             {categories.map((category) => (
@@ -74,16 +166,28 @@ export default function Docs() {
                       <li key={item.id}>
                         <button
                           onClick={() => setActiveSection(item.id as Section)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                             activeSection === item.id
                               ? 'bg-blue-100 text-blue-700'
                               : 'text-gray-600 hover:bg-gray-100'
                           }`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <span>{item.label}</span>
+                          {item.method ? (
+                            <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                              item.method === 'POST' ? 'bg-emerald-100 text-emerald-700' :
+                              item.method === 'GET' ? 'bg-blue-100 text-blue-700' :
+                              item.method === 'PUT' ? 'bg-amber-100 text-amber-700' :
+                              item.method === 'DELETE' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {item.method}
+                            </span>
+                          ) : (
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          )}
+                          <span className={`truncate ${item.method ? 'font-mono text-xs' : ''}`}>{item.label}</span>
                         </button>
                       </li>
                     ))}
@@ -94,8 +198,8 @@ export default function Docs() {
         </aside>
 
         {/* Main Content */}
-        <main className="ml-64 flex-1 min-h-[calc(100vh-64px)]">
-          <div className="max-w-4xl mx-auto px-8 py-12">
+        <main className={`ml-64 flex-1 min-h-[calc(100vh-64px)] ${currentToc.length > 0 ? 'mr-56' : ''}`}>
+          <div className="max-w-3xl mx-auto px-8 py-12">
             {/* 무비서 API란 */}
             {activeSection === 'intro' && (
               <div>
@@ -103,12 +207,14 @@ export default function Docs() {
                   무비서 API란
                 </h1>
                 <div className="prose prose-gray max-w-none">
-                  <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                    무비서 API는 AI 기반 영화 추천 기능을 여러분의 서비스에 쉽게
-                    연동할 수 있도록 제공하는 RESTful API입니다. SBERT와
-                    LightGCN을 결합한 하이브리드 추천 알고리즘으로 사용자의
-                    취향에 맞는 최적의 영화를 추천합니다.
-                  </p>
+                  <div id="intro-overview">
+                    <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                      무비서 API는 AI 기반 영화 추천 기능을 여러분의 서비스에 쉽게
+                      연동할 수 있도록 제공하는 RESTful API입니다. SBERT와
+                      LightGCN을 결합한 하이브리드 추천 알고리즘으로 사용자의
+                      취향에 맞는 최적의 영화를 추천합니다.
+                    </p>
+                  </div>
 
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8">
                     <h3 className="text-lg font-semibold text-blue-900 mb-3">
@@ -169,7 +275,7 @@ export default function Docs() {
                     </ul>
                   </div>
 
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  <h2 id="intro-algorithm" className="text-xl font-bold text-gray-900 mb-4">
                     추천 알고리즘
                   </h2>
                   <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -193,7 +299,7 @@ export default function Docs() {
                     </div>
                   </div>
 
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  <h2 id="intro-spec" className="text-xl font-bold text-gray-900 mb-4">
                     API 스펙
                   </h2>
                   <div className="overflow-hidden border border-gray-200 rounded-xl">
@@ -433,9 +539,12 @@ export default function Docs() {
                           </code>
                         )}
                         {item.codeBlock && (
-                          <pre className="bg-gray-900 text-gray-100 px-4 py-3 rounded-lg text-sm overflow-x-auto mb-3">
-                            <code>{item.codeBlock}</code>
-                          </pre>
+                          <div className="relative mb-3">
+                            <pre className="bg-gray-900 text-gray-100 px-4 py-3 rounded-lg text-sm overflow-x-auto pr-12">
+                              <code>{item.codeBlock}</code>
+                            </pre>
+                            <CopyButton text={item.codeBlock} />
+                          </div>
                         )}
                         {item.action && (
                           <Link
@@ -533,22 +642,23 @@ export default function Docs() {
 
                 <div className="space-y-8">
                   {/* API Key Header */}
-                  <div>
+                  <div id="auth-header">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">API Key 헤더</h2>
                     <p className="text-gray-600 mb-4">
                       모든 요청의 헤더에 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm">X-API-Key</code>를 포함해야 합니다.
                     </p>
-                    <div className="bg-gray-900 rounded-lg overflow-hidden">
-                      <pre className="p-4 font-mono text-sm text-gray-300">
+                    <div className="bg-gray-900 rounded-lg overflow-hidden relative">
+                      <pre className="p-4 font-mono text-sm text-gray-300 pr-12">
                         <code>
                           <span className="text-gray-500">X-API-Key:</span> <span className="text-sky-300">sk-moviesir-xxxxxxxxxxxxxxxx</span>
                         </code>
                       </pre>
+                      <CopyButton text="X-API-Key: sk-moviesir-xxxxxxxxxxxxxxxx" />
                     </div>
                   </div>
 
                   {/* Key Format */}
-                  <div>
+                  <div id="auth-format">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">API Key 형식</h2>
                     <table className="w-full">
                       <tbody className="divide-y divide-gray-200">
@@ -575,7 +685,7 @@ export default function Docs() {
                   </div>
 
                   {/* Security */}
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div id="auth-security" className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <div className="flex gap-3">
                       <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -621,7 +731,7 @@ export default function Docs() {
             {activeSection === 'recommend' && (
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold">
                     POST
                   </span>
                   <h1 className="text-3xl font-bold text-gray-900">/recommend</h1>
@@ -632,19 +742,20 @@ export default function Docs() {
 
                 <div className="space-y-8">
                   {/* Endpoint */}
-                  <div>
+                  <div id="recommend-endpoint">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Endpoint</h2>
-                    <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="bg-gray-900 rounded-lg p-4 relative">
                       <code className="text-sm">
                         <span className="text-emerald-400">POST</span>
                         <span className="text-gray-300"> https://api.moviesir.cloud</span>
                         <span className="text-amber-300">/recommend</span>
                       </code>
+                      <CopyButton text="POST https://api.moviesir.cloud/recommend" />
                     </div>
                   </div>
 
                   {/* Request Parameters */}
-                  <div>
+                  <div id="recommend-params">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Request Parameters</h2>
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                       <table className="w-full">
@@ -693,7 +804,7 @@ export default function Docs() {
                   </div>
 
                   {/* Available Genres */}
-                  <div>
+                  <div id="recommend-genres">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">지원 장르</h2>
                     <div className="flex flex-wrap gap-2">
                       {['액션', 'SF', '드라마', '코미디', '로맨스', '스릴러', '공포', '애니메이션', '범죄', '모험', '판타지', '가족', '미스터리', '전쟁', '역사', '음악', '다큐멘터리', '서부'].map((genre) => (
@@ -708,9 +819,9 @@ export default function Docs() {
                   </div>
 
                   {/* Request / Response Example */}
-                  <div>
+                  <div id="recommend-example">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">예시</h2>
-                    <div className="bg-gray-900 rounded-xl overflow-hidden">
+                    <div className="bg-gray-900 rounded-xl overflow-hidden relative">
                       <div className="flex border-b border-gray-800">
                         <button
                           onClick={() => setActiveTab('request')}
@@ -780,11 +891,47 @@ export default function Docs() {
                           </pre>
                         )}
                       </div>
+                      <CopyButton text={activeTab === 'request'
+                        ? `POST /recommend HTTP/1.1
+Host: api.moviesir.cloud
+Content-Type: application/json
+X-API-Key: sk-moviesir-xxx...
+
+{
+  "runtime_limit": 360,
+  "genres": ["액션", "SF"],
+  "exclude_adult": true
+}`
+                        : `{
+  "success": true,
+  "data": {
+    "track_a": {
+      "movies": [
+        {
+          "id": 550,
+          "title": "파이트 클럽",
+          "poster_url": "https://...",
+          "runtime": 139,
+          "genres": ["드라마"],
+          "score": 0.95
+        },
+        {
+          "id": 27205,
+          "title": "인셉션",
+          "runtime": 148,
+          "score": 0.92
+        }
+      ],
+      "total_runtime": 287
+    },
+    "track_b": { ... }
+  }
+}`} />
                     </div>
                   </div>
 
                   {/* Response Fields */}
-                  <div>
+                  <div id="recommend-response">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Response Fields</h2>
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                       <table className="w-full">
@@ -863,7 +1010,7 @@ export default function Docs() {
 
                 <div className="space-y-8">
                   {/* Error Table */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div id="errors-table" className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
@@ -906,9 +1053,9 @@ export default function Docs() {
                   </div>
 
                   {/* Error Response Example */}
-                  <div>
+                  <div id="errors-format">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">에러 응답 형식</h2>
-                    <div className="bg-gray-900 rounded-lg overflow-hidden">
+                    <div className="bg-gray-900 rounded-lg overflow-hidden relative">
                       <div className="px-4 py-2 border-b border-gray-800 flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-medium">401</span>
                         <span className="text-sm text-gray-400">Unauthorized</span>
@@ -924,6 +1071,13 @@ export default function Docs() {
                           <span className="text-gray-500">{'}'}</span>
                         </code>
                       </pre>
+                      <CopyButton text={`{
+  "success": false,
+  "error": {
+    "code": "INVALID_API_KEY",
+    "message": "유효하지 않은 API 키입니다"
+  }
+}`} />
                     </div>
                   </div>
                 </div>
@@ -940,7 +1094,7 @@ export default function Docs() {
 
                 <div className="space-y-8">
                   {/* Plan Limits */}
-                  <div>
+                  <div id="rate-plans">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">플랜별 호출 한도</h2>
                     <div className="grid md:grid-cols-3 gap-4">
                       {[
@@ -959,7 +1113,7 @@ export default function Docs() {
                   </div>
 
                   {/* Rate Limit Headers */}
-                  <div>
+                  <div id="rate-headers">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">응답 헤더</h2>
                     <p className="text-gray-600 mb-4">모든 API 응답에는 Rate Limit 관련 헤더가 포함됩니다.</p>
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -995,9 +1149,9 @@ export default function Docs() {
                   </div>
 
                   {/* Rate Limit Error */}
-                  <div>
+                  <div id="rate-exceeded">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">한도 초과 시</h2>
-                    <div className="bg-gray-900 rounded-lg overflow-hidden">
+                    <div className="bg-gray-900 rounded-lg overflow-hidden relative">
                       <div className="px-4 py-2 border-b border-gray-800 flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded text-xs font-medium">429</span>
                         <span className="text-sm text-gray-400">Too Many Requests</span>
@@ -1015,6 +1169,15 @@ export default function Docs() {
                           <span className="text-gray-500">{'}'}</span>
                         </code>
                       </pre>
+                      <CopyButton text={`{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "일일 호출 한도를 초과했습니다",
+    "limit": 1000,
+    "reset_at": "2025-01-08T00:00:00Z"
+  }
+}`} />
                     </div>
                   </div>
 
@@ -1031,8 +1194,204 @@ export default function Docs() {
                 </div>
               </div>
             )}
+
+            {/* /recommend_single Section */}
+            {activeSection === 'recommend-single' && (
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold">
+                    POST
+                  </span>
+                  <h1 className="text-3xl font-bold text-gray-900">/recommend_single</h1>
+                </div>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  단일 영화를 새로 추천받을 때 사용합니다. 기존 추천 결과에서 마음에 들지 않는 영화를 교체할 수 있습니다.
+                </p>
+
+                <div className="space-y-8">
+                  {/* Endpoint */}
+                  <div id="single-endpoint">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-3">Endpoint</h2>
+                    <div className="bg-gray-900 rounded-lg p-4 relative">
+                      <code className="text-sm">
+                        <span className="text-emerald-400">POST</span>
+                        <span className="text-gray-300"> https://api.moviesir.cloud</span>
+                        <span className="text-amber-300">/recommend_single</span>
+                      </code>
+                      <CopyButton text="POST https://api.moviesir.cloud/recommend_single" />
+                    </div>
+                  </div>
+
+                  {/* Request Parameters */}
+                  <div id="single-params">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-3">Request Parameters</h2>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">파라미터</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">타입</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">필수</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">설명</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">runtime_limit</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">integer</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">필수</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">총 가용 시간 (분 단위)</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">genres</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">string[]</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">선택</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">선호 장르 배열</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">excluded_ids</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">integer[]</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">선택</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">제외할 영화 ID 목록</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">track</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">string</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">선택</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">"A" (장르 중심) 또는 "B" (다양성)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Example */}
+                  <div id="single-example">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-3">예시</h2>
+                    <CodeBlock
+                      language="bash"
+                      code={`curl -X POST https://api.moviesir.cloud/recommend_single \\
+  -H "X-API-Key: sk-moviesir-xxx..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "runtime_limit": 360,
+    "genres": ["액션"],
+    "excluded_ids": [550, 27205],
+    "track": "A"
+  }'`}
+                    />
+                  </div>
+
+                  {/* Response */}
+                  <div id="single-response">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-3">Response</h2>
+                    <CodeBlock
+                      language="json"
+                      code={`{
+  "success": true,
+  "data": {
+    "movie": {
+      "id": 157336,
+      "title": "인터스텔라",
+      "poster_url": "https://image.tmdb.org/t/p/w500/...",
+      "runtime": 169,
+      "genres": ["SF", "모험", "드라마"],
+      "score": 0.94
+    }
+  }
+}`}
+                    />
+                  </div>
+
+                  {/* Response Fields */}
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-3">Response Fields</h2>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">필드</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">타입</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">설명</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">success</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">boolean</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">요청 성공 여부</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">data.movie</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">object</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">새로 추천된 단일 영화 정보</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">movie.id</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">integer</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">영화 ID (TMDB 기준)</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3">
+                              <code className="text-sm text-blue-600">movie.score</code>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">number</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">추천 점수 (0~1)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
+
+        {/* Right Sidebar - On This Page */}
+        {currentToc.length > 0 && (
+          <aside className="fixed right-0 top-16 w-56 h-[calc(100vh-64px)] border-l border-gray-200 overflow-y-auto hidden lg:block">
+            <nav className="p-4">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                On this page
+              </span>
+              <ul className="mt-3 space-y-2">
+                {currentToc.map((item) => (
+                  <li key={item.id}>
+                    <a
+                      href={`#${item.id}`}
+                      className="text-sm text-gray-600 hover:text-blue-600 transition-colors block py-1"
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
+        )}
       </div>
     </div>
   )
