@@ -85,6 +85,17 @@ export default function ApiKeys() {
     }
   }
 
+  const activateKey = async (id: string) => {
+    if (!confirm('이 API 키를 다시 활성화하시겠습니까?')) return
+
+    try {
+      await api.patch(`/b2b/api-keys/${id}/activate`)
+      loadKeys()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const startEditKey = (key: ApiKey) => {
     setEditingKeyId(key.id)
     setEditingKeyName(key.name)
@@ -292,12 +303,19 @@ export default function ApiKeys() {
                           }`} />
                           <span className="hidden sm:inline">{key.is_active ? '활성' : '비활성'}</span>
                         </span>
-                        {key.is_active && (
+                        {key.is_active ? (
                           <button
                             onClick={() => deactivateKey(key.id)}
                             className="text-[10px] lg:text-xs text-yellow-400 hover:text-yellow-300 hidden sm:inline"
                           >
                             비활성화
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => activateKey(key.id)}
+                            className="text-[10px] lg:text-xs text-green-400 hover:text-green-300 hidden sm:inline"
+                          >
+                            활성화
                           </button>
                         )}
                         <button
