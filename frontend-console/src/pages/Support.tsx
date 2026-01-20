@@ -35,24 +35,25 @@ export default function Support() {
       <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="text-white font-semibold">MovieSir</span>
+            <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
+            <span className="text-xl font-semibold text-white">무비서</span>
+            <span className="text-xs font-semibold text-white border border-white/30 bg-white/10 px-1.5 py-0.5 rounded">
+              API
+            </span>
           </Link>
           <nav className="flex items-center gap-6">
             <Link to="/docs" className="text-sm text-gray-400 hover:text-white transition-colors">
               API 문서
             </Link>
-            <Link to="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
-              로그인
+            <Link to="/contact" className="text-sm text-gray-400 hover:text-white transition-colors">
+              도입 문의
             </Link>
-            <Link
-              to="/register"
+            <a
+              href="https://console.moviesir.cloud"
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-colors"
             >
-              시작하기
-            </Link>
+              콘솔
+            </a>
           </nav>
         </div>
       </header>
@@ -77,13 +78,13 @@ export default function Support() {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Contact Info Cards */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5">
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5 flex-1">
               <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4">
                 <Mail className="w-6 h-6 text-blue-400" />
               </div>
               <h3 className="text-white font-semibold mb-2">이메일</h3>
-              <p className="text-gray-400 text-sm mb-3">기술 문의 및 일반 문의</p>
+              <p className="text-gray-400 text-sm mb-3 whitespace-nowrap">기술 문의 및 일반 문의</p>
               <a
                 href="mailto:support@moviesir.cloud"
                 className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
@@ -92,30 +93,26 @@ export default function Support() {
               </a>
             </div>
 
-            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5">
+            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5 flex-1">
               <div className="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-cyan-400" />
               </div>
               <h3 className="text-white font-semibold mb-2">문의 유형</h3>
               <ul className="text-gray-400 text-sm space-y-1">
-                <li>- API 기술 지원</li>
-                <li>- 요금제 및 결제 문의</li>
-                <li>- 엔터프라이즈 도입 상담</li>
-                <li>- 기타 문의</li>
+                <li className="whitespace-nowrap">- API 기술 지원</li>
+                <li className="whitespace-nowrap">- 요금제 및 결제 문의</li>
+                <li className="whitespace-nowrap">- 엔터프라이즈 도입 상담</li>
+                <li className="whitespace-nowrap">- 기타 문의</li>
               </ul>
             </div>
 
-            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5">
+            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5 flex-1">
               <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center mb-4">
                 <Clock className="w-6 h-6 text-green-400" />
               </div>
               <h3 className="text-white font-semibold mb-2">응답 시간</h3>
-              <p className="text-gray-400 text-sm">
-                영업일 기준 24시간 이내 답변 드립니다.
-              </p>
-              <p className="text-gray-500 text-xs mt-2">
-                운영시간: 평일 09:00 - 18:00 (KST)
-              </p>
+              <p className="text-gray-400 text-sm whitespace-nowrap">영업일 기준 24시간 이내 답변 드립니다.</p>
+              <p className="text-gray-500 text-xs mt-2 whitespace-nowrap">운영시간: 평일 09:00 - 18:00 (KST)</p>
             </div>
           </div>
 

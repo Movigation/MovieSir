@@ -69,10 +69,11 @@ ${formData.message}`
       <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="text-white font-semibold">MovieSir</span>
+            <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
+            <span className="text-xl font-semibold text-white">무비서</span>
+            <span className="text-xs font-semibold text-white border border-white/30 bg-white/10 px-1.5 py-0.5 rounded">
+              API
+            </span>
           </Link>
           <nav className="flex items-center gap-6">
             <Link to="/docs" className="text-sm text-gray-400 hover:text-white transition-colors">
@@ -81,12 +82,12 @@ ${formData.message}`
             <Link to="/support" className="text-sm text-gray-400 hover:text-white transition-colors">
               일반 문의
             </Link>
-            <Link
-              to="/login"
+            <a
+              href="https://console.moviesir.cloud"
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-colors"
             >
-              콘솔 로그인
-            </Link>
+              콘솔
+            </a>
           </nav>
         </div>
       </header>
@@ -290,7 +291,7 @@ ${formData.message}`
           </div>
 
           {/* Side Info */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 flex flex-col gap-6">
             {/* Process */}
             <div className="bg-[#16161d] rounded-xl p-6 border border-white/5">
               <h3 className="text-white font-semibold mb-4">도입 프로세스</h3>
@@ -306,8 +307,8 @@ ${formData.message}`
                       <span className="text-blue-400 text-xs font-bold">{item.step}</span>
                     </div>
                     <div>
-                      <p className="text-white text-sm font-medium">{item.title}</p>
-                      <p className="text-gray-500 text-xs">{item.desc}</p>
+                      <p className="text-white text-sm font-medium whitespace-nowrap">{item.title}</p>
+                      <p className="text-gray-500 text-xs whitespace-nowrap">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -317,9 +318,7 @@ ${formData.message}`
             {/* Direct Contact */}
             <div className="bg-[#16161d] rounded-xl p-6 border border-white/5">
               <h3 className="text-white font-semibold mb-3">직접 연락</h3>
-              <p className="text-gray-400 text-sm mb-4">
-                빠른 상담이 필요하시면 직접 연락주세요.
-              </p>
+              <p className="text-gray-400 text-sm mb-4 whitespace-nowrap">빠른 상담이 필요하시면 직접 연락주세요.</p>
               <a
                 href="mailto:support@moviesir.cloud?subject=[도입 문의]"
                 className="block text-center py-2.5 border border-blue-500/50 text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-500/10 transition-colors"
@@ -329,15 +328,15 @@ ${formData.message}`
             </div>
 
             {/* FAQ */}
-            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5">
+            <div className="bg-[#16161d] rounded-xl p-6 border border-white/5 flex-1">
               <h3 className="text-white font-semibold mb-3">자주 묻는 질문</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-gray-300 font-medium">최소 계약 기간이 있나요?</p>
+                  <p className="text-gray-300 font-medium whitespace-nowrap">최소 계약 기간이 있나요?</p>
                   <p className="text-gray-500">엔터프라이즈 플랜은 월 단위 계약이 가능합니다.</p>
                 </div>
                 <div>
-                  <p className="text-gray-300 font-medium">온프레미스 배포가 가능한가요?</p>
+                  <p className="text-gray-300 font-medium whitespace-nowrap">온프레미스 배포가 가능한가요?</p>
                   <p className="text-gray-500">네, 별도 협의를 통해 가능합니다.</p>
                 </div>
               </div>

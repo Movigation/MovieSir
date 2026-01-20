@@ -1179,8 +1179,8 @@ X-API-Key: sk-moviesir-xxx...
                             <td className="px-4 py-3">
                               <code className="text-sm font-mono text-gray-900">{error.code}</code>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{error.desc}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{error.solution}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{error.desc}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{error.solution}</td>
                           </tr>
                         ))}
                       </tbody>
