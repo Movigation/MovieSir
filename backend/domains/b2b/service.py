@@ -168,6 +168,8 @@ def company_to_response(company: Company) -> CompanyResponse:
         name=company.name,
         email=company.manager_email,
         plan=company.plan_type,
+        oauth_provider=company.oauth_provider,
+        created_at=company.created_at,
     )
 
 
