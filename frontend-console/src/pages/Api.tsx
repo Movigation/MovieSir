@@ -451,7 +451,7 @@ export default function Api() {
                     모바일에서도 편리하게
                   </h2>
                   <p className="text-white/70 mb-6 leading-relaxed">
-                    무비서 Demo App은 PWA(Progressive Web App)를 지원합니다.
+                    무비서 Console은 PWA(Progressive Web App)를 지원합니다.
                     <br />
                     설치 없이 홈 화면에 추가하여 네이티브 앱처럼 사용하세요.
                   </p>
@@ -472,12 +472,12 @@ export default function Api() {
                   </ul>
                   <div className="mt-8">
                     <a
-                      href="https://demo.moviesir.cloud"
+                      href="https://console.moviesir.cloud"
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
                     >
-                      Demo App 체험하기
+                      Console 바로가기
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
