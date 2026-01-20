@@ -319,15 +319,13 @@ export default function ApiDocs() {
             <button
               key={i}
               onClick={() => setSelectedEndpoint(i)}
-              className={`flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg text-[10px] lg:text-sm whitespace-nowrap transition-colors ${
-                selectedEndpoint === i
+              className={`flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg text-[10px] lg:text-sm whitespace-nowrap transition-colors ${selectedEndpoint === i
                   ? 'bg-blue-500 text-white'
                   : 'bg-white/5 text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
-              <span className={`px-1 lg:px-1.5 py-0.5 rounded text-[9px] lg:text-xs font-medium ${
-                ep.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-              }`}>
+              <span className={`px-1 lg:px-1.5 py-0.5 rounded text-[9px] lg:text-xs font-medium ${ep.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                }`}>
                 {ep.method}
               </span>
               <span className="hidden sm:inline">{ep.path}</span>
@@ -340,11 +338,10 @@ export default function ApiDocs() {
         <div className="space-y-4 lg:space-y-6">
           <div>
             <div className="flex flex-wrap items-center gap-2 lg:gap-3 mb-2">
-              <span className={`px-1.5 lg:px-2 py-0.5 lg:py-1 rounded text-[10px] lg:text-sm font-medium ${
-                endpoints[selectedEndpoint].method === 'GET'
+              <span className={`px-1.5 lg:px-2 py-0.5 lg:py-1 rounded text-[10px] lg:text-sm font-medium ${endpoints[selectedEndpoint].method === 'GET'
                   ? 'bg-blue-500/20 text-blue-400'
                   : 'bg-green-500/20 text-green-400'
-              }`}>
+                }`}>
                 {endpoints[selectedEndpoint].method}
               </span>
               <code className="text-white font-mono text-xs lg:text-sm break-all">{endpoints[selectedEndpoint].path}</code>
@@ -390,11 +387,10 @@ export default function ApiDocs() {
                 <button
                   key={lang.id}
                   onClick={() => setSelectedLanguage(lang.id)}
-                  className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-[9px] lg:text-xs font-medium whitespace-nowrap transition-colors ${
-                    selectedLanguage === lang.id
+                  className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-[9px] lg:text-xs font-medium whitespace-nowrap transition-colors ${selectedLanguage === lang.id
                       ? `bg-white/10 ${lang.color}`
                       : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                  }`}
+                    }`}
                 >
                   {lang.name}
                 </button>
@@ -431,9 +427,8 @@ export default function ApiDocs() {
               {errorCodes.map((err) => (
                 <tr key={err.code}>
                   <td className="py-2 lg:py-3">
-                    <span className={`text-[10px] lg:text-sm font-medium ${
-                      err.code < 500 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
+                    <span className={`text-[10px] lg:text-sm font-medium ${err.code < 500 ? 'text-yellow-400' : 'text-red-400'
+                      }`}>
                       {err.code}
                     </span>
                   </td>

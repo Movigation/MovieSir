@@ -90,8 +90,8 @@ export default function Chatbot({
               ? "relative translate-y-[200px] sm:translate-y-[150px]"
               : isRecommended
                 // 추천 상태일 때는 버튼이 화면 중앙 아래에 고정 (모바일)
-                ? "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-43%] xl:ml-[-40%] 2xl:ml-[-17%]"
-                : "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-30%] xl:ml-[-23%] 2xl:ml-[-12%]"
+                ? "fixed bottom-[-25px] sm:top-[12%] xl:top-[8%] 2xl:top-[4%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-[calc(50%-365px)] sm:translate-x-0 lg:left-[calc(50%-480px)] xl:left-[calc(50%-480px)] 2xl:left-[calc(50%-480px)]"
+                : "fixed bottom-[-25px] sm:top-[15%] xl:top-[8%] 2xl:top-[4%] left-1/2 -translate-x-1/2 z-chatbot-btn sm:left-[calc(50%-356px)] sm:translate-x-0 lg:left-[calc(50%-356px)] xl:left-[calc(50%-356px)] 2xl:left-[calc(50%-356px)]"
             }
           `}
         >

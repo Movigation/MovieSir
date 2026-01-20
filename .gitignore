@@ -87,6 +87,10 @@ ai/training/sbert_data/index/*
 ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
+# 성능 비교 데이터
+ai/compare/cbf/inner_results/*.npz
+ai/compare/cbf/inner_results/movies_list.csv
+
 # DB
 *.sql
 *.rdb

@@ -68,8 +68,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             resetMovieStore();
             resetOnboardingStore();
 
-            // 세션 타이머 정리
+            // 세션 타이머 및 온보딩 플래그 정리
             sessionStorage.removeItem('loginTime');
+            sessionStorage.removeItem('onboarding_from_reminder');
+            sessionStorage.removeItem('onboarding_in_progress');
 
             console.log('✅ 로컬 상태 및 스토어 정리 완료');
         }
@@ -104,6 +106,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(null);
             localStorage.removeItem('user');
             sessionStorage.removeItem('user');
+            sessionStorage.removeItem('onboarding_from_reminder');
+            sessionStorage.removeItem('onboarding_in_progress');
             resetMovieStore();
             resetOnboardingStore();
         };
