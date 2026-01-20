@@ -233,6 +233,21 @@ def deactivate_api_key(
     return {"success": True, "message": "API 키가 비활성화되었습니다"}
 
 
+@router.patch("/api-keys/{key_id}/activate")
+def activate_api_key(
+    key_id: int,
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    API 키 활성화
+    """
+    success = service.activate_api_key(db, company.company_id, key_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="API 키를 찾을 수 없습니다")
+    return {"success": True, "message": "API 키가 활성화되었습니다"}
+
+
 @router.delete("/api-keys/{key_id}")
 def delete_api_key(
     key_id: int,
