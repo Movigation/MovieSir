@@ -302,6 +302,7 @@ export default function Settings() {
               </div>
             )}
           </div>
+          </div>
 
           {/* Notification Settings */}
           <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
