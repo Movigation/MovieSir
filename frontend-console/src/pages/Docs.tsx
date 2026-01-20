@@ -108,8 +108,8 @@ export default function Docs() {
     { id: 'features', label: '주요 기능', category: 'API 소개', method: null },
     { id: 'getting-started', label: '시작하기', category: 'API 소개', method: null },
     { id: 'auth', label: '인증', category: 'API Reference', method: null },
-    { id: 'recommend', label: '/recommend', category: 'Endpoints', method: 'POST' },
-    { id: 'recommend-single', label: '/recommend_single', category: 'Endpoints', method: 'POST' },
+    { id: 'recommend', label: '/v1/recommend', category: 'Endpoints', method: 'POST' },
+    { id: 'recommend-single', label: '/v1/recommend_single', category: 'Endpoints', method: 'POST' },
     { id: 'errors', label: '에러 코드', category: 'API Reference', method: null },
     { id: 'rate-limit', label: 'Rate Limit', category: 'API Reference', method: null },
   ]
@@ -216,7 +216,7 @@ export default function Docs() {
                     </p>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-8">
                     <h3 className="text-lg font-semibold text-blue-900 mb-3">
                       핵심 가치
                     </h3>
@@ -279,7 +279,7 @@ export default function Docs() {
                     추천 알고리즘
                   </h2>
                   <div className="grid md:grid-cols-2 gap-4 mb-8">
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                    <div className="border border-gray-200 rounded-xl p-6">
                       <h4 className="font-semibold text-gray-900 mb-2">
                         SBERT
                       </h4>
@@ -288,7 +288,7 @@ export default function Docs() {
                         줄거리, 장르, 키워드를 분석하여 유사한 영화를 찾습니다.
                       </p>
                     </div>
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                    <div className="border border-gray-200 rounded-xl p-6">
                       <h4 className="font-semibold text-gray-900 mb-2">
                         LightGCN
                       </h4>
@@ -511,7 +511,7 @@ export default function Docs() {
                       step: 3,
                       title: "API 호출 테스트",
                       desc: "발급받은 API 키로 추천 API를 호출해보세요.",
-                      codeBlock: `curl -X POST https://api.moviesir.cloud/recommend \\
+                      codeBlock: `curl -X POST https://api.moviesir.cloud/v1/recommend \\
   -H "X-API-Key: your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{"runtime_limit": 180, "genres": ["액션"]}'`,
@@ -522,9 +522,9 @@ export default function Docs() {
                       desc: "테스트가 완료되면 실제 서비스에 API를 연동합니다. 자세한 연동 방법은 아래 API Reference를 참고하세요.",
                     },
                   ].map((item, i) => (
-                    <div key={i} className="flex gap-6">
+                    <div key={i} className="flex gap-4">
                       <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                           {item.step}
                         </div>
                       </div>
@@ -534,13 +534,13 @@ export default function Docs() {
                         </h3>
                         <p className="text-gray-600 mb-3">{item.desc}</p>
                         {item.code && (
-                          <code className="block bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm mb-3">
+                          <code className="block bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm mb-3">
                             {item.code}
                           </code>
                         )}
                         {item.codeBlock && (
                           <div className="relative mb-3">
-                            <pre className="bg-gray-900 text-gray-100 px-4 py-3 rounded-lg text-sm overflow-x-auto pr-12">
+                            <pre className="bg-gray-900 text-gray-100 px-4 py-3 rounded-xl text-sm overflow-x-auto pr-12">
                               <code>{item.codeBlock}</code>
                             </pre>
                             <CopyButton text={item.codeBlock} />
@@ -621,7 +621,7 @@ export default function Docs() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">
-                        /recommend API
+                        /v1/recommend API
                       </h4>
                       <p className="text-sm text-gray-500">
                         추천 API 상세 문서
@@ -647,7 +647,7 @@ export default function Docs() {
                     <p className="text-gray-600 mb-4">
                       모든 요청의 헤더에 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm">X-API-Key</code>를 포함해야 합니다.
                     </p>
-                    <div className="bg-gray-900 rounded-lg overflow-hidden relative">
+                    <div className="bg-gray-900 rounded-xl overflow-hidden relative">
                       <pre className="p-4 font-mono text-sm text-gray-300 pr-12">
                         <code>
                           <span className="text-gray-500">X-API-Key:</span> <span className="text-sky-300">sk-moviesir-xxxxxxxxxxxxxxxx</span>
@@ -685,7 +685,7 @@ export default function Docs() {
                   </div>
 
                   {/* Security */}
-                  <div id="auth-security" className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div id="auth-security" className="p-5 bg-amber-50 border border-amber-200 rounded-xl">
                     <div className="flex gap-3">
                       <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -734,7 +734,7 @@ export default function Docs() {
                   <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold">
                     POST
                   </span>
-                  <h1 className="text-3xl font-bold text-gray-900">/recommend</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">/v1/recommend</h1>
                 </div>
                 <p className="text-gray-600 mb-8 leading-relaxed">
                   사용자의 선호도와 가용 시간을 기반으로 최적의 영화 조합을 추천합니다.
@@ -744,20 +744,30 @@ export default function Docs() {
                   {/* Endpoint */}
                   <div id="recommend-endpoint">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Endpoint</h2>
-                    <div className="bg-gray-900 rounded-lg p-4 relative">
+                    <div className="bg-gray-900 rounded-xl p-4 relative">
                       <code className="text-sm">
                         <span className="text-emerald-400">POST</span>
                         <span className="text-gray-300"> https://api.moviesir.cloud</span>
-                        <span className="text-amber-300">/recommend</span>
+                        <span className="text-amber-300">/v1/recommend</span>
                       </code>
-                      <CopyButton text="POST https://api.moviesir.cloud/recommend" />
+                      <CopyButton text="POST https://api.moviesir.cloud/v1/recommend" />
                     </div>
+                    <Link
+                      to="/playground"
+                      className="inline-flex items-center gap-1.5 mt-3 text-sm text-blue-600 hover:text-blue-500 font-medium"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Playground에서 테스트하기
+                    </Link>
                   </div>
 
                   {/* Request Parameters */}
                   <div id="recommend-params">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Request Parameters</h2>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <table className="w-full">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200">
@@ -848,7 +858,7 @@ export default function Docs() {
                         {activeTab === 'request' ? (
                           <pre className="text-gray-300 leading-relaxed overflow-x-auto">
                             <code>
-                              <span className="text-emerald-400">POST</span> /recommend HTTP/1.1{'\n'}
+                              <span className="text-emerald-400">POST</span> /v1/recommend HTTP/1.1{'\n'}
                               <span className="text-gray-500">Host:</span> api.moviesir.cloud{'\n'}
                               <span className="text-gray-500">Content-Type:</span> application/json{'\n'}
                               <span className="text-gray-500">X-API-Key:</span> sk-moviesir-xxx...{'\n\n'}
@@ -892,7 +902,7 @@ export default function Docs() {
                         )}
                       </div>
                       <CopyButton text={activeTab === 'request'
-                        ? `POST /recommend HTTP/1.1
+                        ? `POST /v1/recommend HTTP/1.1
 Host: api.moviesir.cloud
 Content-Type: application/json
 X-API-Key: sk-moviesir-xxx...
@@ -933,7 +943,7 @@ X-API-Key: sk-moviesir-xxx...
                   {/* Response Fields */}
                   <div id="recommend-response">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Response Fields</h2>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <table className="w-full">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200">
@@ -1010,7 +1020,7 @@ X-API-Key: sk-moviesir-xxx...
 
                 <div className="space-y-8">
                   {/* Error Table */}
-                  <div id="errors-table" className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div id="errors-table" className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
@@ -1055,7 +1065,7 @@ X-API-Key: sk-moviesir-xxx...
                   {/* Error Response Example */}
                   <div id="errors-format">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">에러 응답 형식</h2>
-                    <div className="bg-gray-900 rounded-lg overflow-hidden relative">
+                    <div className="bg-gray-900 rounded-xl overflow-hidden relative">
                       <div className="px-4 py-2 border-b border-gray-800 flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-medium">401</span>
                         <span className="text-sm text-gray-400">Unauthorized</span>
@@ -1116,7 +1126,7 @@ X-API-Key: sk-moviesir-xxx...
                   <div id="rate-headers">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">응답 헤더</h2>
                     <p className="text-gray-600 mb-4">모든 API 응답에는 Rate Limit 관련 헤더가 포함됩니다.</p>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <table className="w-full">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200">
@@ -1151,7 +1161,7 @@ X-API-Key: sk-moviesir-xxx...
                   {/* Rate Limit Error */}
                   <div id="rate-exceeded">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">한도 초과 시</h2>
-                    <div className="bg-gray-900 rounded-lg overflow-hidden relative">
+                    <div className="bg-gray-900 rounded-xl overflow-hidden relative">
                       <div className="px-4 py-2 border-b border-gray-800 flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded text-xs font-medium">429</span>
                         <span className="text-sm text-gray-400">Too Many Requests</span>
@@ -1182,7 +1192,7 @@ X-API-Key: sk-moviesir-xxx...
                   </div>
 
                   {/* Best Practices */}
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="p-5 bg-blue-50 border border-blue-200 rounded-xl">
                     <h3 className="font-medium text-blue-800 mb-2">Rate Limit 관리 팁</h3>
                     <ul className="text-sm text-blue-700 space-y-1">
                       <li>- 응답 캐싱을 통해 불필요한 호출을 줄이세요</li>
@@ -1195,14 +1205,14 @@ X-API-Key: sk-moviesir-xxx...
               </div>
             )}
 
-            {/* /recommend_single Section */}
+            {/* /v1/recommend_single Section */}
             {activeSection === 'recommend-single' && (
               <div>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold">
                     POST
                   </span>
-                  <h1 className="text-3xl font-bold text-gray-900">/recommend_single</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">/v1/recommend_single</h1>
                 </div>
                 <p className="text-gray-600 mb-8 leading-relaxed">
                   단일 영화를 새로 추천받을 때 사용합니다. 기존 추천 결과에서 마음에 들지 않는 영화를 교체할 수 있습니다.
@@ -1212,20 +1222,30 @@ X-API-Key: sk-moviesir-xxx...
                   {/* Endpoint */}
                   <div id="single-endpoint">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Endpoint</h2>
-                    <div className="bg-gray-900 rounded-lg p-4 relative">
+                    <div className="bg-gray-900 rounded-xl p-4 relative">
                       <code className="text-sm">
                         <span className="text-emerald-400">POST</span>
                         <span className="text-gray-300"> https://api.moviesir.cloud</span>
-                        <span className="text-amber-300">/recommend_single</span>
+                        <span className="text-amber-300">/v1/recommend_single</span>
                       </code>
-                      <CopyButton text="POST https://api.moviesir.cloud/recommend_single" />
+                      <CopyButton text="POST https://api.moviesir.cloud/v1/recommend_single" />
                     </div>
+                    <Link
+                      to="/playground"
+                      className="inline-flex items-center gap-1.5 mt-3 text-sm text-blue-600 hover:text-blue-500 font-medium"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Playground에서 테스트하기
+                    </Link>
                   </div>
 
                   {/* Request Parameters */}
                   <div id="single-params">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Request Parameters</h2>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <table className="w-full">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200">
@@ -1286,7 +1306,7 @@ X-API-Key: sk-moviesir-xxx...
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">예시</h2>
                     <CodeBlock
                       language="bash"
-                      code={`curl -X POST https://api.moviesir.cloud/recommend_single \\
+                      code={`curl -X POST https://api.moviesir.cloud/v1/recommend_single \\
   -H "X-API-Key: sk-moviesir-xxx..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1322,7 +1342,7 @@ X-API-Key: sk-moviesir-xxx...
                   {/* Response Fields */}
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Response Fields</h2>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <table className="w-full">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200">
