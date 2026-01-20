@@ -21,7 +21,7 @@ export default function SideRecommendationPopup({
         timestamp: number
     } | null>(null);
     const [expandedMovieId, setExpandedMovieId] = useState<number | null>(null);
-    const { detailMovieId, setDetailMovieId, userId } = useMovieStore();
+    const { detailMovieId, setDetailMovieId, userId, sessionId } = useMovieStore();
     const panelRef = useRef<HTMLDivElement>(null);
 
     // 로컬 스토리지에서 데이터 로드
@@ -64,9 +64,10 @@ export default function SideRecommendationPopup({
             return;
         }
 
+        // 초기 로드 및 스토어의 세션이 변경될 때(추천 완료 시) 즉시 로드
         loadLastData();
 
-        // 다른 창이나 동일창에서의 변경 감지
+        // 다른 창/탭에서의 변경 감지
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === `last_recommendations_${userId}`) {
                 loadLastData();
@@ -74,13 +75,11 @@ export default function SideRecommendationPopup({
         };
 
         window.addEventListener('storage', handleStorageChange);
-        const interval = setInterval(loadLastData, 2000);
 
         return () => {
             window.removeEventListener('storage', handleStorageChange);
-            clearInterval(interval);
         };
-    }, [userId]);
+    }, [userId, sessionId]); // sessionId가 바뀌면(추천이 끝나면) 마켓 스토리지를 다시 읽음
 
     // 외부 클릭 시 닫기
     useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ChatbotPanelProps } from "@/services/chatbot/components/chatbot.types";
 import FilterChatBlock from '@/services/chatbot/FilterBlock/FilterChatBlock';
 import RecommendedMoviesSection from '@/services/chatbot/components/RecommendedMoviesSection';
@@ -53,6 +53,7 @@ export default function ChatbotPanel({
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasRecommended, setHasRecommended] = useState(false);  // 추천 완료 플래그
   const { loadRecommended, resetFilters } = useMovieStore();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // 챗봇이 열릴 때 초기 메시지 표시
   useEffect(() => {
@@ -110,11 +111,10 @@ export default function ChatbotPanel({
     ];
     setMessages(initialMessages);
 
-    // 맨 위로 스크롤
+    // 맨 위로 스크롤 (useRef 사용)
     setTimeout(() => {
-      const messagesContainer = document.querySelector('.overflow-y-auto');
-      if (messagesContainer) {
-        messagesContainer.scrollTo({
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({
           top: 0,
           behavior: 'smooth'
         });
@@ -274,6 +274,7 @@ export default function ChatbotPanel({
         {/* [모바일] pb-24: 하단 네비게이션 바(헤더)가 버튼을 가리지 않도록 96px 패딩 추가 */}
         {/* [데스크톱] sm:pb-4: 상단 헤더이므로        {/* 메시지 컨테이너 */}
         <div
+          ref={scrollRef}
           className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide bg-transparent p-4 pb-24 sm:pb-4 space-y-4 overscroll-contain"
         >
           {messages.map((msg) => (
