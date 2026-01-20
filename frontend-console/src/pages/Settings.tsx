@@ -127,7 +127,7 @@ export default function Settings() {
       </div>
 
       {/* Account Settings */}
-      <div className="space-y-6 mb-6 lg:max-w-[50%]">
+      <div className="space-y-6 mb-6 md:max-w-[50%]">
       {/* Company Info */}
       <div className="bg-[#16161d] rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
