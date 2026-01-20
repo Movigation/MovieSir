@@ -128,6 +128,8 @@ export default function Settings() {
 
       {/* Account Settings - Company Info & Password Change */}
       <div className={`grid gap-6 mb-6 items-start ${!company?.oauth_provider ? 'lg:grid-cols-2' : ''}`}>
+      {/* Left Column: Company Info + Notification Settings */}
+      <div className="space-y-6">
       {/* Company Info */}
       <div className="bg-[#16161d] rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
@@ -300,6 +302,47 @@ export default function Settings() {
         )}
       </div>
 
+      {/* Notification Settings */}
+      <div className="bg-[#16161d] rounded-xl p-5">
+        <h2 className="text-sm font-medium text-white mb-4">알림 설정</h2>
+        <div className="space-y-4">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm text-white">일일 한도 알림</p>
+              <p className="text-xs text-gray-500">사용량이 80%에 도달하면 이메일로 알려드립니다</p>
+            </div>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={notifications.dailyLimitAlert}
+                onChange={(e) => setNotifications({ ...notifications, dailyLimitAlert: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
+            </div>
+          </label>
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm text-white">주간 사용량 리포트</p>
+              <p className="text-xs text-gray-500">매주 월요일 API 사용량 요약을 받아보세요</p>
+            </div>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={notifications.weeklyReport}
+                onChange={(e) => setNotifications({ ...notifications, weeklyReport: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
+            </div>
+          </label>
+        </div>
+        <p className="text-xs text-gray-600 mt-4">* 알림 설정은 현재 준비 중입니다</p>
+      </div>
+      </div>
+
       {/* Change Password - OAuth 사용자에게는 숨김 */}
       {!company?.oauth_provider && (
       <div className="bg-[#16161d] rounded-xl p-5">
@@ -380,46 +423,6 @@ export default function Settings() {
         </form>
       </div>
       )}
-      </div>
-
-      {/* Notification Settings */}
-      <div className="bg-[#16161d] rounded-xl p-5 mb-6">
-        <h2 className="text-sm font-medium text-white mb-4">알림 설정</h2>
-        <div className="space-y-4">
-          <label className="flex items-center justify-between cursor-pointer">
-            <div>
-              <p className="text-sm text-white">일일 한도 알림</p>
-              <p className="text-xs text-gray-500">사용량이 80%에 도달하면 이메일로 알려드립니다</p>
-            </div>
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={notifications.dailyLimitAlert}
-                onChange={(e) => setNotifications({ ...notifications, dailyLimitAlert: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
-            </div>
-          </label>
-          <label className="flex items-center justify-between cursor-pointer">
-            <div>
-              <p className="text-sm text-white">주간 사용량 리포트</p>
-              <p className="text-xs text-gray-500">매주 월요일 API 사용량 요약을 받아보세요</p>
-            </div>
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={notifications.weeklyReport}
-                onChange={(e) => setNotifications({ ...notifications, weeklyReport: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
-            </div>
-          </label>
-        </div>
-        <p className="text-xs text-gray-600 mt-4">* 알림 설정은 현재 준비 중입니다</p>
       </div>
 
       {/* Plan Upgrade */}
