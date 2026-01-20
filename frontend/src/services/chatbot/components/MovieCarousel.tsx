@@ -9,13 +9,15 @@ interface MovieCarouselProps {
     className?: string;
     containerClassName?: string; // e.g., 'h-[450px]'
     cardWidthClassName?: string; // e.g., 'w-[280px] sm:w-[320px]'
+    arrowClassName?: string; // 화살표 스타일 커스터마이징용
 }
 
 export default function MovieCarousel({
     children,
     className = '',
     containerClassName = 'h-[450px] sm:h-[450px] lg:h-[550px]',
-    cardWidthClassName = 'w-[280px] sm:w-[320px] lg:w-[380px]'
+    cardWidthClassName = 'w-[280px] sm:w-[320px] lg:w-[380px]',
+    arrowClassName = '' // 기본값 빈 문자열
 }: MovieCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -126,7 +128,11 @@ export default function MovieCarousel({
                 {/* 좌측 화살표 - 항상 표시 */}
                 <button
                     onClick={(e) => { e.stopPropagation(); goToPrev(); }}
-                    className="absolute left-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110 active:scale-95 group"
+                    className={`
+                        absolute left-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full 
+                        backdrop-blur-md border transition-all hover:scale-110 active:scale-95 group
+                        ${arrowClassName || 'bg-white/10 hover:bg-white/20 border-white/20 text-white'}
+                    `}
                     aria-label="이전 영화"
                 >
                     <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
@@ -135,7 +141,11 @@ export default function MovieCarousel({
                 {/* 우측 화살표 - 항상 표시 */}
                 <button
                     onClick={(e) => { e.stopPropagation(); goToNext(); }}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110 active:scale-95 group"
+                    className={`
+                        absolute right-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full 
+                        backdrop-blur-md border transition-all hover:scale-110 active:scale-95 group
+                        ${arrowClassName || 'bg-white/10 hover:bg-white/20 border-white/20 text-white'}
+                    `}
                     aria-label="다음 영화"
                 >
                     <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />

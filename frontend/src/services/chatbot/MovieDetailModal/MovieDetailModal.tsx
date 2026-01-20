@@ -106,9 +106,9 @@ export default function MovieDetailModal() {
                         {/* 모바일 확장 유도 오버레이 (축소 상태일 때만) */}
                         {!isPosterExpanded && (
                             <div className="absolute inset-0 bg-black/20 flex items-center justify-center md:hidden pointer-events-none">
-                                <span className="text-white/80 text-xs bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                                {/* <span className="text-white/80 text-xs bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">
                                     터치하여 크게 보기
-                                </span>
+                                </span> */}
                             </div>
                         )}
                     </div>
