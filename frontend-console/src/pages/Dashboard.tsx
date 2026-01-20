@@ -88,7 +88,8 @@ export default function Dashboard() {
     )
   }
 
-  const usagePercent = Math.round((data.today / data.daily_limit) * 100)
+  const isEnterprise = data.plan === 'ENTERPRISE'
+  const usagePercent = isEnterprise ? 0 : Math.round((data.today / data.daily_limit) * 100)
 
   // chart_data에서 성공/에러 비율 계산
   const totalSuccess = data.chart_data.reduce((sum, d) => sum + d.success, 0)
@@ -184,9 +185,9 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span className="text-xs text-gray-500 font-medium">{usagePercent}% 사용</span>
+            <span className="text-xs text-gray-500 font-medium">{isEnterprise ? '무제한' : `${usagePercent}% 사용`}</span>
           </div>
-          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{(data.daily_limit - data.today).toLocaleString()}</p>
+          <p className="text-xl lg:text-2xl font-bold text-white mt-3">{isEnterprise ? '∞' : (data.daily_limit - data.today).toLocaleString()}</p>
           <p className="text-xs lg:text-sm text-gray-500 mt-1">남은 호출</p>
         </div>
       </div>
@@ -217,7 +218,7 @@ export default function Dashboard() {
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">일일 한도</p>
-              <p className="font-semibold text-white text-sm lg:text-base">{data.daily_limit.toLocaleString()}</p>
+              <p className="font-semibold text-white text-sm lg:text-base">{isEnterprise ? '∞' : data.daily_limit.toLocaleString()}</p>
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">API 키</p>
@@ -225,7 +226,7 @@ export default function Dashboard() {
             </div>
             <div className="text-center">
               <p className="text-[10px] lg:text-xs text-gray-500">사용률</p>
-              <p className="font-semibold text-blue-400 text-sm lg:text-base">{usagePercent}%</p>
+              <p className="font-semibold text-blue-400 text-sm lg:text-base">{isEnterprise ? '-' : `${usagePercent}%`}</p>
             </div>
           </div>
         </div>
@@ -330,10 +331,11 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500 mt-1">성공률</p>
             </div>
             <div className="text-center p-4 bg-white/5 rounded-lg">
-              <p className="text-2xl font-bold text-purple-400">{data.daily_limit - data.today}</p>
+              <p className="text-2xl font-bold text-purple-400">{isEnterprise ? '∞' : data.daily_limit - data.today}</p>
               <p className="text-xs text-gray-500 mt-1">남은 호출</p>
             </div>
           </div>
+          {!isEnterprise && (
           <div className="mt-4 p-4 bg-white/5 rounded-lg">
             <div className="flex justify-between text-xs text-gray-500 mb-2">
               <span>일일 사용량</span>
@@ -346,6 +348,7 @@ export default function Dashboard() {
               />
             </div>
           </div>
+          )}
         </div>
 
         {/* Recent Logs */}

@@ -124,12 +124,20 @@ export default function Layout() {
               }`}>{company?.plan}</span>
             </div>
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${
-                company?.plan === 'ENTERPRISE' ? 'bg-amber-500' : 'bg-blue-500'
-              }`} style={{ width: `${Math.min(Math.round((usage.today / usage.daily_limit) * 100), 100)}%` }} />
+              <div
+                className={`h-full rounded-full ${
+                  company?.plan === 'ENTERPRISE'
+                    ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                    : 'bg-blue-500'
+                }`}
+                style={{ width: company?.plan === 'ENTERPRISE' ? '100%' : `${Math.min(Math.round((usage.today / usage.daily_limit) * 100), 100)}%` }}
+              />
             </div>
             <p className="text-xs text-gray-500 mt-1.5">
-              {usage.today.toLocaleString()} / {usage.daily_limit.toLocaleString()} calls today
+              {company?.plan === 'ENTERPRISE'
+                ? `${usage.today.toLocaleString()} calls today (무제한)`
+                : `${usage.today.toLocaleString()} / ${usage.daily_limit.toLocaleString()} calls today`
+              }
             </p>
           </div>
         </div>
