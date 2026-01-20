@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
@@ -16,6 +16,10 @@ export default function Login() {
   const { login } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    document.title = '무비서 Console 로그인'
+  }, [])
 
   const [form, setForm] = useState({
     email: '',
