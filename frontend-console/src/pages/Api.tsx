@@ -226,29 +226,33 @@ export default function Api() {
                 </p>
               </div>
 
-              {/* PC Monitor Mockup */}
+              {/* PC Monitor Mockup - iMac Style */}
               <div className="relative mx-auto max-w-[900px]">
-                {/* Monitor Frame */}
-                <div className="bg-gray-800 rounded-t-xl p-3 pb-0">
-                  {/* Browser Chrome */}
-                  <div className="bg-gray-700 rounded-t-lg overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 border-b border-gray-700">
-                      <div className="flex gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                        <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                      </div>
-                      <div className="flex-1 mx-4">
-                        <div className="bg-gray-700 rounded-md px-3 py-1 text-xs text-gray-400 flex items-center gap-2">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                          console.moviesir.cloud/dashboard
+                {/* Monitor Body */}
+                <div className="relative bg-gradient-to-b from-[#2a2a2e] to-[#1a1a1e] rounded-[20px] p-[10px] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.7)]">
+                  {/* Screen Bezel */}
+                  <div className="bg-[#0a0a0a] rounded-[12px] p-[2px] overflow-hidden">
+                    {/* Browser Chrome */}
+                    <div className="bg-[#1e1e22] rounded-t-[10px] overflow-hidden">
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#2d2d32]">
+                        <div className="flex gap-2">
+                          <div className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
+                          <div className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
+                          <div className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
                         </div>
+                        <div className="flex-1 mx-8">
+                          <div className="bg-[#1a1a1e] rounded-lg px-4 py-1.5 text-xs text-gray-400 flex items-center gap-2 max-w-md mx-auto">
+                            <svg className="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                            </svg>
+                            <span className="text-gray-500">console.moviesir.cloud/dashboard</span>
+                          </div>
+                        </div>
+                        <div className="w-16" />
                       </div>
                     </div>
                     {/* Screenshot */}
-                    <div className="aspect-[16/9] bg-gray-900 overflow-hidden">
+                    <div className="aspect-[16/9] bg-[#0f0f12] overflow-hidden">
                       <img
                         src="/images/console-dashboard.png"
                         alt="B2B Console Dashboard"
@@ -268,10 +272,17 @@ export default function Api() {
                       </div>
                     </div>
                   </div>
+                  {/* Chin with Logo */}
+                  <div className="h-6 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-b from-[#3a3a3e] to-[#2a2a2e] flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-[#1a1a1e]" />
+                    </div>
+                  </div>
                 </div>
-                {/* Monitor Stand */}
-                <div className="mx-auto w-24 h-4 bg-gray-800" />
-                <div className="mx-auto w-40 h-2 bg-gray-700 rounded-b-lg" />
+                {/* Stand Neck */}
+                <div className="mx-auto w-[60px] h-[50px] bg-gradient-to-b from-[#2a2a2e] to-[#3a3a3e] rounded-b-lg" />
+                {/* Stand Base */}
+                <div className="mx-auto w-[180px] h-[12px] bg-gradient-to-b from-[#3a3a3e] to-[#2a2a2e] rounded-[6px] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]" />
               </div>
 
               {/* Feature Pills */}
@@ -289,30 +300,50 @@ export default function Api() {
           <div className="relative py-20">
             <div className="max-w-[1100px] mx-auto px-6">
               <div className="grid md:grid-cols-2 gap-12 items-center">
-                {/* Phone Mockup */}
+                {/* Phone Mockup - iPhone 14 Pro Style */}
                 <div className="flex justify-center md:order-2">
                   <div className="relative">
                     {/* Phone Frame */}
-                    <div className="w-[280px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl border border-gray-700">
-                      {/* Notch */}
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-900 rounded-b-2xl z-10" />
+                    <div className="relative w-[280px] bg-[#1a1a1e] rounded-[52px] p-[12px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)]">
+                      {/* Titanium Edge Effect */}
+                      <div className="absolute inset-0 rounded-[52px] bg-gradient-to-br from-[#3a3a3e] via-[#1a1a1e] to-[#2a2a2e] opacity-50" />
+                      {/* Side Button - Right */}
+                      <div className="absolute right-[-2px] top-[120px] w-[3px] h-[60px] bg-[#2a2a2e] rounded-l-sm" />
+                      {/* Volume Buttons - Left */}
+                      <div className="absolute left-[-2px] top-[100px] w-[3px] h-[30px] bg-[#2a2a2e] rounded-r-sm" />
+                      <div className="absolute left-[-2px] top-[140px] w-[3px] h-[50px] bg-[#2a2a2e] rounded-r-sm" />
                       {/* Screen */}
-                      <div className="bg-gray-800 rounded-[2.25rem] overflow-hidden">
+                      <div className="relative bg-[#000] rounded-[40px] overflow-hidden">
+                        {/* Dynamic Island */}
+                        <div className="absolute top-[12px] left-1/2 -translate-x-1/2 w-[90px] h-[28px] bg-black rounded-full z-20 flex items-center justify-center gap-2">
+                          <div className="w-[8px] h-[8px] rounded-full bg-[#1a1a1e] ring-1 ring-[#2a2a2e]" />
+                        </div>
                         {/* Status Bar */}
-                        <div className="flex justify-between items-center px-6 py-2 text-[10px] text-white/80">
+                        <div className="relative z-10 flex justify-between items-center px-8 pt-[14px] pb-1 text-[12px] font-semibold text-white">
                           <span>9:41</span>
                           <div className="flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z"/>
+                            {/* Signal */}
+                            <svg className="w-[17px] h-[12px]" viewBox="0 0 17 12" fill="white">
+                              <rect x="0" y="7" width="3" height="5" rx="0.5"/>
+                              <rect x="4.5" y="4.5" width="3" height="7.5" rx="0.5"/>
+                              <rect x="9" y="2" width="3" height="10" rx="0.5"/>
+                              <rect x="13.5" y="0" width="3" height="12" rx="0.5"/>
                             </svg>
-                            <svg className="w-4 h-3" fill="currentColor" viewBox="0 0 24 24">
-                              <rect x="2" y="7" width="20" height="10" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-                              <rect x="4" y="9" width="12" height="6" fill="currentColor"/>
+                            {/* WiFi */}
+                            <svg className="w-[16px] h-[12px]" viewBox="0 0 16 12" fill="white">
+                              <path d="M8 2.4c2.6 0 5 1 6.8 2.8l-1.3 1.3C12 5 10.1 4.2 8 4.2S4 5 2.5 6.5L1.2 5.2C3 3.4 5.4 2.4 8 2.4zm0 3.2c1.7 0 3.2.7 4.4 1.8l-1.3 1.3c-.8-.8-1.9-1.3-3.1-1.3s-2.3.5-3.1 1.3L3.6 7.4c1.2-1.1 2.7-1.8 4.4-1.8zm0 3.2c.9 0 1.6.3 2.2.9L8 12l-2.2-2.3c.6-.6 1.3-.9 2.2-.9z"/>
                             </svg>
+                            {/* Battery */}
+                            <div className="flex items-center gap-0.5">
+                              <div className="w-[22px] h-[11px] border border-white/40 rounded-[3px] p-[2px]">
+                                <div className="h-full w-full bg-white rounded-[1px]" />
+                              </div>
+                              <div className="w-[1px] h-[4px] bg-white/40 rounded-r-full" />
+                            </div>
                           </div>
                         </div>
                         {/* App Content */}
-                        <div className="aspect-[9/16] bg-gray-950 overflow-hidden">
+                        <div className="aspect-[9/19.5] bg-[#0f0f12]">
                           <img
                             src="/images/pwa-mobile.png"
                             alt="MovieSir PWA"
@@ -327,12 +358,13 @@ export default function Api() {
                             <p className="text-xs text-center">무비서 PWA</p>
                           </div>
                         </div>
+                        {/* Home Indicator */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[120px] h-[4px] bg-white/80 rounded-full" />
                       </div>
-                      {/* Home Indicator */}
-                      <div className="mx-auto mt-2 w-32 h-1 bg-gray-600 rounded-full" />
                     </div>
                     {/* Glow Effect */}
-                    <div className="absolute -inset-4 bg-blue-500/20 blur-3xl rounded-full -z-10" />
+                    <div className="absolute -inset-8 bg-blue-500/15 blur-[60px] rounded-full -z-10" />
+                    <div className="absolute -inset-4 bg-blue-400/10 blur-[30px] rounded-full -z-10" />
                   </div>
                 </div>
 
