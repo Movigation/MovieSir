@@ -126,9 +126,11 @@ export default function Settings() {
         <p className="text-sm text-gray-500 mt-1">계정 및 구독 정보를 관리하세요</p>
       </div>
 
-      {/* Account Settings */}
-      <div className="space-y-6 mb-6 md:max-w-[50%]">
-      {/* Company Info */}
+      {/* Account Settings - 2 Column Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Company Info */}
       <div className="bg-[#16161d] rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-white">기업 정보</h2>
@@ -338,11 +340,12 @@ export default function Settings() {
           </label>
         </div>
         <p className="text-xs text-gray-600 mt-4">* 알림 설정은 현재 준비 중입니다</p>
-      </div>
+          </div>
+        </div>
 
-      {/* Change Password - OAuth 사용자에게는 숨김 */}
-      {!company?.oauth_provider && (
-      <div className="bg-[#16161d] rounded-xl p-5">
+        {/* Right Column - Change Password */}
+        {!company?.oauth_provider && (
+          <div className="bg-[#16161d] rounded-xl p-5 h-fit">
         <h2 className="text-sm font-medium text-white mb-4">비밀번호 변경</h2>
 
         {message.text && (
