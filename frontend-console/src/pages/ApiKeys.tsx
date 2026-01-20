@@ -20,7 +20,7 @@ export default function ApiKeys() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null)
   const [editingKeyName, setEditingKeyName] = useState('')
-  const { token } = useAuthStore()
+  const { token, company } = useAuthStore()
   const navigate = useNavigate()
 
   // 원본 키인지 확인 (마스킹되지 않은 키)
@@ -286,7 +286,7 @@ export default function ApiKeys() {
                       </div>
                     </td>
                     <td className="py-3 lg:py-4 text-xs lg:text-sm text-gray-400 hidden sm:table-cell whitespace-nowrap">
-                      {key.daily_limit.toLocaleString()}회
+                      {company?.plan === 'ENTERPRISE' ? '∞' : `${key.daily_limit.toLocaleString()}회`}
                     </td>
                     <td className="py-3 lg:py-4 text-xs lg:text-sm text-gray-400 hidden sm:table-cell whitespace-nowrap">
                       {new Date(key.created_at).toLocaleDateString('ko-KR')}
