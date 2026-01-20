@@ -1161,7 +1161,7 @@ X-API-Key: sk-moviesir-xxx...
                           { status: '401', code: 'INVALID_API_KEY', desc: '유효하지 않은 API 키', solution: '올바른 API 키를 사용하세요', color: 'red' },
                           { status: '401', code: 'MISSING_API_KEY', desc: 'API 키 누락', solution: 'X-API-Key 헤더를 추가하세요', color: 'red' },
                           { status: '403', code: 'FORBIDDEN', desc: '접근 권한 없음', solution: 'API 키 권한을 확인하세요', color: 'red' },
-                          { status: '429', code: 'RATE_LIMIT_EXCEEDED', desc: '호출 한도 초과', solution: '다음 날까지 기다리거나 플랜을 업그레이드하세요', color: 'orange' },
+                          { status: '429', code: 'RATE_LIMIT_EXCEEDED', desc: '호출 한도 초과', solution: '플랜 업그레이드 또는 내일 재시도', color: 'orange' },
                           { status: '500', code: 'INTERNAL_ERROR', desc: '서버 내부 오류', solution: '잠시 후 다시 시도하세요', color: 'gray' },
                           { status: '503', code: 'SERVICE_UNAVAILABLE', desc: '서비스 일시 중단', solution: '서비스 상태를 확인하세요', color: 'gray' },
                         ].map((error, i) => (
