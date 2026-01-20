@@ -477,7 +477,7 @@ export default function Settings() {
                   </button>
                 ) : (
                   <a
-                    href="mailto:support@moviesir.cloud?subject=요금제 문의"
+                    href="/contact"
                     className="block w-full py-2 bg-white/5 text-gray-400 rounded-lg text-xs font-medium hover:bg-white/10 hover:text-white transition-colors text-center"
                   >
                     도입 문의

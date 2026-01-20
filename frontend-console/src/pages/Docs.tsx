@@ -225,6 +225,12 @@ export default function Docs() {
             >
               API 홈
             </a>
+            <Link
+              to="/support"
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              문의
+            </Link>
             <a
               href="https://console.moviesir.cloud/login"
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-colors"
@@ -1171,7 +1177,7 @@ X-API-Key: sk-moviesir-xxx...
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <code className="text-sm font-mono">{error.code}</code>
+                              <code className="text-sm font-mono text-gray-900">{error.code}</code>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">{error.desc}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{error.solution}</td>
@@ -1226,11 +1232,12 @@ X-API-Key: sk-moviesir-xxx...
                   {/* Plan Limits */}
                   <div id="rate-plans">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">플랜별 호출 한도</h2>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-4 gap-4">
                       {[
                         { plan: 'FREE', limit: '1,000', desc: '테스트 및 개발용' },
                         { plan: 'BASIC', limit: '10,000', desc: '소규모 서비스' },
                         { plan: 'PRO', limit: '100,000', desc: '대규모 서비스' },
+                        { plan: 'ENTERPRISE', limit: '무제한', desc: '엔터프라이즈' },
                       ].map((item) => (
                         <div key={item.plan} className="p-6 bg-gray-50 rounded-xl border border-gray-200 text-center">
                           <span className="text-sm font-medium text-blue-600">{item.plan}</span>

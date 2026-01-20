@@ -15,6 +15,8 @@ import Logs from '@/pages/Logs'
 import ApiDocs from '@/pages/ApiDocs'
 import Playground from '@/pages/Playground'
 import Settings from '@/pages/Settings'
+import Support from '@/pages/Support'
+import Contact from '@/pages/Contact'
 import OAuthCallback from '@/pages/OAuthCallback'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -51,6 +53,8 @@ function App() {
       <Route path="/api" element={<Api />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
+      <Route path="/support" element={<Support />} />
+      <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

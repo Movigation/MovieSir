@@ -202,7 +202,7 @@ export default function Dashboard() {
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-white text-sm lg:text-base truncate">{company?.name || 'MovieSir'}</p>
-              <p className="text-[10px] lg:text-xs text-blue-400 truncate">{company?.email || 'contact@moviesir.cloud'}</p>
+              <p className="text-[10px] lg:text-xs text-blue-400 truncate">{company?.email || 'support@moviesir.cloud'}</p>
             </div>
           </div>
           <button

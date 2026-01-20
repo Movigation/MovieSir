@@ -124,12 +124,12 @@ export default function Api() {
                   </div>
                 </li>
                 <li>
-                  <a
-                    href="mailto:support@moviesir.cloud"
+                  <Link
+                    to="/support"
                     className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                   >
                     문의
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
