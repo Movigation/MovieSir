@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Trash2, Eye, EyeOff, X } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthContext';
 import { deleteUser } from '@/api/authApi';
 import * as userApi from '@/api/userApi';
+import SettingItem from './SettingItem';
 
 type UserSettingsProps = {
     onBack: () => void;
@@ -93,8 +94,8 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
             {/* 설정 내용 */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
                 {/* 닉네임 변경 */}
-                <div className="p-4 bg-gray-700 rounded-lg">
-                    <h3 className="text-white font-medium mb-3">닉네임</h3>
+                <SettingItem>
+                    <h3 className="text-black dark:text-white font-medium mb-3">닉네임</h3>
                     {isEditing ? (
                         <div className="flex gap-2">
                             <input
@@ -102,7 +103,7 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
                                 value={tempName}
                                 onChange={(e) => setTempName(e.target.value)}
                                 disabled={isLoading}
-                                className="flex-1 px-3 py-2 bg-gray-600 text-white rounded-lg border border-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-600 text-black dark:text-white rounded-lg border border-gray-200 dark:border-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
                                 autoFocus
                             />
                             <button
@@ -119,30 +120,30 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
                                     setTempName(user?.nickname || '');
                                 }}
                                 disabled={isLoading}
-                                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50 text-black dark:text-white rounded-lg transition-colors"
                             >
                                 취소
                             </button>
                         </div>
                     ) : (
                         <div className="flex items-center justify-between">
-                            <span className="text-white text-lg">{user?.nickname}</span>
+                            <span className="text-black dark:text-white text-lg">{user?.nickname}</span>
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
+                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
                             >
                                 변경
                             </button>
                         </div>
                     )}
-                </div>
+                </SettingItem>
 
                 {/* 이메일 표시 */}
-                <div className="p-4 bg-gray-700 rounded-lg">
-                    <h3 className="text-white font-medium mb-3">이메일</h3>
-                    <p className="text-gray-300">{user?.email}</p>
+                <SettingItem>
+                    <h3 className="text-black dark:text-white font-medium mb-3">이메일</h3>
+                    <p className="text-gray-700 dark:text-gray-300">{user?.email}</p>
                     <p className="text-gray-500 text-sm mt-1">이메일은 변경할 수 없습니다</p>
-                </div>
+                </SettingItem>
 
                 {/* 회원 탈퇴 */}
                 <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg">

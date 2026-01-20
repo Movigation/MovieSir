@@ -115,18 +115,29 @@ export default function MovieCard({
     };
 
     const handleMouseEnter = () => {
-        if (window.innerWidth >= 1024 && !isPeeking) {
+        if (window.innerWidth >= 1024) {
             setIsHovered(true);
-            onExpand();
+            if (!isPeeking) {
+                onExpand();
+            }
         }
     };
 
     const handleMouseLeave = () => {
-        if (window.innerWidth >= 1024 && !isPeeking) {
+        if (window.innerWidth >= 1024) {
             setIsHovered(false);
-            onCollapse();
+            if (!isPeeking) {
+                onCollapse();
+            }
         }
     };
+
+    // 🎬 [UX 개선] 캐러셀 이동으로 중앙에 오게 될 때, 이미 마우스가 올라와 있다면 호버 효과 적용
+    useEffect(() => {
+        if (window.innerWidth >= 1024 && !isPeeking && isHovered) {
+            onExpand();
+        }
+    }, [isPeeking, isHovered, onExpand]);
 
     // 0. 스켈레톤 상태인 경우 (API 로딩 중)
     if (movie.isSkeleton) {
@@ -167,7 +178,7 @@ export default function MovieCard({
             {/* 🎬 [핵심 수정] 내부 래퍼에만 슬라이드 애니메이션 적용 (점프 방지) */}
             <div className={`relative w-full h-full ${(shouldAnimate && startInnerAnim) ? 'animate-slide-up-inner' : ''}`}>
                 {/* 1. 배경 포스터 이미지 & 스켈레톤 */}
-                <div className="absolute inset-0 w-full h-full overflow-hidden bg-gray-200 dark:bg-gray-800">
+                <div className="absolute inset-0 w-full h-full overflow-hidden bg-gray-200 dark:bg-gray-800 poster-optimize">
                     {/* 로딩 스켈레톤 (이미지 아래에 배치) */}
                     {loadingPhase === 0 && (
                         <div className="absolute inset-0 w-full h-full skeleton-shimmer" />
