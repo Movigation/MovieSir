@@ -7,7 +7,7 @@ import secrets
 import hashlib
 import httpx
 import resend
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
@@ -504,19 +504,47 @@ def get_response_time_stats(db: Session, company_id: int, days: int = 7) -> dict
 
 # ==================== Logs Service ====================
 
-def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEntry]:
-    """최근 API 로그 조회"""
+def get_recent_logs(
+    db: Session,
+    company_id: int,
+    limit: int = 50,
+    offset: int = 0,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> dict:
+    """
+    API 로그 조회 (페이지네이션 및 날짜 필터 지원)
+    - limit: 조회할 로그 수
+    - offset: 건너뛸 로그 수
+    - start_date: 시작 날짜 (KST 기준)
+    - end_date: 종료 날짜 (KST 기준)
+    """
     # 회사의 API 키들
     api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
     key_ids = [k.key_id for k in api_keys]
 
     if not key_ids:
-        return []
+        return {"logs": [], "total": 0, "has_more": False}
 
-    # 최근 로그 조회
-    logs = db.query(ApiLog).filter(
-        ApiLog.key_id.in_(key_ids)
-    ).order_by(ApiLog.created_at.desc()).limit(limit).all()
+    # 기본 쿼리
+    query = db.query(ApiLog).filter(ApiLog.key_id.in_(key_ids))
+
+    # 날짜 필터 적용 (KST → UTC 변환 필요)
+    if start_date:
+        # KST 00:00:00 → UTC로 변환 (9시간 빼기)
+        start_utc = datetime.combine(start_date, datetime.min.time()) - timedelta(hours=9)
+        query = query.filter(ApiLog.created_at >= start_utc)
+
+    if end_date:
+        # KST 23:59:59 → UTC로 변환 (9시간 빼기)
+        end_utc = datetime.combine(end_date, datetime.max.time()) - timedelta(hours=9)
+        query = query.filter(ApiLog.created_at <= end_utc)
+
+    # 총 개수 조회
+    total = query.count()
+
+    # 페이지네이션 적용하여 로그 조회
+    logs = query.order_by(ApiLog.created_at.desc()).offset(offset).limit(limit).all()
 
     result = []
     for log in logs:
@@ -529,6 +557,7 @@ def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEn
 
         result.append(LogEntry(
             id=str(log.log_id),
+            date=kst_time.strftime("%Y-%m-%d") if kst_time else "",
             time=kst_time.strftime("%H:%M:%S") if kst_time else "",
             method=method,
             endpoint=endpoint,
@@ -536,7 +565,11 @@ def get_recent_logs(db: Session, company_id: int, limit: int = 10) -> List[LogEn
             latency=log.process_time_ms or 0,
         ))
 
-    return result
+    return {
+        "logs": result,
+        "total": total,
+        "has_more": offset + len(logs) < total
+    }
 
 
 # ==================== OAuth Service ====================

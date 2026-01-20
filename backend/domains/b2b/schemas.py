@@ -115,7 +115,8 @@ class DashboardResponse(BaseModel):
 class LogEntry(BaseModel):
     """로그 항목"""
     id: str
-    time: str
+    date: str  # YYYY-MM-DD
+    time: str  # HH:MM:SS
     method: str
     endpoint: str
     status: int
@@ -123,9 +124,10 @@ class LogEntry(BaseModel):
 
 
 class LogsResponse(BaseModel):
-    """로그 목록 응답"""
+    """로그 목록 응답 (페이지네이션 지원)"""
     logs: List[LogEntry]
     total: int
+    has_more: bool
 
 
 # ==================== Usage ====================

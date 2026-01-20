@@ -12,7 +12,7 @@ from backend.core.db import get_db
 from .schemas import (
     CompanyRegister, CompanyLogin, TokenResponse,
     ApiKeyCreate, ApiKeyResponse, UpdateApiKeyRequest,
-    DashboardResponse, LogEntry, OAuthCallback,
+    DashboardResponse, LogEntry, LogsResponse, OAuthCallback,
     ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest
 )
 from . import service
@@ -310,17 +310,47 @@ def get_dashboard(
 
 # ==================== Logs Endpoints ====================
 
-@router.get("/logs", response_model=List[LogEntry])
+@router.get("/logs", response_model=LogsResponse)
 def get_logs(
-    limit: int = Query(default=10, le=100, description="조회할 로그 수"),
+    limit: int = Query(default=50, le=200, description="조회할 로그 수"),
+    offset: int = Query(default=0, ge=0, description="건너뛸 로그 수"),
+    start_date: Optional[str] = Query(default=None, description="시작 날짜 (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(default=None, description="종료 날짜 (YYYY-MM-DD)"),
     company=Depends(get_current_company),
     db: Session = Depends(get_db)
 ):
     """
-    최근 API 로그 조회
-    - limit: 조회할 로그 수 (최대 100)
+    API 로그 조회 (페이지네이션 및 날짜 필터 지원)
+    - limit: 조회할 로그 수 (최대 200)
+    - offset: 건너뛸 로그 수 (페이지네이션)
+    - start_date: 시작 날짜 (YYYY-MM-DD, KST 기준)
+    - end_date: 종료 날짜 (YYYY-MM-DD, KST 기준)
     """
-    return service.get_recent_logs(db, company.company_id, limit)
+    from datetime import datetime
+
+    parsed_start = None
+    parsed_end = None
+
+    if start_date:
+        try:
+            parsed_start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="start_date 형식이 올바르지 않습니다 (YYYY-MM-DD)")
+
+    if end_date:
+        try:
+            parsed_end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="end_date 형식이 올바르지 않습니다 (YYYY-MM-DD)")
+
+    return service.get_recent_logs(
+        db,
+        company.company_id,
+        limit=limit,
+        offset=offset,
+        start_date=parsed_start,
+        end_date=parsed_end
+    )
 
 
 # ==================== Usage Endpoints ====================

@@ -90,7 +90,7 @@ export default function Layout() {
         </div>
 
         {/* User Profile */}
-        <div className="px-3 pt-3 hidden lg:block">
+        <div className="px-3 pt-3">
           <div className="flex items-center gap-3 px-2 py-2 bg-white/5 rounded-lg">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
               {company?.name?.charAt(0) || 'U'}
@@ -112,7 +112,7 @@ export default function Layout() {
         </div>
 
         {/* Plan Badge */}
-        <div className="px-3 pt-3 hidden lg:block">
+        <div className="px-3 pt-3">
           <div className="px-3 py-2.5 bg-white/5 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-500">Current Plan</span>
