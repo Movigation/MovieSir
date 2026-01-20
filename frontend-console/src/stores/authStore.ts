@@ -7,6 +7,7 @@ interface Company {
   email: string
   plan: string
   oauth_provider?: string  // google, github (소셜 로그인 사용자)
+  created_at?: string      // 가입일
 }
 
 interface AuthState {

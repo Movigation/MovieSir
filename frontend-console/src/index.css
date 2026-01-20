@@ -3,10 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  /* Safari 100vh 문제 해결 */
+  :root {
+    --vh: 1vh;
+  }
+
   html {
     @apply bg-[#0f0f13];
     min-height: 100%;
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html,
@@ -19,6 +27,32 @@
     @apply bg-[#0f0f13] text-gray-100;
     margin: 0;
     min-height: 100vh;
+    min-height: -webkit-fill-available;
+    /* 폰트 스택 - Mac/Windows 모두 지원 */
+    font-family:
+      'Pretendard',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Apple SD Gothic Neo',
+      'Malgun Gothic',
+      '맑은 고딕',
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+  }
+
+  /* Safari/iOS용 viewport height 수정 */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      min-height: -webkit-fill-available;
+    }
+
+    .h-screen {
+      height: 100vh;
+      height: -webkit-fill-available;
+    }
   }
 
   /* Global Scrollbar */
@@ -247,6 +281,33 @@
     animation: spin-slow 20s linear infinite;
   }
 
+  /* Film Strip Scroll Animations - S자 형태 */
+  @keyframes film-scroll-right {
+    0% {
+      transform: translateX(-50%) rotate(-15deg);
+    }
+    100% {
+      transform: translateX(0%) rotate(-15deg);
+    }
+  }
+
+  @keyframes film-scroll-left {
+    0% {
+      transform: translateX(50%) rotate(15deg);
+    }
+    100% {
+      transform: translateX(0%) rotate(15deg);
+    }
+  }
+
+  .animate-film-scroll-right {
+    animation: film-scroll-right 60s linear infinite;
+  }
+
+  .animate-film-scroll-left {
+    animation: film-scroll-left 55s linear infinite;
+  }
+
   /* Custom Scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
@@ -269,5 +330,28 @@
   .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  /* Safari backdrop-blur 폴백 */
+  @supports not ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+    .backdrop-blur-sm,
+    .backdrop-blur-md {
+      background-color: rgba(255, 255, 255, 0.95) !important;
+    }
+  }
+
+  /* 스크롤바 숨기기 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 활성 포스터 테두리 글로우 */
+  .animate-ring-glow {
+    box-shadow: 0 0 14px 4px rgba(59, 130, 246, 0.8);
   }
 }

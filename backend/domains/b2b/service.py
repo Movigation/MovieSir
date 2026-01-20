@@ -168,6 +168,8 @@ def company_to_response(company: Company) -> CompanyResponse:
         name=company.name,
         email=company.manager_email,
         plan=company.plan_type,
+        oauth_provider=company.oauth_provider,
+        created_at=company.created_at,
     )
 
 
@@ -248,6 +250,20 @@ def deactivate_api_key(db: Session, company_id: int, key_id: int) -> bool:
         return False
 
     api_key.is_active = False
+    db.commit()
+    return True
+
+
+def activate_api_key(db: Session, company_id: int, key_id: int) -> bool:
+    """API 키 활성화"""
+    api_key = db.query(ApiKey).filter(
+        and_(ApiKey.key_id == key_id, ApiKey.company_id == company_id)
+    ).first()
+
+    if not api_key:
+        return False
+
+    api_key.is_active = True
     db.commit()
     return True
 

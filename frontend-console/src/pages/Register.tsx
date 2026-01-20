@@ -79,13 +79,13 @@ export default function Register() {
       <main className="relative flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[400px]">
           {/* Logo */}
-          <Link to="/api" className="flex items-center justify-center gap-2 mb-10">
+          <a href="https://api.moviesir.cloud" className="flex items-center justify-center gap-2 mb-10">
             <img src="/favicon.svg" alt="무비서" className="w-12 h-12" />
             <span className="text-2xl font-bold text-white">무비서</span>
             <span className="text-sm font-semibold text-blue-400 border border-blue-400/50 px-2 py-0.5 rounded">
               API
             </span>
-          </Link>
+          </a>
 
           {/* Form Card - Glass Effect */}
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
@@ -208,15 +208,15 @@ export default function Register() {
 
           {/* Back to API */}
           <div className="mt-8 text-center">
-            <Link
-              to="/api"
+            <a
+              href="https://api.moviesir.cloud"
               className="text-white/40 hover:text-white/70 text-sm transition-colors inline-flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               API 홈으로
-            </Link>
+            </a>
           </div>
         </div>
       </main>
