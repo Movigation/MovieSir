@@ -252,6 +252,20 @@ def deactivate_api_key(db: Session, company_id: int, key_id: int) -> bool:
     return True
 
 
+def activate_api_key(db: Session, company_id: int, key_id: int) -> bool:
+    """API 키 활성화"""
+    api_key = db.query(ApiKey).filter(
+        and_(ApiKey.key_id == key_id, ApiKey.company_id == company_id)
+    ).first()
+
+    if not api_key:
+        return False
+
+    api_key.is_active = True
+    db.commit()
+    return True
+
+
 def delete_api_key(db: Session, company_id: int, key_id: int) -> bool:
     """API 키 완전 삭제"""
     api_key = db.query(ApiKey).filter(
