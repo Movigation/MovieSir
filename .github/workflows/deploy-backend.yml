@@ -81,4 +81,8 @@ jobs:
             sleep 3
             curl -s http://localhost:8000/ || echo "⚠️ 헬스체크 대기중"
 
+            echo "📌 nginx 설정 업데이트"
+            sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-enabled/moviesir
+            sudo nginx -t && sudo systemctl reload nginx
+
             echo "✅ 백엔드 배포 완료"

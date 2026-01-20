@@ -137,7 +137,7 @@ jobs:
             rm -rf /tmp/console-build
 
             echo "📌 Nginx 설정 업데이트"
-            sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-available/moviesir
+            sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-enabled/moviesir
             sudo nginx -t && sudo systemctl reload nginx
 
             echo "📌 배포된 파일:"

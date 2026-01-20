@@ -91,6 +91,91 @@ function CodeBlock({ code, language, showLineNumbers = false }: { code: string; 
   )
 }
 
+// SDK 코드 탭 컴포넌트
+function SdkCodeTabs({ curlCode, jsCode, pythonCode }: { curlCode: string; jsCode: string; pythonCode: string }) {
+  const [activeTab, setActiveTab] = useState<'curl' | 'javascript' | 'python'>('curl')
+
+  const tabs = [
+    { id: 'curl', label: 'cURL' },
+    { id: 'javascript', label: 'JavaScript' },
+    { id: 'python', label: 'Python' },
+  ] as const
+
+  const code = activeTab === 'curl' ? curlCode : activeTab === 'javascript' ? jsCode : pythonCode
+
+  return (
+    <div className="relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-900">
+      <div className="flex border-b border-gray-800">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === tab.id
+                ? 'text-white border-b-2 border-blue-400 bg-gray-800'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <pre className="p-4 overflow-x-auto">
+        <code className="text-sm font-mono text-gray-300 leading-relaxed whitespace-pre">{code}</code>
+      </pre>
+      <CopyButton text={code} />
+    </div>
+  )
+}
+
+// 하단 네비게이션 컴포넌트
+function BottomNavigation({
+  activeSection,
+  setActiveSection,
+  navigation
+}: {
+  activeSection: Section
+  setActiveSection: (section: Section) => void
+  navigation: { id: string; label: string }[]
+}) {
+  const currentIndex = navigation.findIndex(item => item.id === activeSection)
+  const prevItem = currentIndex > 0 ? navigation[currentIndex - 1] : null
+  const nextItem = currentIndex < navigation.length - 1 ? navigation[currentIndex + 1] : null
+
+  return (
+    <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-200">
+      {prevItem ? (
+        <button
+          onClick={() => setActiveSection(prevItem.id as Section)}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors group"
+        >
+          <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <div className="text-left">
+            <span className="text-xs text-gray-400 block">이전</span>
+            <span className="text-sm font-medium">{prevItem.label}</span>
+          </div>
+        </button>
+      ) : <div />}
+      {nextItem ? (
+        <button
+          onClick={() => setActiveSection(nextItem.id as Section)}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors group"
+        >
+          <div className="text-right">
+            <span className="text-xs text-gray-400 block">다음</span>
+            <span className="text-sm font-medium">{nextItem.label}</span>
+          </div>
+          <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      ) : <div />}
+    </div>
+  )
+}
+
 export default function Docs() {
   const [searchParams] = useSearchParams()
   const [activeSection, setActiveSection] = useState<Section>('intro')
@@ -140,12 +225,12 @@ export default function Docs() {
             >
               API 홈
             </a>
-            <Link
-              to="/login"
+            <a
+              href="https://console.moviesir.cloud/login"
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-colors"
             >
               콘솔로 이동
-            </Link>
+            </a>
           </div>
         </div>
       </header>
@@ -198,7 +283,7 @@ export default function Docs() {
         </aside>
 
         {/* Main Content */}
-        <main className={`ml-64 flex-1 min-h-[calc(100vh-64px)] ${currentToc.length > 0 ? 'mr-56' : ''}`}>
+        <main className="ml-64 mr-56 flex-1 min-h-[calc(100vh-64px)]">
           <div className="max-w-3xl mx-auto px-8 py-12">
             {/* 무비서 API란 */}
             {activeSection === 'intro' && (
@@ -341,6 +426,7 @@ export default function Docs() {
                     </table>
                   </div>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -479,6 +565,7 @@ export default function Docs() {
                     </div>
                   ))}
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -499,7 +586,7 @@ export default function Docs() {
                       step: 1,
                       title: "회원가입 및 로그인",
                       desc: "콘솔에서 회원가입 후 로그인합니다.",
-                      action: { label: "콘솔 바로가기", link: "/login" },
+                      action: { label: "콘솔 바로가기", link: "https://console.moviesir.cloud/login" },
                     },
                     {
                       step: 2,
@@ -511,10 +598,7 @@ export default function Docs() {
                       step: 3,
                       title: "API 호출 테스트",
                       desc: "발급받은 API 키로 추천 API를 호출해보세요.",
-                      codeBlock: `curl -X POST https://api.moviesir.cloud/v1/recommend \\
-  -H "X-API-Key: your_api_key" \\
-  -H "Content-Type: application/json" \\
-  -d '{"runtime_limit": 180, "genres": ["액션"]}'`,
+                      sdkCode: true,
                     },
                     {
                       step: 4,
@@ -538,17 +622,49 @@ export default function Docs() {
                             {item.code}
                           </code>
                         )}
-                        {item.codeBlock && (
-                          <div className="relative mb-3">
-                            <pre className="bg-gray-900 text-gray-100 px-4 py-3 rounded-xl text-sm overflow-x-auto pr-12">
-                              <code>{item.codeBlock}</code>
-                            </pre>
-                            <CopyButton text={item.codeBlock} />
+                        {item.sdkCode && (
+                          <div className="mb-3">
+                            <SdkCodeTabs
+                              curlCode={`curl -X POST https://api.moviesir.cloud/v1/recommend \\
+  -H "X-API-Key: your_api_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{"runtime_limit": 180, "genres": ["액션"]}'`}
+                              jsCode={`const response = await fetch('https://api.moviesir.cloud/v1/recommend', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'your_api_key',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    runtime_limit: 180,
+    genres: ['액션'],
+  }),
+});
+
+const data = await response.json();
+console.log(data);`}
+                              pythonCode={`import requests
+
+response = requests.post(
+    'https://api.moviesir.cloud/v1/recommend',
+    headers={
+        'X-API-Key': 'your_api_key',
+        'Content-Type': 'application/json',
+    },
+    json={
+        'runtime_limit': 180,
+        'genres': ['액션'],
+    }
+)
+
+data = response.json()
+print(data)`}
+                            />
                           </div>
                         )}
                         {item.action && (
-                          <Link
-                            to={item.action.link}
+                          <a
+                            href={item.action.link}
                             className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-500 font-medium text-sm"
                           >
                             {item.action.label}
@@ -565,7 +681,7 @@ export default function Docs() {
                                 d="M9 5l7 7-7 7"
                               />
                             </svg>
-                          </Link>
+                          </a>
                         )}
                       </div>
                     </div>
@@ -629,6 +745,7 @@ export default function Docs() {
                     </div>
                   </button>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -724,6 +841,7 @@ export default function Docs() {
                     </div>
                   </div>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -1007,6 +1125,7 @@ X-API-Key: sk-moviesir-xxx...
                     </div>
                   </div>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -1091,6 +1210,7 @@ X-API-Key: sk-moviesir-xxx...
                     </div>
                   </div>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -1202,6 +1322,7 @@ X-API-Key: sk-moviesir-xxx...
                     </ul>
                   </div>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
 
@@ -1385,6 +1506,7 @@ X-API-Key: sk-moviesir-xxx...
                     </div>
                   </div>
                 </div>
+                <BottomNavigation activeSection={activeSection} setActiveSection={setActiveSection} navigation={navigation} />
               </div>
             )}
           </div>
