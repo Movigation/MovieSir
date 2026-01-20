@@ -19,7 +19,13 @@ from backend.domains.mypage.router import router as mypage_router
 from backend.domains.b2b.router import router as b2b_router
 from backend.domains.b2b.external_router import router as external_router
 
-app = FastAPI()
+app = FastAPI(
+    title="MovieSir API",
+    description="AI 기반 영화 추천 서비스 API",
+    version="1.0.0",
+    docs_url="/swagger",
+    redoc_url="/redoc",
+)
 
 # CORS 설정
 app.add_middleware(
