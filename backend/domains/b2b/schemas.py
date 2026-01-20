@@ -51,6 +51,8 @@ class CompanyResponse(BaseModel):
     name: str
     email: str
     plan: str
+    oauth_provider: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
