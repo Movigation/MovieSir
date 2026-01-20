@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -29,10 +28,18 @@ export default function Landing() {
     i18n.changeLanguage(nextLang);
   };
 
-  // Scroll position tracking for scroll-to-top button
+  const [showScrollBottom, setShowScrollBottom] = useState(true);
+
+  // Scroll position tracking for scroll buttons
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
+      const scrollTop = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+
+      setShowScrollTop(scrollTop > 500);
+      setShowScrollBottom(!isNearBottom && scrollTop < 500);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -40,6 +47,10 @@ export default function Landing() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
   };
 
   // Scroll Animation with Intersection Observer
@@ -1109,22 +1120,9 @@ export default function Landing() {
               href="https://demo.moviesir.cloud"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-3 px-12 py-6 text-xl font-bold transition-all bg-white rounded-full text-accent-600 hover:scale-105 hover:shadow-2xl"
+              className="inline-flex items-center px-12 py-6 text-xl font-bold transition-all bg-white rounded-full text-accent-600 hover:scale-105 hover:shadow-2xl"
             >
               {t('cta.startFree')}
-              <svg
-                className="w-7 h-7"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                />
-              </svg>
             </a>
             <a
               href="https://console.moviesir.cloud/login"
@@ -1185,12 +1183,12 @@ export default function Landing() {
               <h4 className="mb-4 font-semibold">{t('footer.resources')}</h4>
               <ul className="space-y-3 text-gray-400">
                 <li>
-                  <Link
-                    to="/login"
+                  <a
+                    href="https://console.moviesir.cloud/login"
                     className="transition-colors hover:text-white"
                   >
                     {t('footer.console')}
-                  </Link>
+                  </a>
                 </li>
                 <li>
                   <a href="#faq" className="transition-colors hover:text-white">
@@ -1221,6 +1219,31 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Bottom Button */}
+      <button
+        onClick={scrollToBottom}
+        className={`fixed bottom-8 right-8 w-12 h-12 bg-accent-600 text-white rounded-full shadow-lg shadow-accent-500/30 flex items-center justify-center hover:bg-accent-500 hover:scale-110 transition-all z-50 ${
+          showScrollBottom
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+        aria-label="맨 아래로"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
 
       {/* Scroll to Top Button */}
       <button

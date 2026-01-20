@@ -43,7 +43,12 @@ export default function Login() {
         password: form.password,
       })
       login(data.company, data.access_token)
-      navigate('/dashboard')
+      // api.moviesir.cloud에서 로그인 시 console.moviesir.cloud로 리다이렉트
+      if (window.location.hostname === 'api.moviesir.cloud') {
+        window.location.href = 'https://console.moviesir.cloud/dashboard'
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err: any) {
       const message = err.response?.data?.detail || '이메일 또는 비밀번호를 확인해주세요'
       setError(message)

@@ -139,19 +139,19 @@ export default function Api() {
                 무비서 이용하기
               </a>
               <span className="text-white/30">|</span>
-              <Link
-                to="/login"
+              <a
+                href="https://console.moviesir.cloud/login"
                 className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
               >
                 콘솔
-              </Link>
+              </a>
               <span className="text-white/30">|</span>
-              <Link
-                to="/register"
+              <a
+                href="https://console.moviesir.cloud/register"
                 className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
               >
                 회원가입
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -195,8 +195,8 @@ export default function Api() {
                   시간 맞춤 추천부터 OTT 필터링까지, 한 번의 호출로 해결합니다
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    to="/login"
+                  <a
+                    href="https://console.moviesir.cloud/login"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition-colors shadow-lg shadow-blue-500/25"
                   >
                     시작하기
@@ -213,7 +213,7 @@ export default function Api() {
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </Link>
+                  </a>
                   <Link
                     to="/docs"
                     className="inline-flex items-center gap-2 px-6 py-3 border border-white/30 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
