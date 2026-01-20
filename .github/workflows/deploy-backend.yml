@@ -65,6 +65,9 @@ jobs:
             ${{ secrets.ENV_PRODUCTION_APP }}
             ENVEOF
 
+            echo "📌 빌더 캐시 정리"
+            docker builder prune -f || true
+
             echo "📌 기존 컨테이너 중지"
             docker compose --env-file .env.production down || true
 

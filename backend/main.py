@@ -1,5 +1,5 @@
 # backend/main.py
-# deploy trigger: 2025-01-20 v7 - FastAPI Swagger UI 경로 변경 (/swagger, /redoc)
+# deploy trigger: 2025-01-20 v8 - nginx Swagger/ReDoc 프록시 설정 추가
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
