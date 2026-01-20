@@ -35,93 +35,13 @@ export default function Api() {
                 </span>
               </a>
               <ul className="hidden md:flex items-center gap-1">
-                {/* 소개 드롭다운 */}
-                <li className="relative group">
-                  <button className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1">
-                    소개
-                    <svg
-                      className="w-3 h-3 transition-transform group-hover:rotate-180"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                  <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      <Link
-                        to="/docs?section=intro"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        무비서 API란
-                      </Link>
-                      <Link
-                        to="/docs?section=features"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        주요 기능
-                      </Link>
-                      <Link
-                        to="/docs?section=getting-started"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        시작하기
-                      </Link>
-                    </div>
-                  </div>
-                </li>
-                {/* API 문서 드롭다운 */}
-                <li className="relative group">
-                  <button className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1">
+                <li>
+                  <Link
+                    to="/docs"
+                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
                     API 문서
-                    <svg
-                      className="w-3 h-3 transition-transform group-hover:rotate-180"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                  <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      <Link
-                        to="/docs?section=auth"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        인증
-                      </Link>
-                      <Link
-                        to="/docs?section=recommend"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        /recommend
-                      </Link>
-                      <Link
-                        to="/docs?section=errors"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        에러 코드
-                      </Link>
-                      <Link
-                        to="/docs?section=rate-limit"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        Rate Limit
-                      </Link>
-                    </div>
-                  </div>
+                  </Link>
                 </li>
                 <li>
                   <Link
@@ -129,6 +49,14 @@ export default function Api() {
                     className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                   >
                     문의
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/contact"
+                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    도입 문의
                   </Link>
                 </li>
               </ul>
@@ -142,14 +70,12 @@ export default function Api() {
               >
                 무비서 이용하기
               </a>
-              <span className="text-white/30">|</span>
               <a
                 href="https://console.moviesir.cloud/login"
                 className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
               >
                 콘솔
               </a>
-              <span className="text-white/30">|</span>
               <a
                 href="https://console.moviesir.cloud/register"
                 className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
