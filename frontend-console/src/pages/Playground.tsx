@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Highlight, themes } from 'prism-react-renderer'
 
 interface Movie {
   movie_id: number
@@ -39,16 +40,28 @@ const genres = ['드라마', '코미디', '스릴러', '로맨스', '액션', '�
 // 지원 언어 목록
 type Language = 'curl' | 'python' | 'javascript' | 'nodejs' | 'go' | 'java' | 'php' | 'ruby'
 
-const languages: { id: Language; name: string; color: string }[] = [
-  { id: 'curl', name: 'cURL', color: 'text-green-400' },
-  { id: 'python', name: 'Python', color: 'text-yellow-400' },
-  { id: 'javascript', name: 'JavaScript', color: 'text-yellow-300' },
-  { id: 'nodejs', name: 'Node.js', color: 'text-green-500' },
-  { id: 'go', name: 'Go', color: 'text-cyan-400' },
-  { id: 'java', name: 'Java', color: 'text-orange-400' },
-  { id: 'php', name: 'PHP', color: 'text-purple-400' },
-  { id: 'ruby', name: 'Ruby', color: 'text-red-400' },
+const languages: { id: Language; name: string }[] = [
+  { id: 'curl', name: 'cURL' },
+  { id: 'python', name: 'Python' },
+  { id: 'javascript', name: 'JavaScript' },
+  { id: 'nodejs', name: 'Node.js' },
+  { id: 'go', name: 'Go' },
+  { id: 'java', name: 'Java' },
+  { id: 'php', name: 'PHP' },
+  { id: 'ruby', name: 'Ruby' },
 ]
+
+// Prism 언어 매핑 (prism-react-renderer 기본 지원 언어로 매핑)
+const prismLanguageMap: Record<Language, string> = {
+  curl: 'bash',
+  python: 'python',
+  javascript: 'javascript',
+  nodejs: 'javascript',
+  go: 'go',
+  java: 'javascript',   // Java → JavaScript (유사 문법)
+  php: 'javascript',    // PHP → JavaScript (유사 문법)
+  ruby: 'python',       // Ruby → Python (유사 문법)
+}
 
 export default function Playground() {
   // API Key (수동 입력 필수, localStorage에 저장 가능)
@@ -100,6 +113,8 @@ export default function Playground() {
 
   // Code Example Language
   const [selectedLang, setSelectedLang] = useState<Language>('curl')
+  const [copiedCode, setCopiedCode] = useState(false)
+  const [copiedResponse, setCopiedResponse] = useState(false)
 
   // API 키는 보안상 마스킹되어 저장되므로 수동 입력 필수
   const effectiveApiKey = manualApiKey.trim()
@@ -318,8 +333,15 @@ puts response.body`
     }
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, isCode = false) => {
     navigator.clipboard.writeText(text)
+    if (isCode) {
+      setCopiedCode(true)
+      setTimeout(() => setCopiedCode(false), 2000)
+    } else {
+      setCopiedResponse(true)
+      setTimeout(() => setCopiedResponse(false), 2000)
+    }
   }
 
   const allMovies = response?.data
@@ -472,9 +494,18 @@ puts response.body`
             <button
               onClick={() => response && copyToClipboard(JSON.stringify(response, null, 2))}
               disabled={!response}
-              className="px-2.5 py-1 text-xs bg-white/5 text-gray-400 rounded hover:text-white disabled:opacity-50 transition-colors"
+              className="p-1.5 text-gray-500 hover:text-white disabled:opacity-50 transition-colors"
+              title="복사"
             >
-              복사
+              {copiedResponse ? (
+                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              )}
             </button>
           </div>
           <div>
@@ -486,51 +517,90 @@ puts response.body`
                 </span>
               )}
             </div>
-            <pre className="p-4 font-mono text-xs text-gray-400 overflow-auto max-h-[280px] lg:max-h-[320px]">
-              {error ? (
-                <span className="text-red-400">{`{\n  "success": false,\n  "error": "${error}"\n}`}</span>
-              ) : response ? (
-                JSON.stringify(response, null, 2)
-              ) : (
-                <span className="text-gray-600">{`{\n  "message": "파라미터를 설정하고 Send Request를 클릭하세요"\n}`}</span>
+            <Highlight
+              theme={themes.nightOwl}
+              code={error
+                ? `{\n  "success": false,\n  "error": "${error}"\n}`
+                : response
+                ? JSON.stringify(response, null, 2)
+                : `{\n  "message": "파라미터를 설정하고 Send Request를 클릭하세요"\n}`}
+              language="json"
+            >
+              {({ style, tokens, getLineProps, getTokenProps }) => (
+                <pre
+                  className="p-4 font-mono text-xs overflow-auto max-h-[280px] lg:max-h-[320px] custom-scrollbar leading-relaxed"
+                  style={{ ...style, background: 'transparent' }}
+                >
+                  {tokens.map((line, i) => (
+                    <div key={i} {...getLineProps({ line })}>
+                      {line.map((token, key) => (
+                        <span key={key} {...getTokenProps({ token })} />
+                      ))}
+                    </div>
+                  ))}
+                </pre>
               )}
-            </pre>
+            </Highlight>
           </div>
         </div>
       </div>
 
       {/* Code Examples */}
-      <div className="bg-[#16161d] rounded-xl overflow-hidden mb-6">
-        <div className="px-4 lg:px-5 py-3 lg:py-4 border-b border-white/5 flex justify-between items-center">
-          <h3 className="text-sm font-medium text-white">Code Example</h3>
+      <div className="bg-[#1a1a24] rounded-xl overflow-hidden border border-white/10 mb-6">
+        {/* Language Tabs */}
+        <div className="flex items-center justify-between border-b border-white/10">
+          <div className="flex overflow-x-auto scrollbar-hide">
+            {languages.map(lang => (
+              <button
+                key={lang.id}
+                onClick={() => setSelectedLang(lang.id)}
+                className={`px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 -mb-[1px] ${
+                  selectedLang === lang.id
+                    ? 'text-white border-blue-500'
+                    : 'text-gray-500 hover:text-gray-300 border-transparent'
+                }`}
+              >
+                {lang.name}
+              </button>
+            ))}
+          </div>
           <button
-            onClick={() => copyToClipboard(getCodeExample(selectedLang))}
-            className="px-2.5 py-1 text-xs bg-white/5 text-gray-400 rounded hover:text-white transition-colors"
+            onClick={() => copyToClipboard(getCodeExample(selectedLang), true)}
+            className="p-2.5 text-gray-500 hover:text-white transition-colors flex-shrink-0"
+            title="복사"
           >
-            복사
+            {copiedCode ? (
+              <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            )}
           </button>
         </div>
-        {/* Language Tabs */}
-        <div className="px-4 lg:px-5 py-2 border-b border-white/5 flex gap-1 overflow-x-auto">
-          {languages.map(lang => (
-            <button
-              key={lang.id}
-              onClick={() => setSelectedLang(lang.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                selectedLang === lang.id
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-              }`}
+        {/* Code Block */}
+        <Highlight
+          theme={themes.nightOwl}
+          code={getCodeExample(selectedLang)}
+          language={prismLanguageMap[selectedLang]}
+        >
+          {({ style, tokens, getLineProps, getTokenProps }) => (
+            <pre
+              className="p-4 font-mono text-xs overflow-auto max-h-[300px] custom-scrollbar leading-relaxed"
+              style={{ ...style, background: 'transparent' }}
             >
-              {lang.name}
-            </button>
-          ))}
-        </div>
-        <pre className={`p-4 font-mono text-xs overflow-auto max-h-[300px] ${
-          languages.find(l => l.id === selectedLang)?.color || 'text-gray-400'
-        }`}>
-          {getCodeExample(selectedLang)}
-        </pre>
+              {tokens.map((line, i) => (
+                <div key={i} {...getLineProps({ line })}>
+                  {line.map((token, key) => (
+                    <span key={key} {...getTokenProps({ token })} />
+                  ))}
+                </div>
+              ))}
+            </pre>
+          )}
+        </Highlight>
       </div>
 
       {/* Movie Preview */}

@@ -13,6 +13,15 @@ export default function Settings() {
   const [companyLoading, setCompanyLoading] = useState(false)
   const [companyMessage, setCompanyMessage] = useState({ type: '', text: '' })
 
+  // API 키 개수
+  const [apiKeyCount, setApiKeyCount] = useState(0)
+
+  // 알림 설정 (로컬 상태)
+  const [notifications, setNotifications] = useState({
+    dailyLimitAlert: true,
+    weeklyReport: false,
+  })
+
   // 실시간으로 회사 정보 가져오기
   useEffect(() => {
     const fetchCompany = async () => {
@@ -26,6 +35,19 @@ export default function Settings() {
     }
     fetchCompany()
   }, [setCompany])
+
+  // API 키 개수 조회
+  useEffect(() => {
+    const fetchApiKeyCount = async () => {
+      try {
+        const { data } = await api.get('/b2b/api-keys')
+        setApiKeyCount(data.length)
+      } catch (err) {
+        console.error('Failed to fetch API keys:', err)
+      }
+    }
+    fetchApiKeyCount()
+  }, [])
 
   const handleCompanyUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,8 +126,10 @@ export default function Settings() {
         <p className="text-sm text-gray-500 mt-1">계정 및 구독 정보를 관리하세요</p>
       </div>
 
+      {/* Account Settings - Company Info & Password Change */}
+      <div className={`grid gap-6 mb-6 items-start ${!company?.oauth_provider ? 'lg:grid-cols-2' : ''}`}>
       {/* Company Info */}
-      <div className="bg-[#16161d] rounded-xl p-5 mb-6">
+      <div className="bg-[#16161d] rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-white">기업 정보</h2>
           {!editMode && (
@@ -194,7 +218,7 @@ export default function Settings() {
             </div>
           </form>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-xs text-gray-500 mb-1">기업명</p>
               <p className="text-sm font-medium text-white">{company?.name}</p>
@@ -256,12 +280,150 @@ export default function Settings() {
                 {company?.plan}
               </span>
             </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">가입일</p>
+              <p className="text-sm font-medium text-white">
+                {company?.created_at
+                  ? new Date(company.created_at).toLocaleDateString('ko-KR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  : '-'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">API 키</p>
+              <p className="text-sm font-medium text-white">{apiKeyCount}개</p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Plan Upgrade */}
+      {/* Change Password - OAuth 사용자에게는 숨김 */}
+      {!company?.oauth_provider && (
+      <div className="bg-[#16161d] rounded-xl p-5">
+        <h2 className="text-sm font-medium text-white mb-4">비밀번호 변경</h2>
+
+        {message.text && (
+          <div
+            className={`p-3 rounded-lg mb-4 text-xs flex items-center gap-2 ${
+              message.type === 'error'
+                ? 'bg-red-500/10 text-red-400'
+                : 'bg-green-500/10 text-green-400'
+            }`}
+          >
+            {message.type === 'error' ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {message.text}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-2">현재 비밀번호</label>
+            <input
+              type="password"
+              value={passwordForm.current}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, current: e.target.value })
+              }
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-2">새 비밀번호</label>
+            <input
+              type="password"
+              value={passwordForm.new}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, new: e.target.value })
+              }
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-2">새 비밀번호 확인</label>
+            <input
+              type="password"
+              value={passwordForm.confirm}
+              onChange={(e) =>
+                setPasswordForm({ ...passwordForm, confirm: e.target.value })
+              }
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                변경 중...
+              </span>
+            ) : (
+              '비밀번호 변경'
+            )}
+          </button>
+        </form>
+      </div>
+      )}
+      </div>
+
+      {/* Notification Settings */}
       <div className="bg-[#16161d] rounded-xl p-5 mb-6">
+        <h2 className="text-sm font-medium text-white mb-4">알림 설정</h2>
+        <div className="space-y-4">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm text-white">일일 한도 알림</p>
+              <p className="text-xs text-gray-500">사용량이 80%에 도달하면 이메일로 알려드립니다</p>
+            </div>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={notifications.dailyLimitAlert}
+                onChange={(e) => setNotifications({ ...notifications, dailyLimitAlert: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
+            </div>
+          </label>
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm text-white">주간 사용량 리포트</p>
+              <p className="text-xs text-gray-500">매주 월요일 API 사용량 요약을 받아보세요</p>
+            </div>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={notifications.weeklyReport}
+                onChange={(e) => setNotifications({ ...notifications, weeklyReport: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 rounded-full peer peer-checked:bg-blue-500 peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
+            </div>
+          </label>
+        </div>
+        <p className="text-xs text-gray-600 mt-4">* 알림 설정은 현재 준비 중입니다</p>
+      </div>
+
+      {/* Plan Upgrade */}
+      <div className="bg-[#16161d] rounded-xl p-5">
         <h2 className="text-sm font-medium text-white mb-4">구독 플랜</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {plans.map((plan) => (
@@ -320,87 +482,6 @@ export default function Settings() {
           ))}
         </div>
       </div>
-
-      {/* Change Password - OAuth 사용자에게는 숨김 */}
-      {!company?.oauth_provider && (
-      <div className="bg-[#16161d] rounded-xl p-5">
-        <h2 className="text-sm font-medium text-white mb-4">비밀번호 변경</h2>
-
-        {message.text && (
-          <div
-            className={`p-3 rounded-lg mb-4 text-xs flex items-center gap-2 ${
-              message.type === 'error'
-                ? 'bg-red-500/10 text-red-400'
-                : 'bg-green-500/10 text-green-400'
-            }`}
-          >
-            {message.type === 'error' ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-            {message.text}
-          </div>
-        )}
-
-        <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
-          <div>
-            <label className="block text-xs text-gray-500 mb-2">현재 비밀번호</label>
-            <input
-              type="password"
-              value={passwordForm.current}
-              onChange={(e) =>
-                setPasswordForm({ ...passwordForm, current: e.target.value })
-              }
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-2">새 비밀번호</label>
-            <input
-              type="password"
-              value={passwordForm.new}
-              onChange={(e) =>
-                setPasswordForm({ ...passwordForm, new: e.target.value })
-              }
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-2">새 비밀번호 확인</label>
-            <input
-              type="password"
-              value={passwordForm.confirm}
-              onChange={(e) =>
-                setPasswordForm({ ...passwordForm, confirm: e.target.value })
-              }
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                변경 중...
-              </span>
-            ) : (
-              '비밀번호 변경'
-            )}
-          </button>
-        </form>
-      </div>
-      )}
     </div>
   )
 }

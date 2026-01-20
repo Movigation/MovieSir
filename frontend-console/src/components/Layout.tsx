@@ -89,6 +89,51 @@ export default function Layout() {
           </button>
         </div>
 
+        {/* User Profile */}
+        <div className="px-3 pt-3 hidden lg:block">
+          <div className="flex items-center gap-3 px-2 py-2 bg-white/5 rounded-lg">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+              {company?.name?.charAt(0) || 'U'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white truncate">{company?.name}</p>
+              <p className="text-xs text-gray-500 truncate">{company?.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+              title="로그아웃"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Plan Badge */}
+        <div className="px-3 pt-3 hidden lg:block">
+          <div className="px-3 py-2.5 bg-white/5 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-500">Current Plan</span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                company?.plan === 'ENTERPRISE' ? 'bg-amber-500/20 text-amber-400' :
+                company?.plan === 'PRO' ? 'bg-blue-500/20 text-blue-400' :
+                company?.plan === 'BASIC' ? 'bg-cyan-500/20 text-cyan-400' :
+                'bg-gray-500/20 text-gray-400'
+              }`}>{company?.plan}</span>
+            </div>
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${
+                company?.plan === 'ENTERPRISE' ? 'bg-amber-500' : 'bg-blue-500'
+              }`} style={{ width: `${Math.min(Math.round((usage.today / usage.daily_limit) * 100), 100)}%` }} />
+            </div>
+            <p className="text-xs text-gray-500 mt-1.5">
+              {usage.today.toLocaleString()} / {usage.daily_limit.toLocaleString()} calls today
+            </p>
+          </div>
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 p-3 overflow-y-auto">
           <ul className="space-y-1">
@@ -115,50 +160,6 @@ export default function Layout() {
           </ul>
         </nav>
 
-        {/* Plan Badge */}
-        <div className="px-3 pb-3 hidden lg:block">
-          <div className="px-3 py-2.5 bg-white/5 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-gray-500">Current Plan</span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                company?.plan === 'ENTERPRISE' ? 'bg-amber-500/20 text-amber-400' :
-                company?.plan === 'PRO' ? 'bg-blue-500/20 text-blue-400' :
-                company?.plan === 'BASIC' ? 'bg-cyan-500/20 text-cyan-400' :
-                'bg-gray-500/20 text-gray-400'
-              }`}>{company?.plan}</span>
-            </div>
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${
-                company?.plan === 'ENTERPRISE' ? 'bg-amber-500' : 'bg-blue-500'
-              }`} style={{ width: `${Math.min(Math.round((usage.today / usage.daily_limit) * 100), 100)}%` }} />
-            </div>
-            <p className="text-xs text-gray-500 mt-1.5">
-              {usage.today.toLocaleString()} / {usage.daily_limit.toLocaleString()} calls today
-            </p>
-          </div>
-        </div>
-
-        {/* User */}
-        <div className="p-3 border-t border-white/5">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-              {company?.name?.charAt(0) || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-white truncate">{company?.name}</p>
-              <p className="text-xs text-gray-500 truncate">{company?.email}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-              title="로그아웃"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}

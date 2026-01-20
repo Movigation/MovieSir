@@ -1,72 +1,178 @@
 import { useState } from 'react'
+import { Highlight, themes } from 'prism-react-renderer'
 
 type Language = 'curl' | 'python' | 'javascript' | 'nodejs' | 'go' | 'java' | 'php' | 'ruby'
 
-const languages: { id: Language; name: string; color: string }[] = [
-  { id: 'curl', name: 'cURL', color: 'text-green-400' },
-  { id: 'python', name: 'Python', color: 'text-yellow-400' },
-  { id: 'javascript', name: 'JavaScript', color: 'text-yellow-300' },
-  { id: 'nodejs', name: 'Node.js', color: 'text-green-500' },
-  { id: 'go', name: 'Go', color: 'text-cyan-400' },
-  { id: 'java', name: 'Java', color: 'text-orange-400' },
-  { id: 'php', name: 'PHP', color: 'text-purple-400' },
-  { id: 'ruby', name: 'Ruby', color: 'text-red-400' },
+// Prism 언어 매핑 (prism-react-renderer 기본 지원 언어로 매핑)
+const prismLanguageMap: Record<Language, string> = {
+  curl: 'bash',
+  python: 'python',
+  javascript: 'javascript',
+  nodejs: 'javascript',
+  go: 'go',
+  java: 'javascript',
+  php: 'javascript',
+  ruby: 'python',
+}
+
+const languages: { id: Language; name: string }[] = [
+  { id: 'curl', name: 'cURL' },
+  { id: 'python', name: 'Python' },
+  { id: 'javascript', name: 'JavaScript' },
+  { id: 'nodejs', name: 'Node.js' },
+  { id: 'go', name: 'Go' },
+  { id: 'java', name: 'Java' },
+  { id: 'php', name: 'PHP' },
+  { id: 'ruby', name: 'Ruby' },
 ]
 
-const getCodeExample = (lang: Language, method: string, path: string, isPost: boolean): string => {
-  const url = `https://api.moviesir.cloud${path}`
-  const body = isPost ? '{"genres": ["액션"], "limit": 10}' : ''
+const endpoints = [
+  {
+    method: 'POST',
+    path: '/v1/recommend',
+    title: 'Recommend Movies',
+    description: '사용자의 선호도와 가용 시간을 기반으로 최적의 영화 조합을 추천합니다.',
+    params: [
+      { name: 'user_movie_ids', type: 'integer[]', required: true, description: '사용자가 좋아하는 영화 ID 목록' },
+      { name: 'available_time', type: 'integer', required: false, description: '시청 가능 시간 (분, 기본: 180)' },
+      { name: 'preferred_genres', type: 'string[]', required: false, description: '선호 장르 (예: ["액션", "SF"])' },
+      { name: 'preferred_otts', type: 'string[]', required: false, description: '선호 OTT 플랫폼' },
+      { name: 'allow_adult', type: 'boolean', required: false, description: '성인 콘텐츠 허용 여부 (기본: false)' },
+      { name: 'excluded_ids_a', type: 'integer[]', required: false, description: '트랙 A에서 제외할 영화 ID' },
+      { name: 'excluded_ids_b', type: 'integer[]', required: false, description: '트랙 B에서 제외할 영화 ID' },
+    ],
+    requestBody: `{
+  "user_movie_ids": [550, 27205, 157336],
+  "available_time": 360,
+  "preferred_genres": ["액션", "SF"],
+  "allow_adult": false
+}`,
+    response: `{
+  "success": true,
+  "data": {
+    "track_a": {
+      "label": "장르 맞춤 추천",
+      "movies": [
+        {
+          "movie_id": 157336,
+          "title": "인터스텔라",
+          "runtime": 169,
+          "genres": ["SF", "드라마"],
+          "vote_average": 8.6
+        }
+      ],
+      "total_runtime": 169
+    },
+    "track_b": { ... }
+  },
+  "meta": {
+    "latency_ms": 234,
+    "remaining_quota": 987
+  }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/v1/recommend_single',
+    title: 'Recommend Single',
+    description: '단일 영화를 새로 추천받습니다. 기존 추천에서 마음에 들지 않는 영화를 교체할 때 사용합니다.',
+    params: [
+      { name: 'user_movie_ids', type: 'integer[]', required: true, description: '사용자가 좋아하는 영화 ID 목록' },
+      { name: 'target_runtime', type: 'integer', required: true, description: '목표 런타임 (분)' },
+      { name: 'excluded_ids', type: 'integer[]', required: false, description: '제외할 영화 ID 목록' },
+      { name: 'track', type: 'string', required: false, description: '트랙 선택: "a" 또는 "b"' },
+    ],
+    requestBody: `{
+  "user_movie_ids": [550, 27205],
+  "target_runtime": 120,
+  "excluded_ids": [157336],
+  "track": "a"
+}`,
+    response: `{
+  "success": true,
+  "data": {
+    "movie_id": 603,
+    "title": "매트릭스",
+    "runtime": 136,
+    "genres": ["액션", "SF"],
+    "vote_average": 8.2
+  },
+  "meta": {
+    "latency_ms": 156,
+    "remaining_quota": 986
+  }
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/health',
+    title: 'Health Check',
+    description: 'API 서비스 상태를 확인합니다.',
+    params: [],
+    requestBody: '',
+    response: `{
+  "status": "healthy",
+  "service": "external-api",
+  "version": "v1"
+}`,
+  },
+]
+
+const errorCodes = [
+  { code: 400, name: 'INVALID_REQUEST', description: '잘못된 요청 파라미터' },
+  { code: 401, name: 'INVALID_API_KEY', description: '유효하지 않은 API 키' },
+  { code: 429, name: 'RATE_LIMIT_EXCEEDED', description: '일일 호출 한도 초과' },
+  { code: 503, name: 'AI_SERVICE_UNAVAILABLE', description: 'AI 서비스 일시 불가' },
+]
+
+const getCodeExample = (lang: Language, endpoint: typeof endpoints[0]): string => {
+  const url = `https://api.moviesir.cloud${endpoint.path}`
+  const isPost = endpoint.method === 'POST'
+  const body = endpoint.requestBody || ''
 
   switch (lang) {
     case 'curl':
-      return `curl -X ${method} "${url}" \\
-  -H "X-API-Key: YOUR_API_KEY" \\
+      return `curl -X ${endpoint.method} "${url}" \\
+  -H "X-API-Key: sk-moviesir-xxx..." \\
   -H "Content-Type: application/json"${isPost ? ` \\
   -d '${body}'` : ''}`
 
     case 'python':
       return `import requests
 
-response = requests.${method.toLowerCase()}(
-    "${url}",
-    headers={
-        "X-API-Key": "YOUR_API_KEY",
-        "Content-Type": "application/json"
-    }${isPost ? `,
-    json=${body.replace(/"/g, '"')}` : ''}
-)
+url = "${url}"
+headers = {
+    "Content-Type": "application/json",
+    "X-API-Key": "sk-moviesir-xxx..."
+}
+${isPost ? `data = ${body.replace(/null/g, 'None').replace(/true/g, 'True').replace(/false/g, 'False')}
 
-data = response.json()
-print(data)`
+response = requests.post(url, json=data, headers=headers)` : `response = requests.get(url, headers=headers)`}
+print(response.json())`
 
     case 'javascript':
-      return `const response = await fetch("${url}", {
-  method: "${method}",
+      return `fetch("${url}", {
+  method: "${endpoint.method}",
   headers: {
-    "X-API-Key": "YOUR_API_KEY",
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "X-API-Key": "sk-moviesir-xxx..."
   }${isPost ? `,
   body: JSON.stringify(${body})` : ''}
-});
-
-const data = await response.json();
-console.log(data);`
+})
+  .then(res => res.json())
+  .then(data => console.log(data));`
 
     case 'nodejs':
       return `const axios = require('axios');
 
-const response = await axios.${method.toLowerCase()}(
-  "${url}",
-  ${isPost ? `${body},
-  ` : ''}{
-    headers: {
-      "X-API-Key": "YOUR_API_KEY",
-      "Content-Type": "application/json"
-    }
+axios.${endpoint.method.toLowerCase()}('${url}'${isPost ? `, ${body}` : ''}, {
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk-moviesir-xxx...'
   }
-);
-
-console.log(response.data);`
+})
+  .then(res => console.log(res.data))
+  .catch(err => console.error(err));`
 
     case 'go':
       return `package main
@@ -80,362 +186,351 @@ import (
 )
 
 func main() {
-    ${isPost ? `body := []byte(\`${body}\`)
-    req, _ := http.NewRequest("${method}", "${url}", bytes.NewBuffer(body))` : `req, _ := http.NewRequest("${method}", "${url}", nil)`}
-
-    req.Header.Set("X-API-Key", "YOUR_API_KEY")
+    ${isPost ? `data := []byte(\`${body}\`)
+    req, _ := http.NewRequest("POST", "${url}", bytes.NewBuffer(data))` : `req, _ := http.NewRequest("GET", "${url}", nil)`}
     req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("X-API-Key", "sk-moviesir-xxx...")
 
     client := &http.Client{}
     resp, _ := client.Do(req)
     defer resp.Body.Close()
 
-    data, _ := io.ReadAll(resp.Body)
-    fmt.Println(string(data))
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println(string(body))
 }`
 
     case 'java':
       return `import java.net.http.*;
 import java.net.URI;
 
-HttpClient client = HttpClient.newHttpClient();
+public class MovieSirAPI {
+    public static void main(String[] args) throws Exception {
+        ${isPost ? `String json = """
+            ${body}
+            """;` : ''}
 
-HttpRequest request = HttpRequest.newBuilder()
-    .uri(URI.create("${url}"))
-    .header("X-API-Key", "YOUR_API_KEY")
-    .header("Content-Type", "application/json")
-    ${isPost ? `.POST(HttpRequest.BodyPublishers.ofString("${body.replace(/"/g, '\\"')}"))` : `.GET()`}
-    .build();
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("${url}"))
+            .header("Content-Type", "application/json")
+            .header("X-API-Key", "sk-moviesir-xxx...")
+            .${endpoint.method}(${isPost ? 'HttpRequest.BodyPublishers.ofString(json)' : ''})
+            .build();
 
-HttpResponse<String> response = client.send(
-    request,
-    HttpResponse.BodyHandlers.ofString()
-);
-
-System.out.println(response.body());`
+        HttpResponse<String> response = client.send(request,
+            HttpResponse.BodyHandlers.ofString());
+        System.out.println(response.body());
+    }
+}`
 
     case 'php':
       return `<?php
-$curl = curl_init();
+$url = '${url}';
+${isPost ? `$data = ${body};` : ''}
 
-curl_setopt_array($curl, [
-    CURLOPT_URL => "${url}",
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_CUSTOMREQUEST => "${method}",
-    CURLOPT_HTTPHEADER => [
-        "X-API-Key: YOUR_API_KEY",
-        "Content-Type: application/json"
-    ]${isPost ? `,
-    CURLOPT_POSTFIELDS => '${body}'` : ''}
-]);
+$options = [
+    'http' => [
+        'method' => '${endpoint.method}',
+        'header' => [
+            'Content-Type: application/json',
+            'X-API-Key: sk-moviesir-xxx...'
+        ]${isPost ? `,
+        'content' => json_encode($data)` : ''}
+    ]
+];
 
-$response = curl_exec($curl);
-curl_close($curl);
-
-$data = json_decode($response, true);
-print_r($data);`
+$context = stream_context_create($options);
+$response = file_get_contents($url, false, $context);
+echo $response;
+?>`
 
     case 'ruby':
       return `require 'net/http'
 require 'json'
+require 'uri'
 
-uri = URI("${url}")
+uri = URI('${url}')
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
 
-request = Net::HTTP::${method === 'GET' ? 'Get' : 'Post'}.new(uri)
-request["X-API-Key"] = "YOUR_API_KEY"
-request["Content-Type"] = "application/json"
-${isPost ? `request.body = '${body}'` : ''}
+request = Net::HTTP::${endpoint.method === 'POST' ? 'Post' : 'Get'}.new(uri)
+request['Content-Type'] = 'application/json'
+request['X-API-Key'] = 'sk-moviesir-xxx...'
+${isPost ? `request.body = ${body}.to_json` : ''}
 
 response = http.request(request)
-data = JSON.parse(response.body)
-puts data`
+puts response.body`
 
     default:
       return ''
   }
 }
 
-const endpoints = [
-  {
-    method: 'POST',
-    path: '/v1/recommend',
-    description: '영화 추천 요청',
-    params: [
-      { name: 'genres', type: 'string[]', required: false, description: '장르 필터 (예: ["액션", "SF"])' },
-      { name: 'runtime_limit', type: 'number', required: false, description: '최대 러닝타임 (분)' },
-      { name: 'exclude_adult', type: 'boolean', required: false, description: '성인 콘텐츠 제외' },
-      { name: 'limit', type: 'number', required: false, description: '추천 개수 (기본: 10)' },
-    ],
-    response: `{
-  "success": true,
-  "data": {
-    "recommendations": [
-      {
-        "movie_id": 12345,
-        "title": "인터스텔라",
-        "poster_url": "https://...",
-        "release_year": 2014,
-        "genres": ["SF", "드라마"],
-        "runtime": 169,
-        "score": 0.95
-      }
-    ],
-    "algorithm": "hybrid-v2"
-  },
-  "meta": {
-    "latency_ms": 234,
-    "remaining_quota": 987
-  }
-}`,
-  },
-  {
-    method: 'GET',
-    path: '/v1/movies/:id',
-    description: '영화 상세 정보 조회',
-    params: [
-      { name: 'id', type: 'number', required: true, description: '영화 ID (TMDB ID)' },
-    ],
-    response: `{
-  "success": true,
-  "data": {
-    "movie_id": 12345,
-    "title": "인터스텔라",
-    "original_title": "Interstellar",
-    "overview": "세계 각국의 정부...",
-    "poster_url": "https://...",
-    "backdrop_url": "https://...",
-    "release_date": "2014-11-05",
-    "runtime": 169,
-    "genres": ["SF", "드라마"],
-    "rating": 8.6,
-    "vote_count": 32456
-  }
-}`,
-  },
-  {
-    method: 'GET',
-    path: '/v1/genres',
-    description: '장르 목록 조회',
-    params: [],
-    response: `{
-  "success": true,
-  "data": {
-    "genres": [
-      { "id": 28, "name": "액션" },
-      { "id": 12, "name": "모험" },
-      { "id": 16, "name": "애니메이션" },
-      { "id": 35, "name": "코미디" },
-      { "id": 80, "name": "범죄" }
-    ]
-  }
-}`,
-  },
-  {
-    method: 'GET',
-    path: '/v1/search',
-    description: '영화 검색',
-    params: [
-      { name: 'query', type: 'string', required: true, description: '검색어' },
-      { name: 'page', type: 'number', required: false, description: '페이지 번호 (기본: 1)' },
-    ],
-    response: `{
-  "success": true,
-  "data": {
-    "results": [...],
-    "page": 1,
-    "total_pages": 5,
-    "total_results": 48
-  }
-}`,
-  },
-]
-
-const errorCodes = [
-  { code: 400, name: 'INVALID_REQUEST', description: '잘못된 요청 파라미터' },
-  { code: 401, name: 'INVALID_API_KEY', description: '유효하지 않은 API 키' },
-  { code: 403, name: 'FORBIDDEN', description: '접근 권한 없음' },
-  { code: 429, name: 'RATE_LIMIT_EXCEEDED', description: '일일 호출 한도 초과' },
-  { code: 500, name: 'INTERNAL_ERROR', description: '서버 내부 오류' },
-  { code: 503, name: 'SERVICE_UNAVAILABLE', description: '서비스 일시 불가' },
-]
-
 export default function ApiDocs() {
   const [selectedEndpoint, setSelectedEndpoint] = useState(0)
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('curl')
   const [copiedCode, setCopiedCode] = useState(false)
+  const [copiedResponse, setCopiedResponse] = useState(false)
 
-  const copyCode = (code: string) => {
+  const copyCode = (code: string, isResponse = false) => {
     navigator.clipboard.writeText(code)
-    setCopiedCode(true)
-    setTimeout(() => setCopiedCode(false), 2000)
+    if (isResponse) {
+      setCopiedResponse(true)
+      setTimeout(() => setCopiedResponse(false), 2000)
+    } else {
+      setCopiedCode(true)
+      setTimeout(() => setCopiedCode(false), 2000)
+    }
   }
 
   const currentEndpoint = endpoints[selectedEndpoint]
-  const codeExample = getCodeExample(
-    selectedLanguage,
-    currentEndpoint.method,
-    currentEndpoint.path,
-    currentEndpoint.method === 'POST'
-  )
+  const codeExample = getCodeExample(selectedLanguage, currentEndpoint)
 
   return (
     <div className="p-4 lg:p-8">
       {/* Header */}
       <div className="mb-6 lg:mb-8">
         <h1 className="text-lg lg:text-xl font-semibold text-white">API 문서</h1>
-        <p className="text-xs lg:text-sm text-gray-500 mt-1">MovieSir API 레퍼런스</p>
+        <p className="text-xs lg:text-sm text-gray-500 mt-1">MovieSir External API Reference</p>
       </div>
 
       {/* Authentication */}
-      <div className="bg-[#16161d] rounded-xl p-4 lg:p-5 mb-4 lg:mb-6">
-        <h2 className="text-sm font-medium text-white mb-3 lg:mb-4">인증</h2>
-        <p className="text-xs lg:text-sm text-gray-400 mb-3 lg:mb-4">
-          모든 API 요청에는 <code className="px-1 lg:px-1.5 py-0.5 bg-white/10 rounded text-blue-400 text-[10px] lg:text-sm">X-API-Key</code> 헤더가 필요합니다.
-        </p>
-        <div className="bg-black/30 rounded-lg p-3 lg:p-4 font-mono text-[10px] lg:text-sm overflow-x-auto">
-          <span className="text-gray-500">Header:</span>{' '}
-          <span className="text-blue-400">X-API-Key</span>:{' '}
-          <span className="text-green-400 break-all">sk-moviesir-your-api-key</span>
+      <div className="bg-[#16161d] rounded-xl p-4 lg:p-5 mb-4">
+        <h2 className="text-sm font-medium text-white mb-3">인증</h2>
+        <p className="text-xs text-gray-400 mb-3">모든 API 요청에는 X-API-Key 헤더가 필요합니다.</p>
+        <div className="bg-black/30 rounded-lg p-3">
+          <code className="text-xs text-gray-300 font-mono">
+            <span className="text-gray-500">X-API-Key:</span> <span className="text-cyan-400">sk-moviesir-xxxxxxxxxxxx</span>
+          </code>
         </div>
       </div>
 
       {/* Base URL */}
-      <div className="bg-[#16161d] rounded-xl p-4 lg:p-5 mb-4 lg:mb-6">
-        <h2 className="text-sm font-medium text-white mb-3 lg:mb-4">Base URL</h2>
-        <div className="bg-black/30 rounded-lg p-3 lg:p-4 font-mono text-[10px] lg:text-sm text-cyan-400 overflow-x-auto">
-          https://api.moviesir.cloud
+      <div className="bg-[#16161d] rounded-xl p-4 lg:p-5 mb-4">
+        <h2 className="text-sm font-medium text-white mb-3">Base URL</h2>
+        <div className="bg-black/30 rounded-lg p-3">
+          <code className="text-xs text-amber-400 font-mono">https://api.moviesir.cloud</code>
         </div>
       </div>
 
       {/* Endpoints */}
-      <div className="bg-[#16161d] rounded-xl p-4 lg:p-5 mb-4 lg:mb-6">
-        <h2 className="text-sm font-medium text-white mb-3 lg:mb-4">엔드포인트</h2>
+      <div className="bg-[#16161d] rounded-xl overflow-hidden mb-4">
+        <div className="px-4 lg:px-5 py-3 lg:py-4 border-b border-white/5">
+          <h2 className="text-sm font-medium text-white">Endpoints</h2>
+        </div>
 
-        {/* Endpoint List */}
-        <div className="flex gap-2 mb-4 lg:mb-6 overflow-x-auto pb-2 custom-scrollbar">
+        {/* Endpoint Tabs */}
+        <div className="px-4 lg:px-5 py-3 border-b border-white/5 flex gap-2 overflow-x-auto">
           {endpoints.map((ep, i) => (
             <button
               key={i}
               onClick={() => setSelectedEndpoint(i)}
-              className={`flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg text-[10px] lg:text-sm whitespace-nowrap transition-colors ${selectedEndpoint === i
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedEndpoint === i
                   ? 'bg-blue-500 text-white'
                   : 'bg-white/5 text-gray-400 hover:text-white'
-                }`}
+              }`}
             >
-              <span className={`px-1 lg:px-1.5 py-0.5 rounded text-[9px] lg:text-xs font-medium ${ep.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                }`}>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                ep.method === 'GET'
+                  ? 'bg-blue-500/30 text-blue-300'
+                  : 'bg-emerald-500/30 text-emerald-300'
+              }`}>
                 {ep.method}
               </span>
-              <span className="hidden sm:inline">{ep.path}</span>
-              <span className="sm:hidden">{ep.path.split('/').pop()}</span>
+              {ep.path}
             </button>
           ))}
         </div>
 
-        {/* Selected Endpoint Details */}
-        <div className="space-y-4 lg:space-y-6">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 lg:gap-3 mb-2">
-              <span className={`px-1.5 lg:px-2 py-0.5 lg:py-1 rounded text-[10px] lg:text-sm font-medium ${endpoints[selectedEndpoint].method === 'GET'
+        <div className="p-4 lg:p-5">
+          {/* Endpoint Info */}
+          <div className="mb-6">
+            <h3 className="text-base font-medium text-white mb-2">{currentEndpoint.title}</h3>
+            <p className="text-xs text-gray-400 mb-4">{currentEndpoint.description}</p>
+            <div className="flex items-center gap-2 p-3 bg-black/30 rounded-lg">
+              <span className={`px-2 py-1 rounded text-xs font-bold ${
+                currentEndpoint.method === 'GET'
                   ? 'bg-blue-500/20 text-blue-400'
-                  : 'bg-green-500/20 text-green-400'
-                }`}>
-                {endpoints[selectedEndpoint].method}
+                  : 'bg-emerald-500/20 text-emerald-400'
+              }`}>
+                {currentEndpoint.method}
               </span>
-              <code className="text-white font-mono text-xs lg:text-sm break-all">{endpoints[selectedEndpoint].path}</code>
+              <code className="text-xs text-gray-300 font-mono">
+                https://api.moviesir.cloud<span className="text-amber-400">{currentEndpoint.path}</span>
+              </code>
             </div>
-            <p className="text-xs lg:text-sm text-gray-400">{endpoints[selectedEndpoint].description}</p>
           </div>
 
           {/* Parameters */}
-          {endpoints[selectedEndpoint].params.length > 0 && (
-            <div>
-              <h3 className="text-[10px] lg:text-xs font-medium text-gray-500 mb-2 lg:mb-3">파라미터</h3>
-              <div className="space-y-2">
-                {endpoints[selectedEndpoint].params.map((param) => (
-                  <div key={param.name} className="flex flex-wrap items-start gap-2 lg:gap-4 py-2 border-b border-white/5 last:border-0">
-                    <div className="flex items-center gap-1 lg:gap-2">
-                      <code className="text-[10px] lg:text-sm text-cyan-400 font-mono">{param.name}</code>
-                      {param.required && (
-                        <span className="px-1 lg:px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] lg:text-xs rounded">required</span>
-                      )}
-                    </div>
-                    <span className="text-[9px] lg:text-xs text-gray-500">{param.type}</span>
-                    <span className="text-[10px] lg:text-sm text-gray-400 w-full lg:w-auto lg:flex-1">{param.description}</span>
-                  </div>
-                ))}
+          {currentEndpoint.params.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-white mb-3">Parameters</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-2 px-3 text-gray-400 font-medium">Name</th>
+                      <th className="text-left py-2 px-3 text-gray-400 font-medium">Type</th>
+                      <th className="text-left py-2 px-3 text-gray-400 font-medium">Required</th>
+                      <th className="text-left py-2 px-3 text-gray-400 font-medium">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentEndpoint.params.map((param) => (
+                      <tr key={param.name} className="border-b border-white/5">
+                        <td className="py-2 px-3">
+                          <code className="text-cyan-400">{param.name}</code>
+                        </td>
+                        <td className="py-2 px-3 text-gray-500 font-mono">{param.type}</td>
+                        <td className="py-2 px-3">
+                          {param.required ? (
+                            <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-[10px]">required</span>
+                          ) : (
+                            <span className="text-gray-600">optional</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-gray-400">{param.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
           {/* Code Example */}
-          <div>
-            <div className="flex items-center justify-between mb-2 lg:mb-3">
-              <h3 className="text-[10px] lg:text-xs font-medium text-gray-500">코드 예제</h3>
-              <button
-                onClick={() => copyCode(codeExample)}
-                className="text-[10px] lg:text-xs text-blue-400 hover:text-blue-300"
-              >
-                {copiedCode ? '복사됨!' : '복사'}
-              </button>
-            </div>
-            {/* Language Tabs */}
-            <div className="flex gap-1 mb-3 overflow-x-auto pb-2 custom-scrollbar">
-              {languages.map((lang) => (
+          <div className="mb-6">
+            <h4 className="text-sm font-medium text-white mb-3">Code Example</h4>
+            <div className="bg-[#1a1a24] rounded-xl overflow-hidden border border-white/10">
+              {/* Language Tabs */}
+              <div className="flex items-center justify-between border-b border-white/10">
+                <div className="flex overflow-x-auto scrollbar-hide">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.id}
+                      onClick={() => setSelectedLanguage(lang.id)}
+                      className={`px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 -mb-[1px] ${
+                        selectedLanguage === lang.id
+                          ? 'text-white border-blue-500'
+                          : 'text-gray-500 hover:text-gray-300 border-transparent'
+                      }`}
+                    >
+                      {lang.name}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  key={lang.id}
-                  onClick={() => setSelectedLanguage(lang.id)}
-                  className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded text-[9px] lg:text-xs font-medium whitespace-nowrap transition-colors ${selectedLanguage === lang.id
-                      ? `bg-white/10 ${lang.color}`
-                      : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                    }`}
+                  onClick={() => copyCode(codeExample)}
+                  className="p-2.5 text-gray-500 hover:text-white transition-colors flex-shrink-0"
+                  title="복사"
                 >
-                  {lang.name}
+                  {copiedCode ? (
+                    <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
                 </button>
-              ))}
+              </div>
+              {/* Code Block */}
+              <Highlight
+                theme={themes.nightOwl}
+                code={codeExample}
+                language={prismLanguageMap[selectedLanguage]}
+              >
+                {({ style, tokens, getLineProps, getTokenProps }) => (
+                  <pre
+                    className="p-4 font-mono text-xs overflow-x-auto custom-scrollbar leading-relaxed"
+                    style={{ ...style, background: 'transparent' }}
+                  >
+                    {tokens.map((line, i) => (
+                      <div key={i} {...getLineProps({ line })}>
+                        {line.map((token, key) => (
+                          <span key={key} {...getTokenProps({ token })} />
+                        ))}
+                      </div>
+                    ))}
+                  </pre>
+                )}
+              </Highlight>
             </div>
-            <pre className="bg-black/30 rounded-lg p-3 lg:p-4 font-mono text-[9px] lg:text-xs text-gray-300 overflow-x-auto custom-scrollbar max-h-64 lg:max-h-80">
-              {codeExample}
-            </pre>
           </div>
 
           {/* Response */}
           <div>
-            <h3 className="text-[10px] lg:text-xs font-medium text-gray-500 mb-2 lg:mb-3">응답 예시</h3>
-            <pre className="bg-black/30 rounded-lg p-3 lg:p-4 font-mono text-[9px] lg:text-xs text-gray-300 overflow-x-auto max-h-48 lg:max-h-64 custom-scrollbar">
-              {endpoints[selectedEndpoint].response}
-            </pre>
+            <h4 className="text-sm font-medium text-white mb-3">Response</h4>
+            <div className="bg-[#1a1a24] rounded-xl overflow-hidden border border-white/10">
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+                <span className="text-xs text-gray-400 font-medium">application/json</span>
+                <button
+                  onClick={() => copyCode(currentEndpoint.response, true)}
+                  className="p-1.5 text-gray-500 hover:text-white transition-colors"
+                  title="복사"
+                >
+                  {copiedResponse ? (
+                    <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <Highlight
+                theme={themes.nightOwl}
+                code={currentEndpoint.response}
+                language="json"
+              >
+                {({ style, tokens, getLineProps, getTokenProps }) => (
+                  <pre
+                    className="p-4 font-mono text-xs overflow-x-auto custom-scrollbar leading-relaxed max-h-80"
+                    style={{ ...style, background: 'transparent' }}
+                  >
+                    {tokens.map((line, i) => (
+                      <div key={i} {...getLineProps({ line })}>
+                        {line.map((token, key) => (
+                          <span key={key} {...getTokenProps({ token })} />
+                        ))}
+                      </div>
+                    ))}
+                  </pre>
+                )}
+              </Highlight>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Error Codes */}
       <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-        <h2 className="text-sm font-medium text-white mb-3 lg:mb-4">에러 코드</h2>
+        <h2 className="text-sm font-medium text-white mb-4">에러 코드</h2>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="text-left text-[10px] lg:text-xs text-gray-500 border-b border-white/5">
-                <th className="pb-3 font-medium">HTTP</th>
-                <th className="pb-3 font-medium">코드</th>
-                <th className="pb-3 font-medium hidden sm:table-cell">설명</th>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-2 px-3 text-gray-400 font-medium">Code</th>
+                <th className="text-left py-2 px-3 text-gray-400 font-medium">Name</th>
+                <th className="text-left py-2 px-3 text-gray-400 font-medium">Description</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody>
               {errorCodes.map((err) => (
-                <tr key={err.code}>
-                  <td className="py-2 lg:py-3">
-                    <span className={`text-[10px] lg:text-sm font-medium ${err.code < 500 ? 'text-yellow-400' : 'text-red-400'
-                      }`}>
+                <tr key={err.code} className="border-b border-white/5">
+                  <td className="py-2 px-3">
+                    <span className={`font-bold ${err.code < 500 ? 'text-yellow-400' : 'text-red-400'}`}>
                       {err.code}
                     </span>
                   </td>
-                  <td className="py-2 lg:py-3">
-                    <code className="text-[10px] lg:text-sm text-cyan-400 font-mono">{err.name}</code>
+                  <td className="py-2 px-3">
+                    <code className="text-cyan-400">{err.name}</code>
                   </td>
-                  <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-400 hidden sm:table-cell">{err.description}</td>
+                  <td className="py-2 px-3 text-gray-400">{err.description}</td>
                 </tr>
               ))}
             </tbody>
