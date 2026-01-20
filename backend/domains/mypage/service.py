@@ -270,6 +270,13 @@ def save_satisfaction_survey(
             detail="추천된 영화가 없는 세션입니다"
         )
     
+    # 기존 만족도 피드백 삭제 (중복 방지)
+    db.query(UserMovieFeedback).filter(
+        UserMovieFeedback.user_id == user.user_id,
+        UserMovieFeedback.session_id == session_id_int,
+        UserMovieFeedback.feedback_type.in_(['satisfaction_positive', 'satisfaction_negative'])
+    ).delete(synchronize_session=False)
+
     # 각 영화에 대해 만족도 피드백 저장
     for movie_id in recommended_movie_ids:
         feedback = UserMovieFeedback(
@@ -279,7 +286,7 @@ def save_satisfaction_survey(
             feedback_type=feedback_type
         )
         db.add(feedback)
-    
+
     # 5. DB에 저장
     db.commit()
     

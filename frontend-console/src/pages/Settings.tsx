@@ -345,7 +345,7 @@ export default function Settings() {
 
         {/* Right Column - Change Password */}
         {!company?.oauth_provider && (
-          <div className="bg-[#16161d] rounded-xl p-5 h-fit">
+          <div className="bg-[#16161d] rounded-xl p-5">
         <h2 className="text-sm font-medium text-white mb-4">비밀번호 변경</h2>
 
         {message.text && (
