@@ -214,209 +214,6 @@ export default function Api() {
             </div>
           </div>
 
-          {/* Console Preview - PC Monitor */}
-          <div className="relative py-20">
-            <div className="max-w-[1100px] mx-auto px-6">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  직관적인 B2B Console
-                </h2>
-                <p className="text-white/60">
-                  API 사용량과 성능을 실시간으로 모니터링하세요
-                </p>
-              </div>
-
-              {/* PC Monitor Mockup - iMac Style */}
-              <div className="relative mx-auto max-w-[900px]">
-                {/* Monitor Body */}
-                <div className="relative bg-gradient-to-b from-[#2a2a2e] to-[#1a1a1e] rounded-[20px] p-[10px] shadow-[0_60px_120px_-20px_rgba(0,0,0,0.7)]">
-                  {/* Screen Bezel */}
-                  <div className="bg-[#0a0a0a] rounded-[12px] p-[2px] overflow-hidden">
-                    {/* Browser Chrome */}
-                    <div className="bg-[#1e1e22] rounded-t-[10px] overflow-hidden">
-                      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#2d2d32]">
-                        <div className="flex gap-2">
-                          <div className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
-                          <div className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
-                          <div className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
-                        </div>
-                        <div className="flex-1 mx-8">
-                          <div className="bg-[#1a1a1e] rounded-lg px-4 py-1.5 text-xs text-gray-400 flex items-center gap-2 max-w-md mx-auto">
-                            <svg className="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                            </svg>
-                            <span className="text-gray-500">console.moviesir.cloud/dashboard</span>
-                          </div>
-                        </div>
-                        <div className="w-16" />
-                      </div>
-                    </div>
-                    {/* Screenshot */}
-                    <div className="aspect-[16/9] bg-[#0f0f12] overflow-hidden">
-                      <img
-                        src="/images/console-dashboard.png"
-                        alt="B2B Console Dashboard"
-                        className="w-full h-full object-cover object-top"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                      <div className="hidden w-full h-full flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                          <p className="text-sm">Dashboard Preview</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Chin with Logo */}
-                  <div className="h-6 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-b from-[#3a3a3e] to-[#2a2a2e] flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-[#1a1a1e]" />
-                    </div>
-                  </div>
-                </div>
-                {/* Stand Neck */}
-                <div className="mx-auto w-[60px] h-[50px] bg-gradient-to-b from-[#2a2a2e] to-[#3a3a3e] rounded-b-lg" />
-                {/* Stand Base */}
-                <div className="mx-auto w-[180px] h-[12px] bg-gradient-to-b from-[#3a3a3e] to-[#2a2a2e] rounded-[6px] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]" />
-              </div>
-
-              {/* Feature Pills */}
-              <div className="flex flex-wrap justify-center gap-3 mt-10">
-                {['실시간 사용량 모니터링', 'API 키 관리', '응답 시간 분석', '일별/월별 통계'].map((feature, i) => (
-                  <span key={i} className="px-4 py-2 bg-white/5 rounded-full text-sm text-white/70 border border-white/10">
-                    {feature}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* PWA Support - Phone Mockup */}
-          <div className="relative py-20">
-            <div className="max-w-[1100px] mx-auto px-6">
-              <div className="grid md:grid-cols-2 gap-12 items-center">
-                {/* Phone Mockup - iPhone 14 Pro Style */}
-                <div className="flex justify-center md:order-2">
-                  <div className="relative">
-                    {/* Phone Frame */}
-                    <div className="relative w-[280px] bg-[#1a1a1e] rounded-[52px] p-[12px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-                      {/* Titanium Edge Effect */}
-                      <div className="absolute inset-0 rounded-[52px] bg-gradient-to-br from-[#3a3a3e] via-[#1a1a1e] to-[#2a2a2e] opacity-50" />
-                      {/* Side Button - Right */}
-                      <div className="absolute right-[-2px] top-[120px] w-[3px] h-[60px] bg-[#2a2a2e] rounded-l-sm" />
-                      {/* Volume Buttons - Left */}
-                      <div className="absolute left-[-2px] top-[100px] w-[3px] h-[30px] bg-[#2a2a2e] rounded-r-sm" />
-                      <div className="absolute left-[-2px] top-[140px] w-[3px] h-[50px] bg-[#2a2a2e] rounded-r-sm" />
-                      {/* Screen */}
-                      <div className="relative bg-[#000] rounded-[40px] overflow-hidden">
-                        {/* Dynamic Island */}
-                        <div className="absolute top-[12px] left-1/2 -translate-x-1/2 w-[90px] h-[28px] bg-black rounded-full z-20 flex items-center justify-center gap-2">
-                          <div className="w-[8px] h-[8px] rounded-full bg-[#1a1a1e] ring-1 ring-[#2a2a2e]" />
-                        </div>
-                        {/* Status Bar */}
-                        <div className="relative z-10 flex justify-between items-center px-8 pt-[14px] pb-1 text-[12px] font-semibold text-white">
-                          <span>9:41</span>
-                          <div className="flex items-center gap-1">
-                            {/* Signal */}
-                            <svg className="w-[17px] h-[12px]" viewBox="0 0 17 12" fill="white">
-                              <rect x="0" y="7" width="3" height="5" rx="0.5"/>
-                              <rect x="4.5" y="4.5" width="3" height="7.5" rx="0.5"/>
-                              <rect x="9" y="2" width="3" height="10" rx="0.5"/>
-                              <rect x="13.5" y="0" width="3" height="12" rx="0.5"/>
-                            </svg>
-                            {/* WiFi */}
-                            <svg className="w-[16px] h-[12px]" viewBox="0 0 16 12" fill="white">
-                              <path d="M8 2.4c2.6 0 5 1 6.8 2.8l-1.3 1.3C12 5 10.1 4.2 8 4.2S4 5 2.5 6.5L1.2 5.2C3 3.4 5.4 2.4 8 2.4zm0 3.2c1.7 0 3.2.7 4.4 1.8l-1.3 1.3c-.8-.8-1.9-1.3-3.1-1.3s-2.3.5-3.1 1.3L3.6 7.4c1.2-1.1 2.7-1.8 4.4-1.8zm0 3.2c.9 0 1.6.3 2.2.9L8 12l-2.2-2.3c.6-.6 1.3-.9 2.2-.9z"/>
-                            </svg>
-                            {/* Battery */}
-                            <div className="flex items-center gap-0.5">
-                              <div className="w-[22px] h-[11px] border border-white/40 rounded-[3px] p-[2px]">
-                                <div className="h-full w-full bg-white rounded-[1px]" />
-                              </div>
-                              <div className="w-[1px] h-[4px] bg-white/40 rounded-r-full" />
-                            </div>
-                          </div>
-                        </div>
-                        {/* App Content */}
-                        <div className="aspect-[9/19.5] bg-[#0f0f12]">
-                          <img
-                            src="/images/pwa-mobile.png"
-                            alt="MovieSir PWA"
-                            className="w-full h-full object-cover object-top"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                          <div className="hidden w-full h-full flex flex-col items-center justify-center text-gray-500 p-6">
-                            <img src="/favicon.svg" alt="무비서" className="w-16 h-16 mb-4 opacity-50" />
-                            <p className="text-xs text-center">무비서 PWA</p>
-                          </div>
-                        </div>
-                        {/* Home Indicator */}
-                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[120px] h-[4px] bg-white/80 rounded-full" />
-                      </div>
-                    </div>
-                    {/* Glow Effect */}
-                    <div className="absolute -inset-8 bg-blue-500/15 blur-[60px] rounded-full -z-10" />
-                    <div className="absolute -inset-4 bg-blue-400/10 blur-[30px] rounded-full -z-10" />
-                  </div>
-                </div>
-
-                {/* Text Content */}
-                <div className="md:order-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-full text-sm text-blue-300 mb-4">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    PWA 지원
-                  </div>
-                  <h2 className="text-3xl font-bold text-white mb-4">
-                    모바일에서도 편리하게
-                  </h2>
-                  <p className="text-white/70 mb-6 leading-relaxed">
-                    무비서 Demo App은 PWA(Progressive Web App)를 지원합니다.
-                    <br />
-                    설치 없이 홈 화면에 추가하여 네이티브 앱처럼 사용하세요.
-                  </p>
-                  <ul className="space-y-3">
-                    {[
-                      '앱 설치 없이 홈 화면에서 바로 실행',
-                      '오프라인에서도 일부 기능 사용 가능',
-                      '푸시 알림으로 새 추천 받기',
-                      '네이티브 앱 수준의 부드러운 UX',
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-3 text-white/80">
-                        <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-8">
-                    <a
-                      href="https://demo.moviesir.cloud"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
-                    >
-                      Demo App 체험하기
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Use Cases */}
           <div className="relative py-20">
             <div className="max-w-[1000px] mx-auto px-6">
@@ -544,6 +341,149 @@ export default function Api() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Console Preview - PC Monitor */}
+          <div className="relative py-20">
+            <div className="max-w-[1100px] mx-auto px-6">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  직관적인 B2B Console
+                </h2>
+                <p className="text-white/60">
+                  API 사용량과 성능을 실시간으로 모니터링하세요
+                </p>
+              </div>
+
+              {/* PC Monitor Mockup - Simple Style */}
+              <div className="relative mx-auto max-w-[950px]">
+                {/* Monitor Body */}
+                <div className="relative bg-[#1a1a1e] rounded-xl p-3 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
+                  {/* Screenshot */}
+                  <div className="rounded-lg overflow-hidden bg-[#0f0f12]">
+                    <img
+                      src="/images/console-dashboard.png"
+                      alt="B2B Console Dashboard"
+                      className="w-full h-auto"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden aspect-[16/9] flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-sm">Dashboard Preview</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Stand */}
+                <div className="mx-auto w-[80px] h-[40px] bg-[#1a1a1e] rounded-b-lg" />
+                <div className="mx-auto w-[160px] h-[10px] bg-[#1a1a1e] rounded-full" />
+              </div>
+
+              {/* Feature Pills */}
+              <div className="flex flex-wrap justify-center gap-3 mt-10">
+                {['실시간 사용량 모니터링', 'API 키 관리', '응답 시간 분석', '일별/월별 통계'].map((feature, i) => (
+                  <span key={i} className="px-4 py-2 bg-blue-500/20 rounded-full text-sm text-blue-300 border border-blue-500/30">
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* PWA Support - Phone Mockup */}
+          <div className="relative py-20">
+            <div className="max-w-[1100px] mx-auto px-6">
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                {/* Phone Mockup - iPhone 14 Pro Style */}
+                <div className="flex justify-center md:order-2">
+                  <div className="relative">
+                    {/* Phone Frame */}
+                    <div className="relative w-[280px] bg-[#1c1c1e] rounded-[50px] p-[10px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
+                      {/* Side Button - Right */}
+                      <div className="absolute right-[-2px] top-[100px] w-[3px] h-[70px] bg-[#2c2c2e] rounded-l-sm" />
+                      {/* Volume Buttons - Left */}
+                      <div className="absolute left-[-2px] top-[80px] w-[3px] h-[28px] bg-[#2c2c2e] rounded-r-sm" />
+                      <div className="absolute left-[-2px] top-[115px] w-[3px] h-[55px] bg-[#2c2c2e] rounded-r-sm" />
+                      {/* Screen */}
+                      <div className="relative bg-[#000] rounded-[40px] overflow-hidden">
+                        {/* App Content - Screenshot Only */}
+                        <div className="aspect-[9/19.5]">
+                          <img
+                            src="/images/pwa-mobile.png"
+                            alt="MovieSir PWA"
+                            className="w-full h-full object-cover object-top"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="hidden w-full h-full flex flex-col items-center justify-center text-gray-500 p-6 bg-[#0f0f12]">
+                            <img src="/favicon.svg" alt="무비서" className="w-16 h-16 mb-4 opacity-50" />
+                            <p className="text-xs text-center">무비서 PWA</p>
+                          </div>
+                        </div>
+                        {/* Home Indicator */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[100px] h-[4px] bg-white/60 rounded-full" />
+                      </div>
+                    </div>
+                    {/* Glow Effect */}
+                    <div className="absolute -inset-8 bg-blue-500/20 blur-[60px] rounded-full -z-10" />
+                  </div>
+                </div>
+
+                {/* Text Content */}
+                <div className="md:order-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-full text-sm text-blue-300 mb-4">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    PWA 지원
+                  </div>
+                  <h2 className="text-3xl font-bold text-white mb-4">
+                    모바일에서도 편리하게
+                  </h2>
+                  <p className="text-white/70 mb-6 leading-relaxed">
+                    무비서 Demo App은 PWA(Progressive Web App)를 지원합니다.
+                    <br />
+                    설치 없이 홈 화면에 추가하여 네이티브 앱처럼 사용하세요.
+                  </p>
+                  <ul className="space-y-3">
+                    {[
+                      '앱 설치 없이 홈 화면에서 바로 실행',
+                      '저장 공간 걱정 없는 가벼운 앱',
+                      '브라우저 기반으로 항상 최신 버전',
+                      '네이티브 앱 수준의 부드러운 UX',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-white/80">
+                        <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-8">
+                    <a
+                      href="https://demo.moviesir.cloud"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+                    >
+                      Demo App 체험하기
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
