@@ -188,13 +188,18 @@ export default function Docs() {
     }
   }, [searchParams])
 
+  // 섹션 변경 시 상단으로 스크롤
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeSection])
+
   const navigation = [
     { id: 'intro', label: '무비서 API란', category: 'API 소개', method: null },
     { id: 'features', label: '주요 기능', category: 'API 소개', method: null },
     { id: 'getting-started', label: '시작하기', category: 'API 소개', method: null },
-    { id: 'auth', label: '인증', category: 'API Reference', method: null },
     { id: 'recommend', label: '/v1/recommend', category: 'Endpoints', method: 'POST' },
     { id: 'recommend-single', label: '/v1/recommend_single', category: 'Endpoints', method: 'POST' },
+    { id: 'auth', label: '인증', category: 'API Reference', method: null },
     { id: 'errors', label: '에러 코드', category: 'API Reference', method: null },
     { id: 'rate-limit', label: 'Rate Limit', category: 'API Reference', method: null },
   ]
