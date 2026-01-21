@@ -74,9 +74,8 @@ export default function Layout() {
       `}>
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-white/5">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="MovieSir" className="w-7 h-7" />
-            <span className="text-base font-semibold text-white">무비서 <span className="text-blue-400">Console</span></span>
+          <Link to="/dashboard">
+            <img src="/console_logo.svg" alt="무비서 Console" className="h-14" />
           </Link>
           {/* Mobile Close Button */}
           <button
@@ -182,9 +181,8 @@ export default function Layout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="MovieSir" className="w-7 h-7" />
-            <span className="font-semibold text-white">무비서 <span className="text-blue-400">Console</span></span>
+          <Link to="/dashboard">
+            <img src="/console_logo.svg" alt="무비서 Console" className="h-14" />
           </Link>
           <div className="w-10" /> {/* Spacer */}
         </header>
