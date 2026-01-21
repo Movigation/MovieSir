@@ -43,44 +43,28 @@ export default function Api() {
                     API 문서
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    to="/support"
-                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    문의
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/contact"
-                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    도입 문의
-                  </Link>
-                </li>
               </ul>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <a
                 href="https://demo.moviesir.cloud"
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
-                무비서 이용하기
+                서비스 체험하기
               </a>
+              <Link
+                to="/contact"
+                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                도입 문의
+              </Link>
               <a
                 href="https://console.moviesir.cloud/login"
-                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
+                className="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
               >
                 콘솔
-              </a>
-              <a
-                href="https://console.moviesir.cloud/register"
-                className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
-              >
-                회원가입
               </a>
             </div>
           </div>
