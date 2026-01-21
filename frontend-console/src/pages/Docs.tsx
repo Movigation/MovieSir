@@ -120,7 +120,7 @@ function SdkCodeTabs({ curlCode, jsCode, pythonCode }: { curlCode: string; jsCod
           </button>
         ))}
       </div>
-      <pre className="p-4 overflow-x-auto">
+      <pre className="p-4 pr-12 overflow-x-auto">
         <code className="text-sm font-mono text-gray-300 leading-relaxed whitespace-pre">{code}</code>
       </pre>
       <CopyButton text={code} />
@@ -342,9 +342,12 @@ export default function Docs() {
                     <p className="text-lg text-gray-600 mb-4 leading-relaxed">
                       무비서 API는 AI 기반 영화 추천 기능을 여러분의 서비스에 손쉽게 연동할 수 있도록 제공하는 RESTful API입니다.
                     </p>
-                    <p className="text-gray-600 mb-8 leading-relaxed">
-                      SBERT(Sentence-BERT)와 LightGCN을 결합한 하이브리드 추천 알고리즘을 사용하여,
+                    <p className="text-gray-600 mb-4 leading-relaxed">
+                      SBERT(Sentence-BERT)와 LightGCN을 결합한 하이브리드 추천 알고리즘을 사용합니다.
+                      <br />
                       콘텐츠 기반 추천과 협업 필터링의 장점을 모두 활용합니다.
+                    </p>
+                    <p className="text-gray-600 mb-8 leading-relaxed">
                       단순한 장르 매칭을 넘어, 사용자의 취향과 시청 패턴을 심층 분석하여 최적의 영화를 추천합니다.
                     </p>
                   </div>
@@ -361,7 +364,7 @@ export default function Docs() {
                         <span>
                           <strong>시간 맞춤 추천</strong><br />
                           <span className="text-sm text-blue-700">
-                            이동 시간을 입력하면 해당 시간에 딱 맞는 영화 조합을 제안합니다.
+                            이동 시간을 입력하면 해당 시간에 딱 맞는 영화 조합을 제안합니다.<br />
                             3시간 비행이라면 2편의 영화 조합을, 5시간 KTX라면 3편을 추천합니다.
                           </span>
                         </span>
@@ -373,7 +376,7 @@ export default function Docs() {
                         <span>
                           <strong>AI 개인화</strong><br />
                           <span className="text-sm text-blue-700">
-                            사용자의 시청 이력과 평점 데이터를 분석하여 취향을 파악합니다.
+                            사용자의 시청 이력과 평점 데이터를 분석하여 취향을 파악합니다.<br />
                             사용할수록 더 정확한 추천이 가능해집니다.
                           </span>
                         </span>
@@ -385,8 +388,8 @@ export default function Docs() {
                         <span>
                           <strong>듀얼 트랙 추천</strong><br />
                           <span className="text-sm text-blue-700">
-                            Track A는 선호 장르 중심, Track B는 새로운 장르 탐색용으로 두 가지 추천 결과를 제공합니다.
-                            사용자에게 더 다양한 선택지를 제공하세요.
+                            Track A는 선호 장르 중심, Track B는 새로운 장르 탐색용입니다.<br />
+                            두 가지 추천 결과로 사용자에게 더 다양한 선택지를 제공하세요.
                           </span>
                         </span>
                       </li>
@@ -523,7 +526,7 @@ export default function Docs() {
                         </svg>
                       ),
                       title: "시간 기반 추천",
-                      desc: "이동 시간을 입력하면 해당 시간에 딱 맞는 영화 조합을 추천합니다. 장거리 이동, 출퇴근, 점심시간 등 다양한 상황에 맞는 영화를 제안합니다.",
+                      desc: "이동 시간을 입력하면 해당 시간에 딱 맞는 영화 조합을 추천합니다.\n장거리 이동, 출퇴근, 점심시간 등 다양한 상황에 맞는 영화를 제안합니다.",
                       example:
                         '{ "runtime_limit": 180 } → 3시간 내로 볼 수 있는 영화 조합',
                     },
@@ -544,7 +547,7 @@ export default function Docs() {
                         </svg>
                       ),
                       title: "AI 개인화 추천",
-                      desc: "사용자의 시청 이력과 평점 데이터를 분석하여 취향에 맞는 영화를 추천합니다. 사용할수록 더 정확한 추천이 가능합니다.",
+                      desc: "사용자의 시청 이력과 평점 데이터를 분석하여 취향에 맞는 영화를 추천합니다.\n사용할수록 더 정확한 추천이 가능합니다.",
                       example: "user_id 기반 개인화된 추천 결과 제공",
                     },
                     {
@@ -564,7 +567,7 @@ export default function Docs() {
                         </svg>
                       ),
                       title: "장르 필터링",
-                      desc: "원하는 장르만 선택하여 추천받을 수 있습니다. 복수 장르 선택 시 해당 장르들이 포함된 영화를 우선 추천합니다.",
+                      desc: "원하는 장르만 선택하여 추천받을 수 있습니다.\n복수 장르 선택 시 해당 장르들이 포함된 영화를 우선 추천합니다.",
                       example: '{ "genres": ["액션", "SF"] }',
                     },
                     {
@@ -584,7 +587,7 @@ export default function Docs() {
                         </svg>
                       ),
                       title: "OTT 필터링",
-                      desc: "구독 중인 OTT 플랫폼을 지정하면 해당 플랫폼에서 바로 시청 가능한 영화만 추천합니다. Netflix, 티빙, Watcha, Disney+ 등을 지원합니다.",
+                      desc: "구독 중인 OTT 플랫폼을 지정하면 해당 플랫폼에서 바로 시청 가능한 영화만 추천합니다.\nNetflix, 티빙, Watcha, Disney+ 등을 지원합니다.",
                       example: '{ "ott_providers": ["netflix", "tving"] }',
                     },
                     {
@@ -604,7 +607,7 @@ export default function Docs() {
                         </svg>
                       ),
                       title: "성인 콘텐츠 제외",
-                      desc: "성인 등급 영화를 제외하고 추천받을 수 있습니다. 가족 친화적인 서비스 구현에 활용할 수 있습니다.",
+                      desc: "성인 등급 영화를 제외하고 추천받을 수 있습니다.\n가족 친화적인 서비스 구현에 활용할 수 있습니다.",
                       example: '{ "exclude_adult": true }',
                     },
                   ].map((feature, i) => (
@@ -655,7 +658,7 @@ export default function Docs() {
                     {
                       step: 2,
                       title: "API 키 발급",
-                      desc: "콘솔의 API 키 메뉴에서 새 API 키를 발급받습니다. 발급된 키는 안전하게 보관하세요.",
+                      desc: "콘솔의 API 키 메뉴에서 새 API 키를 발급받습니다.\n발급된 키는 안전하게 보관하세요.",
                       code: "sk-moviesir-xxxxxxxxxxxxxxxxxxxx",
                     },
                     {
@@ -667,7 +670,7 @@ export default function Docs() {
                     {
                       step: 4,
                       title: "서비스에 연동",
-                      desc: "테스트가 완료되면 실제 서비스에 API를 연동합니다. 자세한 연동 방법은 아래 API Reference를 참고하세요.",
+                      desc: "테스트가 완료되면 실제 서비스에 API를 연동합니다.\n자세한 연동 방법은 아래 API Reference를 참고하세요.",
                     },
                   ].map((item, i) => (
                     <div key={i} className="flex gap-4">
@@ -817,9 +820,9 @@ print(data)`}
             {activeSection === 'auth' && (
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">인증</h1>
-                <p className="text-gray-600 mb-2 leading-relaxed">
-                  무비서 API는 API 키 기반 인증을 사용합니다. 모든 API 요청에는 유효한 API 키가 필요하며,
-                  이 키는 요청의 출처를 식별하고 사용량을 추적하는 데 사용됩니다.
+                <p className="text-gray-600 mb-4 leading-relaxed">
+                  무비서 API는 API 키 기반 인증을 사용합니다.<br />
+                  모든 API 요청에는 유효한 API 키가 필요하며, 이 키는 요청의 출처를 식별하고 사용량을 추적하는 데 사용됩니다.
                 </p>
                 <p className="text-gray-600 mb-8 leading-relaxed">
                   API 키는 콘솔에서 무료로 발급받을 수 있으며, 플랜에 따라 일일 호출 한도가 다릅니다.
@@ -830,7 +833,7 @@ print(data)`}
                   <div id="auth-header">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">API Key 헤더</h2>
                     <p className="text-gray-600 mb-4">
-                      모든 요청의 HTTP 헤더에 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm font-medium">X-API-Key</code>를 포함해야 합니다.
+                      모든 요청의 HTTP 헤더에 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm font-medium">X-API-Key</code>를 포함해야 합니다.<br />
                       Bearer 토큰 방식이 아닌 커스텀 헤더를 사용하여 보다 명확한 인증 흐름을 제공합니다.
                     </p>
                     <div className="bg-gray-900 rounded-xl overflow-hidden relative">
@@ -847,7 +850,7 @@ print(data)`}
                   <div id="auth-format">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">API Key 형식</h2>
                     <p className="text-gray-600 mb-4">
-                      API 키는 고유한 접두사로 시작하여 쉽게 식별할 수 있습니다.
+                      API 키는 고유한 접두사로 시작하여 쉽게 식별할 수 있습니다.<br />
                       키가 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm">sk-moviesir-</code>로 시작하지 않는다면 잘못된 형식입니다.
                     </p>
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -884,7 +887,7 @@ print(data)`}
                   <div id="auth-implementation">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">서버 사이드 구현 예시</h2>
                     <p className="text-gray-600 mb-4">
-                      API 키는 반드시 서버 사이드에서 관리하고 호출해야 합니다.
+                      API 키는 반드시 서버 사이드에서 관리하고 호출해야 합니다.<br />
                       아래는 주요 언어/프레임워크별 구현 예시입니다.
                     </p>
 
@@ -952,7 +955,7 @@ async def recommend(request_body: dict):
                   <div id="auth-env">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">환경변수 설정</h2>
                     <p className="text-gray-600 mb-4">
-                      API 키는 코드에 직접 하드코딩하지 말고, 환경변수를 통해 관리하세요.
+                      API 키는 코드에 직접 하드코딩하지 말고, 환경변수를 통해 관리하세요.<br />
                       배포 환경에 따라 적절한 방법을 선택합니다.
                     </p>
                     <div className="grid md:grid-cols-2 gap-4">
@@ -1007,7 +1010,8 @@ async def recommend(request_body: dict):
                   <div id="auth-errors">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">인증 관련 에러</h2>
                     <p className="text-gray-600 mb-4">
-                      인증 실패 시 다음과 같은 에러가 반환됩니다. 에러 코드를 확인하여 적절히 처리하세요.
+                      인증 실패 시 다음과 같은 에러가 반환됩니다.<br />
+                      에러 코드를 확인하여 적절히 처리하세요.
                     </p>
                     <div className="space-y-3">
                       <div className="p-4 bg-white rounded-xl border border-gray-200">
@@ -1045,10 +1049,10 @@ async def recommend(request_body: dict):
                     </p>
                     <div className="space-y-4">
                       {[
-                        { step: 1, title: '콘솔 로그인', desc: '콘솔(console.moviesir.cloud)에서 계정으로 로그인합니다. 계정이 없다면 무료로 가입할 수 있습니다.' },
+                        { step: 1, title: '콘솔 로그인', desc: '콘솔(console.moviesir.cloud)에서 계정으로 로그인합니다.\n계정이 없다면 무료로 가입할 수 있습니다.' },
                         { step: 2, title: 'API Keys 메뉴 이동', desc: '좌측 사이드바에서 API Keys 메뉴를 클릭합니다.' },
                         { step: 3, title: '새 키 발급', desc: '키 이름을 입력하고 (예: "Production", "Development") "발급" 버튼을 클릭합니다.' },
-                        { step: 4, title: '키 안전하게 저장', desc: '발급된 키를 복사하여 안전한 곳에 저장합니다. 보안상 키는 발급 시에만 전체 내용을 확인할 수 있습니다.' },
+                        { step: 4, title: '키 안전하게 저장', desc: '발급된 키를 복사하여 안전한 곳에 저장합니다.\n보안상 키는 발급 시에만 전체 내용을 확인할 수 있습니다.' },
                       ].map((item) => (
                         <div key={item.step} className="flex gap-4">
                           <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
@@ -1072,7 +1076,7 @@ async def recommend(request_body: dict):
                       <div>
                         <p className="font-medium text-blue-800 mb-1">Tip: 용도별 키 분리</p>
                         <p className="text-sm text-blue-700">
-                          개발용과 프로덕션용 API 키를 분리하여 사용하면 사용량 추적과 보안 관리가 용이합니다.
+                          개발용과 프로덕션용 API 키를 분리하여 사용하면 사용량 추적과 보안 관리가 용이합니다.<br />
                           문제 발생 시 특정 키만 비활성화할 수 있어 서비스 영향을 최소화할 수 있습니다.
                         </p>
                       </div>
@@ -1210,7 +1214,7 @@ async def recommend(request_body: dict):
                           Response
                         </button>
                       </div>
-                      <div className="p-5 font-mono text-sm">
+                      <div className="p-5 pr-12 font-mono text-sm">
                         {activeTab === 'request' ? (
                           <pre className="text-gray-300 leading-relaxed overflow-x-auto">
                             <code>
@@ -1578,7 +1582,8 @@ X-API-Key: sk-moviesir-xxx...
                   <div id="rate-plans">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">플랜별 호출 한도</h2>
                     <p className="text-gray-600 mb-4">
-                      서비스 규모에 맞는 플랜을 선택하세요. 모든 플랜은 동일한 API 기능을 제공합니다.
+                      서비스 규모에 맞는 플랜을 선택하세요.<br />
+                      모든 플랜은 동일한 API 기능을 제공합니다.
                     </p>
                     <div className="grid md:grid-cols-4 gap-4">
                       {[
@@ -1640,7 +1645,7 @@ X-API-Key: sk-moviesir-xxx...
                           </svg>
                           <span className="font-medium text-gray-900">API 키 단위</span>
                         </div>
-                        <p className="text-sm text-gray-600">Rate Limit은 API 키 단위로 적용됩니다. 여러 키를 사용하면 각각 별도로 카운팅됩니다.</p>
+                        <p className="text-sm text-gray-600">Rate Limit은 API 키 단위로 적용됩니다.<br />여러 키를 사용하면 각각 별도로 카운팅됩니다.</p>
                       </div>
                       <div className="p-4 bg-white rounded-xl border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
@@ -1658,7 +1663,8 @@ X-API-Key: sk-moviesir-xxx...
                   <div id="rate-headers">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">응답 헤더</h2>
                     <p className="text-gray-600 mb-4">
-                      모든 API 응답에는 Rate Limit 관련 헤더가 포함됩니다. 이 헤더를 모니터링하여 사용량을 추적하세요.
+                      모든 API 응답에는 Rate Limit 관련 헤더가 포함됩니다.<br />
+                      이 헤더를 모니터링하여 사용량을 추적하세요.
                     </p>
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                       <table className="w-full">
@@ -1714,7 +1720,7 @@ X-API-Key: sk-moviesir-xxx...
                   <div id="rate-exceeded">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">한도 초과 시</h2>
                     <p className="text-gray-600 mb-4">
-                      일일 호출 한도를 초과하면 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm">429 Too Many Requests</code> 에러가 반환됩니다.
+                      일일 호출 한도를 초과하면 <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm">429 Too Many Requests</code> 에러가 반환됩니다.<br />
                       응답에는 한도 정보와 초기화 시간이 포함됩니다.
                     </p>
                     <div className="bg-gray-900 rounded-xl overflow-hidden relative">
@@ -1751,7 +1757,8 @@ X-API-Key: sk-moviesir-xxx...
                   <div id="rate-handling">
                     <h2 className="text-xl font-semibold text-gray-900 mb-3">Rate Limit 모니터링 예시</h2>
                     <p className="text-gray-600 mb-4">
-                      응답 헤더를 확인하여 남은 호출 횟수를 모니터링하고, 한도 초과 전에 적절한 조치를 취하세요.
+                      응답 헤더를 확인하여 남은 호출 횟수를 모니터링하고,<br />
+                      한도 초과 전에 적절한 조치를 취하세요.
                     </p>
                     <CodeBlock
                       code={`async function callWithRateLimitCheck(params) {
@@ -1829,7 +1836,7 @@ X-API-Key: sk-moviesir-xxx...
                       <div>
                         <p className="font-medium text-amber-800 mb-1">주의사항</p>
                         <p className="text-sm text-amber-700">
-                          Rate Limit을 우회하기 위해 여러 API 키를 사용하거나 계정을 생성하는 행위는 이용약관 위반입니다.
+                          Rate Limit을 우회하기 위해 여러 API 키를 사용하거나 계정을 생성하는 행위는 이용약관 위반입니다.<br />
                           지속적으로 높은 트래픽이 필요한 경우 Enterprise 플랜을 문의해주세요.
                         </p>
                       </div>
@@ -1850,7 +1857,8 @@ X-API-Key: sk-moviesir-xxx...
                   <h1 className="text-3xl font-bold text-gray-900">/v1/recommend_single</h1>
                 </div>
                 <p className="text-gray-600 mb-8 leading-relaxed">
-                  단일 영화를 새로 추천받을 때 사용합니다. 기존 추천 결과에서 마음에 들지 않는 영화를 교체할 수 있습니다.
+                  단일 영화를 새로 추천받을 때 사용합니다.<br />
+                  기존 추천 결과에서 마음에 들지 않는 영화를 교체할 수 있습니다.
                 </p>
 
                 <div className="space-y-8">
