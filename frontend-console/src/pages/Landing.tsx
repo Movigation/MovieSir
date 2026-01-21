@@ -344,14 +344,10 @@ export default function Landing() {
     <div className="min-h-screen overflow-x-hidden text-gray-900 bg-white">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-        <div className="grid items-center grid-cols-3 px-6 py-4 mx-auto max-w-7xl">
+        <div className="grid items-center grid-cols-3 px-6 py-1 mx-auto max-w-7xl">
           {/* 로고 - 왼쪽 */}
-          <a href="/" className="flex items-center gap-1 justify-self-start">
-            <img src="/favicon.svg" alt="" className="w-14 h-14" />
-            <div className="flex flex-col items-start" style={{ fontFamily: "'Jua', sans-serif" }}>
-              <span className="text-3xl text-gray-900 leading-none">무비서</span>
-              <span className="text-[11px] text-gray-500 leading-none">이동 시간 맞춤형 콘텐츠 추천 서비스</span>
-            </div>
+          <a href="/" className="justify-self-start">
+            <img src="/landing_logo.svg" alt="무비서" className="h-14" />
           </a>
 
           {/* 네비게이션 메뉴 - 중앙 */}
