@@ -60,12 +60,23 @@ export default function ChatbotButton({
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
 
-      // -1 ~ 1 사이 정규화
-      const nx = Math.max(-1, Math.min(1, dx / (rect.width / 2)));
-      const ny = Math.max(-1, Math.min(1, dy / (rect.height / 2)));
+      // -1 ~ 1 사이 정규화 (크기가 0인 경우 방지)
+      const halfWidth = rect.width / 2;
+      const halfHeight = rect.height / 2;
+
+      if (halfWidth <= 0 || halfHeight <= 0) return;
+
+      const nx = dx / halfWidth;
+      const ny = dy / halfHeight;
+
+      // NaN 또는 Infinity 방지 및 -1 ~ 1 범위 제한
+      if (!Number.isFinite(nx) || !Number.isFinite(ny)) return;
+
+      const clampedX = Math.max(-1, Math.min(1, nx));
+      const clampedY = Math.max(-1, Math.min(1, ny));
 
       // ref 사용으로 리렌더링 없이 값만 업데이트
-      targetRef.current = { x: nx, y: ny };
+      targetRef.current = { x: clampedX, y: clampedY };
     };
 
     window.addEventListener("mousemove", handleMove, { passive: true });
@@ -76,14 +87,23 @@ export default function ChatbotButton({
     };
   }, []);
 
-  // ==== 보간 (lerp)으로 부드럽게 따라오기 ====
+  // ==== 보간 (lerp)으로 부드럽게 따라오기 (CPU 최적화) ====
   useEffect(() => {
     let rafId: number;
 
     const animate = () => {
+      const target = targetRef.current;
+
       setSmooth((prev) => {
         const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-        const target = targetRef.current;
+
+        // [최적화] 목표값에 거의 도달했다면 업데이트 생략 (CPU 점유율 감소)
+        const dx = Math.abs(target.x - prev.x);
+        const dy = Math.abs(target.y - prev.y);
+
+        if (dx < 0.001 && dy < 0.001) {
+          return prev; // 참조값이 같으면 리렌더링 발생 안 함
+        }
 
         return {
           x: lerp(prev.x, target.x, 0.1),
@@ -144,6 +164,7 @@ export default function ChatbotButton({
       <button
         ref={botRef}
         onClick={onClick}
+        aria-label="영화 추천 챗봇 열기/닫기"
         className={`
           relative w-28 h-28 rounded-full shadow-xl
           flex items-center justify-center
@@ -164,6 +185,8 @@ export default function ChatbotButton({
         <div
           className={`pointer-events-none absolute inset-0 rounded-full blur-2xl opacity-40 animate-pulse scale-125 transition-colors duration-500 ${isDark ? "bg-blue-400" : "bg-blue-500"
             }`}
+          role="presentation"
+          aria-hidden="true"
         ></div>
 
         {/* === 얼굴 전체(head) === */}
@@ -176,9 +199,11 @@ export default function ChatbotButton({
             `,
             transition: "transform 0.12s ease-out",
           }}
+          role="img"
+          aria-label="챗봇 얼굴"
         >
           {/* === 눈 === */}
-          <div className="flex gap-4">
+          <div className="flex gap-4" role="presentation">
             <div
               className="w-3 h-3 bg-gray-900 rounded-full"
               style={{
@@ -188,6 +213,8 @@ export default function ChatbotButton({
                 `,
                 transition: "transform 0.1s ease-out",
               }}
+              role="presentation"
+              aria-hidden="true"
             />
             <div
               className="w-3 h-3 bg-gray-900 rounded-full"
@@ -198,6 +225,8 @@ export default function ChatbotButton({
                 `,
                 transition: "transform 0.1s ease-out",
               }}
+              role="presentation"
+              aria-hidden="true"
             />
           </div>
 

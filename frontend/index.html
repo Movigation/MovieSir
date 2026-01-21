@@ -8,6 +8,19 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="manifest" href="/manifest.json" />
 
+  <!-- 성능 최적화: 외부 리소스 사전 연결 -->
+  <link rel="preconnect" href="https://image.tmdb.org" />
+
+  <!-- 폰트 최적화: FCP 개선을 위한 비동기 로딩 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap" media="print"
+    onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  </noscript>
+
   <!-- ===== 반응형 웹 표준: 뷰포트 설정 ===== -->
   <!-- initial-scale=1.0: 초기 확대/축소 비율 1:1 -->
   <!-- width=device-width: 뷰포트 너비를 기기 화면 너비에 맞춤 -->
@@ -45,22 +58,6 @@
   <meta name="apple-mobile-web-app-title" content="Moviesir" />
   <!-- iOS 홈 화면 아이콘 -->
   <link rel="apple-touch-icon" href="/icon-192x192.png" />
-
-  <!-- ===== SEO & 소셜 미디어 메타태그 ===== -->
-  <meta name="description" content="AI 기반 영화 추천 챗봇 서비스 - 취향에 맞는 영화를 추천받으세요" />
-  <meta name="keywords" content="영화추천, 챗봇, AI, 무비, OTT" />
-  <meta name="author" content="Moviesir Team" />
-
-  <!-- Open Graph (Facebook, LinkedIn) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Moviesir - AI 영화 추천" />
-  <meta property="og:description" content="AI 기반 영화 추천 챗봇 서비스" />
-  <meta property="og:url" content="https://moviesir.app" />
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Moviesir - AI 영화 추천" />
-  <meta name="twitter:description" content="AI 기반 영화 추천 챗봇 서비스" />
 
   <title>Moviesir - AI 영화 추천</title>
 

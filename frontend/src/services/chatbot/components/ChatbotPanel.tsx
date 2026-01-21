@@ -189,6 +189,7 @@ export default function ChatbotPanel({
               <div className="flex justify-center mt-6">
                 <button
                   onClick={() => handleResetFilters()}
+                  aria-label="필터 초기화 및 다시 추천받기"
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   처음으로
@@ -259,15 +260,17 @@ export default function ChatbotPanel({
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 translate-y-8 pointer-events-none invisible'}
         `}
+        role="dialog"
+        aria-label="영화 추천 챗봇 패널"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        {/* <div className="flex justify-between items-center p-1">
+        {/* Header - 시맨틱 구조를 위해 sr-only로 노출 */}
+        <div className="sr-only">
           <h2 className="text-sm font-bold text-gray-900 dark:text-blue-400 capitalize text-center flex-1">
-            무비서
+            무비서 추천 패널
           </h2>
-        </div> */}
+        </div>
 
         {/* Chat Messages */}
         {/* [반응형] 메시지 영역 - 기본 padding 사용 */}
