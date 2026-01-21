@@ -27,24 +27,13 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS 설정
+# CORS 설정 - 모든 origin 허용 (B2B API는 API Key로 인증)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        # 로컬 개발
-        "http://localhost:5173",  # Vite dev server
-        "http://localhost:3000",  # copy 프론트엔드
-        "http://localhost:3001",  # copy2 프론트엔드
-        # 프로덕션
-        "https://moviesir.cloud",
-        "https://demo.moviesir.cloud",
-        "https://console.moviesir.cloud",
-        # 임시 터널 (모바일 테스트용)
-        "https://poems-rear-hamilton-device.trycloudflare.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_origins=["*"],
+    allow_credentials=False,  # 와일드카드 사용 시 False 필수
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 라우터 등록
