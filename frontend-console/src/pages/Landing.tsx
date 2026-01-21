@@ -30,7 +30,10 @@ export default function Landing() {
   };
 
   const scrollToBottom = () => {
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
   };
 
   // Scroll Animation with Intersection Observer
@@ -46,17 +49,16 @@ export default function Landing() {
       {
         threshold: 0.15,
         rootMargin: "0px 0px -100px 0px",
-      }
+      },
     );
 
     const animatedElements = document.querySelectorAll(
-      ".animate-fade-up, .animate-fade-down, .animate-fade-left, .animate-fade-right, .animate-scale-up, .animate-scale-down, .animate-rotate-in, .animate-blur-in, .animate-flip-up, .animate-bounce-up, .stagger-up, .stagger-scale, .stagger-sides, .stagger-rotate"
+      ".animate-fade-up, .animate-fade-down, .animate-fade-left, .animate-fade-right, .animate-scale-up, .animate-scale-down, .animate-rotate-in, .animate-blur-in, .animate-flip-up, .animate-bounce-up, .stagger-up, .stagger-scale, .stagger-sides, .stagger-rotate",
     );
     animatedElements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
   }, []);
-
 
   const features = [
     {
@@ -71,7 +73,7 @@ export default function Landing() {
         </svg>
       ),
       title: "시간 기반 추천",
-      desc: "이동시간을 입력하면 러닝타임에 딱 맞는 영화 조합을 추천해드립니다",
+      desc: "이동시간을 입력하면 러닝타임에 \n딱 맞는 영화 조합을 추천해드립니다",
     },
     {
       icon: (
@@ -85,7 +87,7 @@ export default function Landing() {
         </svg>
       ),
       title: "AI 개인화 추천",
-      desc: "두 개의 AI 하이브리드 추천 시스템으로 당신의 취향을 파악하고 맞춤 영화를 찾아드립니다",
+      desc: "두 개의 AI 하이브리드 추천 시스템으로 \n당신의 취향을 파악하고 맞춤 영화를 찾아드립니다",
     },
     {
       icon: (
@@ -99,7 +101,7 @@ export default function Landing() {
         </svg>
       ),
       title: "OTT 연동",
-      desc: "구독 중인 OTT 플렛폼에서 바로 시청할 수 있는 영화만 보여드립니다",
+      desc: "구독 중인 OTT 플렛폼에서 \n바로 시청할 수 있는 영화만 보여드립니다",
     },
     {
       icon: (
@@ -113,7 +115,7 @@ export default function Landing() {
         </svg>
       ),
       title: "듀얼 트랙 추천",
-      desc: "개인 취향 맞춤 추천과 인기 영화 추천을 동시에 제공해 선택의 폭을 넓혀드립니다",
+      desc: "개인 취향 맞춤 추천과 인기 영화 추천을 \n동시에 제공해 선택의 폭을 넓혀드립니다",
     },
   ];
 
@@ -202,10 +204,22 @@ export default function Landing() {
   ];
 
   const faqItems = [
-    { q: "무비서는 무료인가요?", a: "네, 무비서는 완전 무료입니다! 회원가입만 하면 모든 기능을 제한 없이 이용할 수 있습니다" },
-    { q: "어떤 OTT를 지원하나요?", a: "현재 Netflix, 티빙, Watcha, Disney+, Apple TV+ 등 주요 OTT 플랫폼을 지원합니다" },
-    { q: "앱을 설치해야 하나요?", a: "아니요! 무비서는 PWA로 제작되어 앱스토어 설치 없이 웹에서 바로 사용할 수 있습니다" },
-    { q: "추천 알고리즘은 어떻게 작동하나요?", a: "SBERT와 LightGCN을 결합한 하이브리드 추천 시스템으로 최적의 영화를 추천합니다" },
+    {
+      q: "무비서는 무료인가요?",
+      a: "네, 무비서는 완전 무료입니다! 회원가입만 하면 모든 기능을 제한 없이 이용할 수 있습니다",
+    },
+    {
+      q: "어떤 OTT를 지원하나요?",
+      a: "현재 Netflix, 티빙, Watcha, Disney+, Apple TV+ 등 주요 OTT 플랫폼을 지원합니다",
+    },
+    {
+      q: "앱을 설치해야 하나요?",
+      a: "아니요! 무비서는 PWA로 제작되어 앱스토어 설치 없이 웹에서 바로 사용할 수 있습니다",
+    },
+    {
+      q: "추천 알고리즘은 어떻게 작동하나요?",
+      a: "SBERT와 LightGCN을 결합한 하이브리드 추천 시스템으로 최적의 영화를 추천합니다",
+    },
   ];
 
   const ottPlatforms = [
@@ -218,14 +232,49 @@ export default function Landing() {
 
   // Hero 섹션 영화 포스터 - 최신 영화들 (Preview 섹션과 겹치지 않음)
   const heroPosters = [
-    { title: "듄", year: 2021, runtime: "2시간 35분", poster: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg" },
-    { title: "에브리씽 에브리웨어", year: 2022, runtime: "2시간 19분", poster: "https://image.tmdb.org/t/p/w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg" },
-    { title: "탑건: 매버릭", year: 2022, runtime: "2시간 11분", poster: "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg" },
-    { title: "더 배트맨", year: 2022, runtime: "2시간 56분", poster: "https://image.tmdb.org/t/p/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg" },
-    { title: "스파이더맨: 노 웨이 홈", year: 2021, runtime: "2시간 28분", poster: "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg" },
-    { title: "아바타: 물의 길", year: 2022, runtime: "3시간 12분", poster: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg" },
+    {
+      title: "듄",
+      year: 2021,
+      runtime: "2시간 35분",
+      poster: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+    },
+    {
+      title: "에브리씽 에브리웨어",
+      year: 2022,
+      runtime: "2시간 19분",
+      poster: "https://image.tmdb.org/t/p/w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",
+    },
+    {
+      title: "탑건: 매버릭",
+      year: 2022,
+      runtime: "2시간 11분",
+      poster: "https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg",
+    },
+    {
+      title: "더 배트맨",
+      year: 2022,
+      runtime: "2시간 56분",
+      poster: "https://image.tmdb.org/t/p/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg",
+    },
+    {
+      title: "스파이더맨: 노 웨이 홈",
+      year: 2021,
+      runtime: "2시간 28분",
+      poster: "https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
+    },
+    {
+      title: "아바타: 물의 길",
+      year: 2022,
+      runtime: "3시간 12분",
+      poster: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
+    },
   ];
-  const mainPoster = { title: "오펜하이머", year: 2023, runtime: "3시간", poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" };
+  const mainPoster = {
+    title: "오펜하이머",
+    year: 2023,
+    runtime: "3시간",
+    poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+  };
 
   // Hero 포스터 자동 스와이프
   const allPosters = [mainPoster, ...heroPosters];
@@ -291,17 +340,14 @@ export default function Landing() {
     });
   }, [totalOriginal]);
 
-
-
   return (
     <div className="min-h-screen overflow-x-hidden text-gray-900 bg-white">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-        <div className="grid grid-cols-3 items-center px-6 py-4 mx-auto max-w-7xl">
+        <div className="grid items-center grid-cols-3 px-6 py-1 mx-auto max-w-7xl">
           {/* 로고 - 왼쪽 */}
-          <a href="/" className="flex items-center gap-3 justify-self-start">
-            <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
-            <span className="text-2xl font-bold text-gray-900">무비서</span>
+          <a href="/" className="justify-self-start">
+            <img src="/landing_logo.svg" alt="무비서" className="h-14" />
           </a>
 
           {/* 네비게이션 메뉴 - 중앙 */}
@@ -330,32 +376,30 @@ export default function Landing() {
                 자주 묻는 질문
               </a>
             </li>
-            <li>
-              <a
-                href="https://api.moviesir.cloud"
-                className="text-base font-bold text-gray-600 transition-colors hover:text-accent-600 whitespace-nowrap"
-              >
-                API
-              </a>
-            </li>
           </ul>
 
           {/* 오른쪽 영역 */}
           <div className="flex items-center gap-3 justify-self-end">
             <a
+              href="https://api.moviesir.cloud"
+              className="px-4 py-2 text-base font-bold text-gray-600 transition-colors rounded-lg hover:text-accent-600 hover:bg-accent-50 whitespace-nowrap"
+            >
+              무비서 API
+            </a>
+            <a
               href="https://demo.moviesir.cloud"
               target="_blank"
               rel="noreferrer"
-              className="px-5 py-2 bg-accent-600 text-white text-sm font-semibold rounded-full hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 transition-all whitespace-nowrap"
+              className="px-5 py-2 text-sm font-semibold text-white transition-all rounded-full bg-accent-600 hover:bg-accent-500 hover:shadow-lg hover:shadow-accent-500/30 whitespace-nowrap"
             >
-              무비서 이용하기
+              서비스 체험하기
             </a>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="min-h-screen relative pt-20 overflow-hidden">
+      <section className="relative min-h-screen pt-20 overflow-hidden">
         {/* Film Strip Background - 앞뒤 원근감 */}
         <div className="absolute inset-0 overflow-hidden">
           {/* 베이스 + 멀티 글로우 효과 */}
@@ -367,7 +411,7 @@ export default function Landing() {
                 radial-gradient(ellipse 50% 50% at 15% 85%, rgba(199, 210, 254, 0.5) 0%, transparent 45%),
                 radial-gradient(ellipse 60% 40% at 50% 50%, rgba(224, 231, 255, 0.35) 0%, transparent 50%),
                 linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(248, 250, 252) 50%, rgb(255, 255, 255) 100%)
-              `
+              `,
             }}
           />
 
@@ -375,7 +419,7 @@ export default function Landing() {
           <div
             className="absolute top-16 -left-10 w-[200%] opacity-60"
             style={{
-              transform: 'rotate(-8deg)',
+              transform: "rotate(-8deg)",
               zIndex: 1,
             }}
           >
@@ -383,7 +427,10 @@ export default function Landing() {
               {/* 필름 구멍 - 상단 */}
               <div className="absolute top-0.5 left-0 right-0 h-2.5 flex gap-2 px-1">
                 {Array.from({ length: 200 }).map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-gray-600 rounded-sm flex-shrink-0" />
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-2 h-2 bg-gray-600 rounded-sm"
+                  />
                 ))}
               </div>
 
@@ -415,8 +462,15 @@ export default function Landing() {
                   "https://image.tmdb.org/t/p/w300/tnAuB8q5vv7Ax9UAEje5Xi4BXik.jpg", // 주토피아
                   "https://image.tmdb.org/t/p/w300/hziiv14OpD73u9gAak4XDDfBKa2.jpg", // 인크레더블 2
                 ].map((poster, i) => (
-                  <div key={i} className="w-16 md:w-20 aspect-[2/3] overflow-hidden rounded flex-shrink-0">
-                    <img src={poster} alt="" className="object-cover w-full h-full" />
+                  <div
+                    key={i}
+                    className="w-16 md:w-20 aspect-[2/3] overflow-hidden rounded flex-shrink-0"
+                  >
+                    <img
+                      src={poster}
+                      alt=""
+                      className="object-cover w-full h-full"
+                    />
                   </div>
                 ))}
               </div>
@@ -424,7 +478,10 @@ export default function Landing() {
               {/* 필름 구멍 - 하단 */}
               <div className="absolute bottom-0.5 left-0 right-0 h-2.5 flex gap-2 px-1">
                 {Array.from({ length: 200 }).map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-gray-600 rounded-sm flex-shrink-0" />
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-2 h-2 bg-gray-600 rounded-sm"
+                  />
                 ))}
               </div>
             </div>
@@ -434,7 +491,7 @@ export default function Landing() {
           <div
             className="absolute top-[35%] -left-20 w-[200%]"
             style={{
-              transform: 'rotate(-15deg)',
+              transform: "rotate(-15deg)",
               zIndex: 2,
             }}
           >
@@ -442,7 +499,10 @@ export default function Landing() {
               {/* 필름 구멍 - 상단 */}
               <div className="absolute top-1.5 left-0 right-0 h-4 flex gap-3 px-2">
                 {Array.from({ length: 150 }).map((_, i) => (
-                  <div key={i} className="w-3 h-3 bg-gray-700 rounded-sm flex-shrink-0" />
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-3 h-3 bg-gray-700 rounded-sm"
+                  />
                 ))}
               </div>
 
@@ -462,8 +522,15 @@ export default function Landing() {
                   "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg", // 위키드 (2024)
                   "https://image.tmdb.org/t/p/w300/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg", // 라이온 킹 (2024)
                 ].map((poster, i) => (
-                  <div key={i} className="w-28 md:w-36 aspect-[2/3] overflow-hidden rounded-md flex-shrink-0 shadow-lg">
-                    <img src={poster} alt="" className="object-cover w-full h-full" />
+                  <div
+                    key={i}
+                    className="w-28 md:w-36 aspect-[2/3] overflow-hidden rounded-md flex-shrink-0 shadow-lg"
+                  >
+                    <img
+                      src={poster}
+                      alt=""
+                      className="object-cover w-full h-full"
+                    />
                   </div>
                 ))}
               </div>
@@ -471,7 +538,10 @@ export default function Landing() {
               {/* 필름 구멍 - 하단 */}
               <div className="absolute bottom-1.5 left-0 right-0 h-4 flex gap-3 px-2">
                 {Array.from({ length: 150 }).map((_, i) => (
-                  <div key={i} className="w-3 h-3 bg-gray-700 rounded-sm flex-shrink-0" />
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-3 h-3 bg-gray-700 rounded-sm"
+                  />
                 ))}
               </div>
             </div>
@@ -479,12 +549,12 @@ export default function Landing() {
 
           {/* 오버레이 - 왼쪽 텍스트 가독성 + 글로우 */}
           <div
-            className="absolute inset-0 pointer-events-none z-10"
+            className="absolute inset-0 z-10 pointer-events-none"
             style={{
               background: `
                 linear-gradient(to right, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.9) 40%, rgba(255,255,255,0.55) 55%, transparent 70%),
                 radial-gradient(ellipse 50% 70% at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)
-              `
+              `,
             }}
           />
         </div>
@@ -514,7 +584,7 @@ export default function Landing() {
                 AI가 당신의 취향을 분석하고
                 <br />
                 구독 중인 OTT에서
-                <span className="font-medium text-accent-600">
+                <span className="font-bold text-accent-600">
                   {" "}
                   바로 볼 수 있는 영화
                 </span>
@@ -528,7 +598,7 @@ export default function Landing() {
                   rel="noreferrer"
                   className="inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all rounded-full bg-accent-600 hover:bg-accent-500 hover:shadow-2xl hover:shadow-accent-500/30"
                 >
-                  무료로 시작하기
+                  서비스 체험하기
                 </a>
                 <a
                   href="https://api.moviesir.cloud"
@@ -544,103 +614,133 @@ export default function Landing() {
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     10K+
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-gray-500">영화 데이터</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-500">
+                    영화 데이터
+                  </div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     1초
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-gray-500">추천 속도</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-500">
+                    추천 속도
+                  </div>
                 </div>
                 <div className="text-center lg:text-left">
                   <div className="text-3xl font-black md:text-4xl text-accent-600">
                     6편
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-gray-500">맞춤 추천</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-500">
+                    맞춤 추천
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Right - Movie Poster Carousel */}
-            <div className="relative hidden lg:flex items-center justify-center">
-              <div className="relative w-[650px]">
+            <div className="relative items-center justify-start hidden lg:flex">
+              <div className="relative w-[650px] -ml-[60px]">
                 {/* AI 영화 추천 헤더 박스 */}
-                <div className="bg-white/80 backdrop-blur-xl rounded-3xl pt-6 pb-4 px-2 shadow-2xl shadow-gray-400/30 border border-white/50">
+                <div className="px-2 pt-6 pb-4 border shadow-2xl bg-white/80 backdrop-blur-xl rounded-3xl shadow-gray-400/30 border-white/50">
                   {/* 헤더 */}
-                  <div className="flex items-center gap-3 mb-5 px-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-500 shadow-lg shadow-accent-500/30">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  <div className="flex items-center gap-3 px-4 mb-5">
+                    <div className="flex items-center justify-center w-12 h-12 shadow-lg rounded-xl bg-accent-500 shadow-accent-500/30">
+                      <svg
+                        className="w-8 h-8 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">AI 추천</h3>
-                      <p className="text-sm text-gray-500">AI가 추천하는 영화</p>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        AI 추천
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        AI가 추천하는 영화
+                      </p>
                     </div>
                   </div>
 
                   {/* 포스터 캐러셀 */}
                   <div
                     ref={carouselRef}
-                    className="overflow-hidden py-4 scrollbar-hide"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    className="py-4 overflow-hidden scrollbar-hide"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   >
                     <div
-                      className="flex gap-4 ease-out pl-4"
+                      className="flex gap-4 pl-4 ease-out"
                       style={{
                         transform: `translateX(-${currentSlide * (192 + 16)}px)`,
-                        transitionProperty: 'transform',
-                        transitionDuration: !isTransitioning ? '0ms' : '500ms',
-                        transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)'
+                        transitionProperty: "transform",
+                        transitionDuration: !isTransitioning ? "0ms" : "500ms",
+                        transitionTimingFunction:
+                          "cubic-bezier(0.25, 0.1, 0.25, 1)",
                       }}
                     >
-                    {infinitePosters.map((movie, i) => {
-                      // 같은 영화의 모든 복제본에 동일한 스타일 적용 (깜빡임 방지)
-                      const isActive = (i % totalOriginal) === (currentSlide % totalOriginal);
-                      return (
-                      <div
-                        key={i}
-                        onClick={() => setCurrentSlide(i)}
-                        className={`relative flex-shrink-0 w-48 h-72 overflow-hidden rounded-2xl cursor-pointer select-none ${
-                          isActive ? 'scale-100 ring-4 ring-blue-500 animate-ring-glow' : 'scale-90 opacity-60'
-                        }`}
-                        style={{
-                          transition: isTransitioning ? 'transform 500ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 400ms ease-out, box-shadow 400ms ease-out' : 'none'
-                        }}
-                      >
-                        <img
-                          src={movie.poster}
-                          alt={movie.title}
-                          className="object-cover w-full h-full pointer-events-none"
-                          draggable={false}
-                        />
-                        {/* 영화 정보 - 하단 그라데이션 */}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 pb-3 px-3">
-                          <p className="text-sm font-bold text-white truncate">{movie.title}</p>
-                          <p className="text-xs text-white/80">{movie.year} • {movie.runtime}</p>
-                        </div>
-                        {/* AI Badge - 현재 활성화된 포스터에만 */}
-                        {isActive && (
-                          <div className="absolute px-3 py-1.5 text-xs font-bold text-white rounded-full shadow-lg top-3 right-3 bg-accent-500 animate-pulse">
-                            AI 추천
+                      {infinitePosters.map((movie, i) => {
+                        // 같은 영화의 모든 복제본에 동일한 스타일 적용 (깜빡임 방지)
+                        const isActive =
+                          i % totalOriginal === currentSlide % totalOriginal;
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => setCurrentSlide(i)}
+                            className={`relative flex-shrink-0 w-48 h-72 overflow-hidden rounded-2xl cursor-pointer select-none ${
+                              isActive
+                                ? "scale-100 ring-4 ring-blue-500 animate-ring-glow"
+                                : "scale-90 opacity-60"
+                            }`}
+                            style={{
+                              transition: isTransitioning
+                                ? "transform 500ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 400ms ease-out, box-shadow 400ms ease-out"
+                                : "none",
+                            }}
+                          >
+                            <img
+                              src={movie.poster}
+                              alt={movie.title}
+                              className="object-cover w-full h-full pointer-events-none"
+                              draggable={false}
+                            />
+                            {/* 영화 정보 - 하단 그라데이션 */}
+                            <div className="absolute inset-x-0 bottom-0 px-3 pt-12 pb-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                              <p className="text-sm font-bold text-white truncate">
+                                {movie.title}
+                              </p>
+                              <p className="text-xs text-white/80">
+                                {movie.year} • {movie.runtime}
+                              </p>
+                            </div>
+                            {/* AI Badge - 현재 활성화된 포스터에만 */}
+                            {isActive && (
+                              <div className="absolute px-3 py-1.5 text-xs font-bold text-white rounded-full shadow-lg top-3 right-3 bg-accent-500 animate-pulse">
+                                AI 추천
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
 
                   {/* 슬라이드 인디케이터 */}
-                  <div className="flex items-center justify-center gap-2 mt-2 px-4">
+                  <div className="flex items-center justify-center gap-2 px-4 mt-2">
                     {allPosters.map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setCurrentSlide(totalOriginal + i)}
                         className={`transition-all duration-300 rounded-full ${
                           currentSlide % totalOriginal === i
-                            ? 'w-6 h-2.5 bg-accent-500 shadow-sm'
-                            : 'w-2.5 h-2.5 bg-gray-400/60 hover:bg-gray-500/80 border border-gray-400/30'
+                            ? "w-6 h-2.5 bg-accent-500 shadow-sm"
+                            : "w-2.5 h-2.5 bg-gray-400/60 hover:bg-gray-500/80 border border-gray-400/30"
                         }`}
                         aria-label={`슬라이드 ${i + 1}`}
                       />
@@ -656,7 +756,7 @@ export default function Landing() {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute flex flex-col items-center gap-2 -translate-x-1/2 bottom-8 left-1/2 z-30">
+        <div className="absolute z-30 flex flex-col items-center gap-2 -translate-x-1/2 bottom-8 left-1/2">
           <span className="text-xs text-gray-400">스크롤</span>
           <div className="flex justify-center w-6 h-10 pt-2 border-2 rounded-full border-accent-300">
             <div className="w-1 h-2 rounded-full bg-accent-500 animate-bounce" />
@@ -665,9 +765,9 @@ export default function Landing() {
       </section>
 
       {/* OTT Platforms - stagger-scale 애니메이션 */}
-      <section className="min-h-screen flex flex-col items-center justify-center py-16 md:py-24 bg-white">
+      <section className="flex flex-col items-center justify-center min-h-screen py-16 bg-white md:py-24">
         {/* 헤더 */}
-        <div className="px-6 mx-auto text-center animate-fade-down max-w-7xl mb-12">
+        <div className="px-6 mx-auto mb-12 text-center animate-fade-down max-w-7xl">
           <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-6">
             연동 플랫폼
           </span>
@@ -696,7 +796,7 @@ export default function Landing() {
       </section>
 
       {/* PWA Section - stagger-up 애니메이션 */}
-      <section className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-gray-50">
+      <section className="flex items-center justify-center min-h-screen py-16 md:py-24 bg-gray-50">
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-20 text-center animate-fade-up">
             <span className="inline-block px-5 py-2.5 bg-accent-50 border border-accent-100 text-accent-600 text-base font-medium rounded-full mb-8">
@@ -706,7 +806,8 @@ export default function Landing() {
               앱처럼 <span className="text-accent-600">사용하세요</span>
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600">
-              별도 설치 없이 홈 화면에 추가하면 네이티브 앱처럼 사용할 수 있습니다
+              별도 설치 없이 홈 화면에 추가하면 네이티브 앱처럼 사용할 수
+              있습니다
             </p>
           </div>
 
@@ -731,8 +832,9 @@ export default function Landing() {
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 홈 화면에 추가
               </h3>
-              <p className="text-lg text-gray-600">
-                브라우저에서 홈 화면에 추가하면 앱처럼 바로 실행됩니다
+              <p className="text-lg text-gray-600 whitespace-pre-line">
+                브라우저에서 홈 화면에 추가하면 <br />
+                앱처럼 바로 실행됩니다
               </p>
             </div>
 
@@ -756,8 +858,9 @@ export default function Landing() {
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 빠른 로딩 속도
               </h3>
-              <p className="text-lg text-gray-600">
-                캐싱 기술로 네이티브 앱 수준의 빠른 속도를 제공합니다
+              <p className="text-lg text-gray-600 whitespace-pre-line">
+                캐싱 기술로 네이티브 앱 수준의 <br />
+                빠른 속도를 제공합니다
               </p>
             </div>
 
@@ -781,8 +884,9 @@ export default function Landing() {
               <h3 className="mb-4 text-2xl font-bold text-gray-900">
                 모든 기기 지원
               </h3>
-              <p className="text-lg text-gray-600">
-                PC, 태블릿, 모바일 어디서든 동일한 경험을 제공합니다
+              <p className="text-lg text-gray-600 whitespace-pre-line">
+                PC, 태블릿, 모바일 어디서든 <br />
+                동일한 경험을 제공합니다
               </p>
             </div>
           </div>
@@ -792,7 +896,7 @@ export default function Landing() {
       {/* Features Section - stagger-sides 애니메이션 */}
       <section
         id="features"
-        className="min-h-screen flex items-center justify-center py-20 relative bg-white"
+        className="relative flex items-center justify-center min-h-screen py-20 bg-white"
       >
         <div className="relative max-w-6xl px-6 mx-auto">
           <div className="mb-16 text-center animate-scale-up">
@@ -803,7 +907,8 @@ export default function Landing() {
               무비서만의 <span className="text-accent-600">특별한 추천</span>
             </h2>
             <p className="text-xl text-gray-600 whitespace-nowrap">
-              AI 기반 하이브리드 추천 시스템으로 당신에게 딱 맞는 영화를 찾아드립니다
+              AI 기반 하이브리드 추천 시스템으로 당신에게 딱 맞는 영화를
+              찾아드립니다
             </p>
           </div>
 
@@ -821,7 +926,7 @@ export default function Landing() {
                     <h3 className="mb-2 text-xl font-bold text-gray-900">
                       {feature.title}
                     </h3>
-                    <p className="text-base leading-relaxed text-gray-600">
+                    <p className="text-base leading-relaxed text-gray-600 whitespace-pre-line">
                       {feature.desc}
                     </p>
                   </div>
@@ -833,10 +938,10 @@ export default function Landing() {
       </section>
 
       {/* Recommendation Preview Section */}
-      <section className="min-h-screen flex items-center justify-center py-16 md:py-20 bg-gray-50">
+      <section className="flex items-center justify-center min-h-screen py-16 md:py-20 bg-gray-50">
         <div className="max-w-2xl px-6 mx-auto">
           <div className="mb-8 text-center animate-fade-up">
-            <span className="inline-block px-4 py-2 bg-accent-50 border border-accent-100 text-accent-600 text-sm font-medium rounded-full mb-6">
+            <span className="inline-block px-4 py-2 mb-6 text-sm font-medium border rounded-full bg-accent-50 border-accent-100 text-accent-600">
               추천 결과 미리보기
             </span>
             <h2 className="mb-4 text-3xl font-black text-gray-900 md:text-4xl">
@@ -852,15 +957,38 @@ export default function Landing() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1 h-4 rounded-full bg-accent-500"></div>
-                <h3 className="text-sm font-bold text-gray-900">취향 맞춤 추천</h3>
+                <h3 className="text-sm font-bold text-gray-900">
+                  취향 맞춤 추천
+                </h3>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { title: "인터스텔라", year: "2014", runtime: "2시간 49분", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
-                  { title: "기생충", year: "2019", runtime: "2시간 12분", poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg" },
-                  { title: "인셉션", year: "2010", runtime: "2시간 28분", poster: "https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg" },
+                  {
+                    title: "인터스텔라",
+                    year: "2014",
+                    runtime: "2시간 49분",
+                    poster:
+                      "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+                  },
+                  {
+                    title: "기생충",
+                    year: "2019",
+                    runtime: "2시간 12분",
+                    poster:
+                      "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+                  },
+                  {
+                    title: "인셉션",
+                    year: "2010",
+                    runtime: "2시간 28분",
+                    poster:
+                      "https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg",
+                  },
                 ].map((movie, i) => (
-                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-lg">
+                  <div
+                    key={i}
+                    className="relative overflow-hidden transition-all rounded-lg cursor-pointer group hover:scale-105 hover:shadow-lg"
+                  >
                     <img
                       src={movie.poster}
                       alt={movie.title}
@@ -868,7 +996,9 @@ export default function Landing() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
                     <div className="absolute bottom-0 left-0 right-0 p-2">
-                      <h4 className="text-xs font-bold text-white truncate">{movie.title}</h4>
+                      <h4 className="text-xs font-bold text-white truncate">
+                        {movie.title}
+                      </h4>
                       <div className="flex items-center gap-1 text-[10px] text-gray-300">
                         <span>{movie.year}</span>
                         <span>•</span>
@@ -884,15 +1014,38 @@ export default function Landing() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1 h-4 bg-yellow-500 rounded-full"></div>
-                <h3 className="text-sm font-bold text-gray-900">인기 영화 추천</h3>
+                <h3 className="text-sm font-bold text-gray-900">
+                  인기 영화 추천
+                </h3>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { title: "라라랜드", year: "2016", runtime: "2시간 8분", poster: "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg" },
-                  { title: "다크 나이트", year: "2008", runtime: "2시간 32분", poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg" },
-                  { title: "너의 이름은", year: "2016", runtime: "1시간 46분", poster: "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg" },
+                  {
+                    title: "라라랜드",
+                    year: "2016",
+                    runtime: "2시간 8분",
+                    poster:
+                      "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",
+                  },
+                  {
+                    title: "다크 나이트",
+                    year: "2008",
+                    runtime: "2시간 32분",
+                    poster:
+                      "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+                  },
+                  {
+                    title: "너의 이름은",
+                    year: "2016",
+                    runtime: "1시간 46분",
+                    poster:
+                      "https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6babgKnONONX.jpg",
+                  },
                 ].map((movie, i) => (
-                  <div key={i} className="relative overflow-hidden transition-all cursor-pointer group rounded-lg hover:scale-105 hover:shadow-lg">
+                  <div
+                    key={i}
+                    className="relative overflow-hidden transition-all rounded-lg cursor-pointer group hover:scale-105 hover:shadow-lg"
+                  >
                     <img
                       src={movie.poster}
                       alt={movie.title}
@@ -900,7 +1053,9 @@ export default function Landing() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80"></div>
                     <div className="absolute bottom-0 left-0 right-0 p-2">
-                      <h4 className="text-xs font-bold text-white truncate">{movie.title}</h4>
+                      <h4 className="text-xs font-bold text-white truncate">
+                        {movie.title}
+                      </h4>
                       <div className="flex items-center gap-1 text-[10px] text-gray-300">
                         <span>{movie.year}</span>
                         <span>•</span>
@@ -915,8 +1070,12 @@ export default function Landing() {
             {/* Total Runtime */}
             <div className="p-3 border rounded-xl bg-accent-50 border-accent-100">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">총 러닝타임</span>
-                <span className="text-lg font-black text-accent-600">13시간 55분</span>
+                <span className="text-sm font-medium text-gray-700">
+                  총 러닝타임
+                </span>
+                <span className="text-lg font-black text-accent-600">
+                  13시간 55분
+                </span>
               </div>
             </div>
           </div>
@@ -926,7 +1085,7 @@ export default function Landing() {
       {/* How It Works Section - stagger-rotate 애니메이션 */}
       <section
         id="how-it-works"
-        className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-gradient-to-br from-accent-600 to-accent-700 text-white"
+        className="flex items-center justify-center min-h-screen py-16 text-white md:py-24 bg-gradient-to-br from-accent-600 to-accent-700"
       >
         <div className="px-6 mx-auto max-w-7xl">
           <div className="mb-24 text-center animate-fade-down">
@@ -970,7 +1129,7 @@ export default function Landing() {
       {/* FAQ Section - animate-flip-up 애니메이션 */}
       <section
         id="faq"
-        className="min-h-screen flex items-center justify-center py-16 md:py-24 bg-accent-50/50"
+        className="flex items-center justify-center min-h-screen py-16 md:py-24 bg-accent-50/50"
       >
         <div className="max-w-4xl px-6 mx-auto">
           <div className="mb-20 text-center animate-blur-in">
@@ -1034,7 +1193,7 @@ export default function Landing() {
       </section>
 
       {/* CTA Section - animate-bounce-up 애니메이션 */}
-      <section className="min-h-screen flex items-center justify-center py-16 md:py-24 relative overflow-hidden">
+      <section className="relative flex items-center justify-center min-h-screen py-16 overflow-hidden md:py-24">
         <div className="absolute inset-0 bg-gradient-to-br from-accent-600 to-accent-700" />
 
         <div className="relative z-10 max-w-5xl px-6 mx-auto text-center">
@@ -1057,7 +1216,7 @@ export default function Landing() {
               rel="noreferrer"
               className="inline-flex items-center px-12 py-6 text-xl font-bold transition-all bg-white rounded-full text-accent-600 hover:scale-105 hover:shadow-2xl"
             >
-              무료로 시작하기
+              서비스 체험하기
             </a>
             <a
               href="https://console.moviesir.cloud/login"
@@ -1089,7 +1248,8 @@ export default function Landing() {
               </a>
               <span className="hidden text-gray-700 md:inline">|</span>
               <span className="hidden md:inline">
-                스나이퍼팩토리 카카오클라우드 마스터 클래스 AIaaS 2기 3팀 무비게이션
+                스나이퍼팩토리 카카오클라우드 마스터 클래스 AIaaS 2기 3팀
+                무비게이션
               </span>
               <a
                 href="https://github.com/movigation"
@@ -1097,7 +1257,11 @@ export default function Landing() {
                 rel="noreferrer"
                 className="transition-colors hover:text-white"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"

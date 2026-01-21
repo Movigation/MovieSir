@@ -1,5 +1,6 @@
 # AI Service API v2 - GPU Server
-# deploy trigger: 2026-01-13
+# Hybrid Recommender: SBERT + ALS
+# Last updated: 2026-01-21
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Any, Dict
@@ -51,10 +52,10 @@ async def load_model():
         try:
             recommender = HybridRecommender(
                 db_config=db_config,
-                lightgcn_model_path="training/lightgcn_model/best_model.pt",
-                lightgcn_data_path="training/lightgcn_data"
+                als_model_path="training/als_data",
+                als_data_path="training/als_data"
             )
-            print("✅ AI Model loaded successfully")
+            print("✅ AI Model loaded successfully (SBERT + ALS)")
             return
         except Exception as e:
             if attempt < max_retries:
@@ -69,7 +70,7 @@ async def load_model():
 
 @app.get("/")
 def health():
-    return {"message": "ok", "service": "ai", "version": "final"}
+    return {"message": "ok", "service": "ai", "version": "final", "model": "SBERT+ALS"}
 
 
 @app.get("/health")
@@ -77,7 +78,8 @@ def health_check():
     return {
         "status": "healthy",
         "model_loaded": recommender is not None,
-        "version": "final"
+        "version": "final",
+        "model": "SBERT+ALS"
     }
 
 
@@ -102,7 +104,7 @@ class RecommendSingleRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
     allow_adult: bool = False
-    negative_movie_ids: Optional[List[int]] = None  # NEW
+    negative_movie_ids: Optional[List[int]] = None
 
 
 class MovieInfo(BaseModel):
@@ -136,10 +138,10 @@ class RecommendResponse(BaseModel):
 @app.post("/recommend", response_model=RecommendResponse)
 def recommend(request: RecommendRequest):
     """
-    영화 추천 - 시간 맞춤 조합 반환
+    영화 추천 - 시간 맞춤 조합 반환 (SBERT + ALS)
 
-    - Track A: 장르 + OTT 필터, SBERT 0.7 + LightGCN 0.3
-    - Track B: 장르 확장, SBERT 0.4 + LightGCN 0.6
+    - Track A: 장르 + OTT 필터, SBERT 0.7 + ALS 0.3 (선호 장르 맞춤)
+    - Track B: 장르 확장, SBERT 0.4 + ALS 0.6 (장르 확장 추천)
     - 총 런타임: 입력 시간의 90%~100%
     """
     if recommender is None:
@@ -154,7 +156,7 @@ def recommend(request: RecommendRequest):
             allow_adult=request.allow_adult,
             excluded_ids_a=request.excluded_ids_a or [],
             excluded_ids_b=request.excluded_ids_b or [],
-            negative_movie_ids=request.negative_movie_ids or []  # NEW
+            negative_movie_ids=request.negative_movie_ids or []
         )
 
         # numpy 타입 변환
@@ -199,7 +201,7 @@ def recommend_single(request: RecommendSingleRequest):
             preferred_genres=request.preferred_genres,
             preferred_otts=request.preferred_otts,
             allow_adult=request.allow_adult,
-            negative_movie_ids=request.negative_movie_ids or []  # NEW
+            negative_movie_ids=request.negative_movie_ids or []
         )
 
         if result:
