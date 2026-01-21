@@ -27,39 +27,6 @@ export default function FloatingBubble({
     position = 'left' // 기본값: 왼쪽 (챗봇 오른쪽에 배치)
 }: Props) {
     // 1. 내부 콘텐츠 (디자인)
-    // 말풍선 꼬리 위치에 따른 스타일 분기
-    // const tailStyles = position === 'left'
-    //     ? {
-    //         // 왼쪽 꼬리 (챗봇 오른쪽에 배치)
-    //         before: `
-    //             before:bottom-[-4px]
-    //             before:left-[-15px]
-    //             before:border-r-gray-200
-    //             before:rotate-[45deg]
-    //         `,
-    //         after: `
-    //             after:bottom-[-4px]
-    //             after:left-[-15px]
-    //             after:border-r-white
-    //             after:rotate-[45deg]
-    //         `
-    //     }
-    //     : {
-    //     // 오른쪽 꼬리 (챗봇 왼쪽에 배치)
-    //     before: `
-    //             before:bottom-[-4px]
-    //             before:right-[-15px]
-    //             before:border-l-gray-200
-    //             before:rotate-[-45deg]
-    //         `,
-    //         after: `
-    //             after:bottom-[-4px]
-    //             after:right-[-15px]
-    //             after:border-l-white
-    //             after:rotate-[-45deg]
-    //         `
-    // };
-
     const InnerContent = (
         <div
             className={`
@@ -73,6 +40,7 @@ export default function FloatingBubble({
                 text-blue-400
                 border
                 border-gray-100
+                cursor-pointer
                 
                 /* 호버 효과 */
                 transform transition-all duration-500
@@ -81,6 +49,9 @@ export default function FloatingBubble({
                 hover:border-blue-200
             `}
             onClick={onClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
         >
             {children}
         </div>

@@ -15,6 +15,8 @@ import Logs from '@/pages/Logs'
 import ApiDocs from '@/pages/ApiDocs'
 import Playground from '@/pages/Playground'
 import Settings from '@/pages/Settings'
+import Support from '@/pages/Support'
+import Contact from '@/pages/Contact'
 import OAuthCallback from '@/pages/OAuthCallback'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -26,16 +28,21 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 // 도메인에 따라 루트 경로 동작 결정
 function RootRoute() {
   const hostname = window.location.hostname
+  const { token } = useAuthStore()
 
   // api.moviesir.cloud → Api 페이지
   if (hostname === 'api.moviesir.cloud') {
     return <Api />
   }
-  // console.moviesir.cloud → 로그인 페이지로 리다이렉트
+  // console.moviesir.cloud → 로그인 여부에 따라 분기
   if (hostname === 'console.moviesir.cloud') {
-    return <Navigate to="/login" replace />
+    return token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
   }
-  // 그 외 (moviesir.cloud, localhost 등) → Landing 페이지
+  // localhost:3001 (로컬 개발) → 로그인 여부에 따라 분기
+  if (hostname === 'localhost') {
+    return token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+  }
+  // 그 외 (moviesir.cloud 등) → Landing 페이지
   return <Landing />
 }
 
@@ -46,28 +53,29 @@ function App() {
       <Route path="/api" element={<Api />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
+      <Route path="/support" element={<Support />} />
+      <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/google/callback" element={<OAuthCallback provider="google" />} />
       <Route path="/auth/github/callback" element={<OAuthCallback provider="github" />} />
+      {/* Protected Routes - /dashboard, /api-keys, etc. */}
       <Route
-        path="/console"
         element={
           <PrivateRoute>
             <Layout />
           </PrivateRoute>
         }
       >
-        <Route index element={<Navigate to="/console/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="api-keys" element={<ApiKeys />} />
-        <Route path="usage" element={<Usage />} />
-        <Route path="users" element={<Users />} />
-        <Route path="logs" element={<Logs />} />
-        <Route path="docs" element={<ApiDocs />} />
-        <Route path="playground" element={<Playground />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/api-keys" element={<ApiKeys />} />
+        <Route path="/usage" element={<Usage />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/logs" element={<Logs />} />
+        <Route path="/api-docs" element={<ApiDocs />} />
+        <Route path="/playground" element={<Playground />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
     </Routes>
   )

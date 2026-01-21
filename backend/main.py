@@ -1,5 +1,5 @@
 # backend/main.py
-# deploy trigger: 2025-01-14 v6 - External API에 api_usage 집계 추가 (Dashboard 연동)
+# deploy trigger: 2025-01-20 v8 - nginx Swagger/ReDoc 프록시 설정 추가
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
@@ -19,7 +19,13 @@ from backend.domains.mypage.router import router as mypage_router
 from backend.domains.b2b.router import router as b2b_router
 from backend.domains.b2b.external_router import router as external_router
 
-app = FastAPI()
+app = FastAPI(
+    title="MovieSir API",
+    description="AI 기반 영화 추천 서비스 API",
+    version="1.0.0",
+    docs_url="/swagger",
+    redoc_url="/redoc",
+)
 
 # CORS 설정
 app.add_middleware(

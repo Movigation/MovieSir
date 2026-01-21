@@ -5,6 +5,10 @@ export default function Api() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    document.title = '무비서 API';
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
@@ -31,101 +35,29 @@ export default function Api() {
                 </span>
               </a>
               <ul className="hidden md:flex items-center gap-1">
-                {/* 소개 드롭다운 */}
-                <li className="relative group">
-                  <button className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1">
-                    소개
-                    <svg
-                      className="w-3 h-3 transition-transform group-hover:rotate-180"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                  <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      <Link
-                        to="/docs?section=intro"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        무비서 API란
-                      </Link>
-                      <Link
-                        to="/docs?section=features"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        주요 기능
-                      </Link>
-                      <Link
-                        to="/docs?section=getting-started"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        시작하기
-                      </Link>
-                    </div>
-                  </div>
-                </li>
-                {/* API 문서 드롭다운 */}
-                <li className="relative group">
-                  <button className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1">
+                <li>
+                  <Link
+                    to="/docs"
+                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
                     API 문서
-                    <svg
-                      className="w-3 h-3 transition-transform group-hover:rotate-180"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                  <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
-                      <Link
-                        to="/docs?section=auth"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        인증
-                      </Link>
-                      <Link
-                        to="/docs?section=recommend"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        /recommend
-                      </Link>
-                      <Link
-                        to="/docs?section=errors"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        에러 코드
-                      </Link>
-                      <Link
-                        to="/docs?section=rate-limit"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
-                      >
-                        Rate Limit
-                      </Link>
-                    </div>
-                  </div>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="mailto:support@moviesir.cloud"
+                  <Link
+                    to="/support"
                     className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                   >
                     문의
-                  </a>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/contact"
+                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    도입 문의
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -138,20 +70,18 @@ export default function Api() {
               >
                 무비서 이용하기
               </a>
-              <span className="text-white/30">|</span>
-              <Link
-                to="/login"
+              <a
+                href="https://console.moviesir.cloud/login"
                 className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
               >
                 콘솔
-              </Link>
-              <span className="text-white/30">|</span>
-              <Link
-                to="/register"
+              </a>
+              <a
+                href="https://console.moviesir.cloud/register"
                 className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
               >
                 회원가입
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -195,8 +125,8 @@ export default function Api() {
                   시간 맞춤 추천부터 OTT 필터링까지, 한 번의 호출로 해결합니다
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    to="/login"
+                  <a
+                    href="https://console.moviesir.cloud/login"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition-colors shadow-lg shadow-blue-500/25"
                   >
                     시작하기
@@ -213,7 +143,7 @@ export default function Api() {
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </Link>
+                  </a>
                   <Link
                     to="/docs"
                     className="inline-flex items-center gap-2 px-6 py-3 border border-white/30 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
@@ -411,6 +341,149 @@ export default function Api() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Console Preview - PC Monitor */}
+          <div className="relative py-20">
+            <div className="max-w-[1100px] mx-auto px-6">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  직관적인 B2B Console
+                </h2>
+                <p className="text-white/60">
+                  API 사용량과 성능을 실시간으로 모니터링하세요
+                </p>
+              </div>
+
+              {/* PC Monitor Mockup - Simple Style */}
+              <div className="relative mx-auto max-w-[950px]">
+                {/* Monitor Body */}
+                <div className="relative bg-[#1a1a1e] rounded-xl p-3 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)]">
+                  {/* Screenshot */}
+                  <div className="rounded-lg overflow-hidden bg-[#0f0f12]">
+                    <img
+                      src="/images/console-dashboard.png"
+                      alt="B2B Console Dashboard"
+                      className="w-full h-auto"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden aspect-[16/9] flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-sm">Dashboard Preview</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Stand */}
+                <div className="mx-auto w-[80px] h-[40px] bg-[#1a1a1e] rounded-b-lg" />
+                <div className="mx-auto w-[160px] h-[10px] bg-[#1a1a1e] rounded-full" />
+              </div>
+
+              {/* Feature Pills */}
+              <div className="flex flex-wrap justify-center gap-3 mt-10">
+                {['실시간 사용량 모니터링', 'API 키 관리', '응답 시간 분석', '일별/월별 통계'].map((feature, i) => (
+                  <span key={i} className="px-4 py-2 bg-blue-500/20 rounded-full text-sm text-blue-300 border border-blue-500/30">
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* PWA Support - Phone Mockup */}
+          <div className="relative py-20">
+            <div className="max-w-[1000px] mx-auto px-6">
+              <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
+                {/* Phone Mockup - iPhone 14 Pro Style */}
+                <div className="flex justify-center order-first md:order-last">
+                  <div className="relative">
+                    {/* Phone Frame */}
+                    <div className="relative w-[280px] bg-[#1c1c1e] rounded-[50px] p-[10px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
+                      {/* Side Button - Right */}
+                      <div className="absolute right-[-2px] top-[100px] w-[3px] h-[70px] bg-[#2c2c2e] rounded-l-sm" />
+                      {/* Volume Buttons - Left */}
+                      <div className="absolute left-[-2px] top-[80px] w-[3px] h-[28px] bg-[#2c2c2e] rounded-r-sm" />
+                      <div className="absolute left-[-2px] top-[115px] w-[3px] h-[55px] bg-[#2c2c2e] rounded-r-sm" />
+                      {/* Screen */}
+                      <div className="relative bg-[#000] rounded-[40px] overflow-hidden">
+                        {/* App Content - Screenshot Only */}
+                        <div className="aspect-[9/19.5]">
+                          <img
+                            src="/images/pwa-mobile.png"
+                            alt="MovieSir PWA"
+                            className="w-full h-full object-cover object-top"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="hidden w-full h-full flex flex-col items-center justify-center text-gray-500 p-6 bg-[#0f0f12]">
+                            <img src="/favicon.svg" alt="무비서" className="w-16 h-16 mb-4 opacity-50" />
+                            <p className="text-xs text-center">무비서 PWA</p>
+                          </div>
+                        </div>
+                        {/* Home Indicator */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[100px] h-[4px] bg-white/60 rounded-full" />
+                      </div>
+                    </div>
+                    {/* Glow Effect */}
+                    <div className="absolute -inset-8 bg-blue-500/20 blur-[60px] rounded-full -z-10" />
+                  </div>
+                </div>
+
+                {/* Text Content */}
+                <div className="max-w-md">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-full text-sm text-blue-300 mb-4">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    PWA 지원
+                  </div>
+                  <h2 className="text-3xl font-bold text-white mb-4">
+                    모바일에서도 편리하게
+                  </h2>
+                  <p className="text-white/70 mb-6 leading-relaxed">
+                    무비서 Console은 PWA(Progressive Web App)를 지원합니다.
+                    <br />
+                    설치 없이 홈 화면에 추가하여 네이티브 앱처럼 사용하세요.
+                  </p>
+                  <ul className="space-y-3">
+                    {[
+                      '앱 설치 없이 홈 화면에서 바로 실행',
+                      '저장 공간 걱정 없는 가벼운 앱',
+                      '브라우저 기반으로 항상 최신 버전',
+                      '네이티브 앱 수준의 부드러운 UX',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-white/80">
+                        <svg className="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-8">
+                    <a
+                      href="https://console.moviesir.cloud"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+                    >
+                      Console 바로가기
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

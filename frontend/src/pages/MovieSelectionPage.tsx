@@ -326,9 +326,9 @@ export default function MovieSelectionPage() {
                         </div>
 
                         {/* 제목 */}
-                        <h3 className="text-xl md:text-2xl font-bold text-white text-center mb-3">
+                        <h2 className="text-xl md:text-2xl font-bold text-white text-center mb-3">
                             영화 선택을 건너뛰시겠어요?
-                        </h3>
+                        </h2>
 
                         {/* 설명 */}
                         <p className="text-gray-400 text-center mb-6 text-sm md:text-base">

@@ -39,7 +39,12 @@ export default function OAuthCallback({ provider }: OAuthCallbackProps) {
           redirect_uri: redirectUri
         })
         login(data.company, data.access_token)
-        navigate('/console/dashboard')
+        // api.moviesir.cloud에서 OAuth 로그인 시 console.moviesir.cloud로 리다이렉트
+        if (window.location.hostname === 'api.moviesir.cloud') {
+          window.location.href = 'https://console.moviesir.cloud/dashboard'
+        } else {
+          navigate('/dashboard')
+        }
       } catch (err: any) {
         const message = err.response?.data?.detail || `${provider} 로그인에 실패했습니다.`
         setError(message)

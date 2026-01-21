@@ -302,9 +302,9 @@ export default function FeedbackPopup() {
 
                 {/* 1. 타이틀 영역 */}
                 <div className="text-center space-y-1 px-2">
-                    <h3 className="text-[18px] font-bold text-black dark:text-white leading-tight">
+                    <h2 className="text-[18px] font-bold text-black dark:text-white leading-tight">
                         <span className="text-blue-600 dark:text-blue-400">[{targetMovie.title}]</span><br />어떠셨나요?
-                    </h3>
+                    </h2>
                 </div>
 
                 {/* 2. 포스터 및 가이드 레이어 영역 */}
@@ -316,7 +316,11 @@ export default function FeedbackPopup() {
                     {/* 모바일용 스와이프 가이드 (Portal을 사용해 body에 렌더링) */}
                     {showTutorial && isVisible && !isDragging && typeof document !== 'undefined' && createPortal(
                         <div
-                            className="md:hidden fixed inset-0 z-[100001] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-[3px] pointer-events-none animate-in fade-in duration-500"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowTutorial(false);
+                            }}
+                            className="md:hidden fixed inset-0 z-[100001] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-[3px] pointer-events-auto animate-in fade-in duration-500 cursor-pointer"
                         >
                             <div className="text-white text-center space-y-6 max-w-[280px]">
                                 <p className="text-[16px] font-bold leading-relaxed drop-shadow-xl text-white">

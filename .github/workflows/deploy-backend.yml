@@ -65,6 +65,9 @@ jobs:
             ${{ secrets.ENV_PRODUCTION_APP }}
             ENVEOF
 
+            echo "📌 빌더 캐시 정리"
+            docker builder prune -f || true
+
             echo "📌 기존 컨테이너 중지"
             docker compose --env-file .env.production down || true
 
@@ -77,5 +80,9 @@ jobs:
             echo "📌 백엔드 헬스체크"
             sleep 3
             curl -s http://localhost:8000/ || echo "⚠️ 헬스체크 대기중"
+
+            echo "📌 nginx 설정 업데이트"
+            sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-enabled/moviesir
+            sudo nginx -t && sudo systemctl reload nginx
 
             echo "✅ 백엔드 배포 완료"

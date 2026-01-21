@@ -57,7 +57,12 @@ export default function Register() {
         password: form.password,
       })
       login(data.company, data.access_token)
-      navigate('/console/dashboard')
+      // api.moviesir.cloud에서 회원가입 시 console.moviesir.cloud로 리다이렉트
+      if (window.location.hostname === 'api.moviesir.cloud') {
+        window.location.href = 'https://console.moviesir.cloud/dashboard'
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err: any) {
       const message = err.response?.data?.detail || '회원가입 중 오류가 발생했습니다'
       setError(message)
