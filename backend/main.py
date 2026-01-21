@@ -1,5 +1,5 @@
 # backend/main.py
-# deploy trigger: 2025-01-20 v8 - nginx Swagger/ReDoc 프록시 설정 추가
+# deploy trigger: 2025-01-21 v9 - nginx CORS 중복 헤더 제거
 from dotenv import load_dotenv
 
 # 환경변수 로드 (.env) - 모든 import 전에 먼저 로드해야 함
