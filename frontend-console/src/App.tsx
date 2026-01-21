@@ -51,6 +51,7 @@ function App() {
     <Routes>
       <Route path="/" element={<RootRoute />} />
       <Route path="/api" element={<Api />} />
+      <Route path="/landing" element={<Landing />} />
       <Route path="/about" element={<Navigate to="/docs" replace />} />
       <Route path="/docs" element={<Docs />} />
       <Route path="/support" element={<Support />} />
