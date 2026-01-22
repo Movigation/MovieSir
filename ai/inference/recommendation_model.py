@@ -447,9 +447,9 @@ class HybridRecommender:
         # ALS 유사도: (M, ALS_dim) @ (ALS_dim, N) = (M, N)
         als_similarities = self.target_als_matrix[indices] @ user_als_profile.T
 
-        # 각 후보 영화의 평균 유사도 계산 (모든 사용자 영화와의 평균)
-        sbert_scores = np.mean(sbert_similarities, axis=1)  # (M,)
-        als_scores = np.mean(als_similarities, axis=1)  # (M,)
+        # 각 후보 영화의 최대 유사도 계산 (모든 사용자 영화 중 최대값)
+        sbert_scores = np.max(sbert_similarities, axis=1)  # (M,)
+        als_scores = np.max(als_similarities, axis=1)  # (M,)
 
         # MinMax 정규화
         scaler = MinMaxScaler()

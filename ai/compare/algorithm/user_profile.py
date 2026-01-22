@@ -45,14 +45,14 @@ class MaxSimilarityRecommender(HybridRecommender):
     개별 영화 임베딩 유지 → 각 후보 영화와 개별 유사도 계산 → 최대값
     """
 
-    def __init__(self, db_config: dict = None, lightgcn_model_path: str = None,
-                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
+    def __init__(self, db_config: dict = None, als_model_path: str = None,
+                 als_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
         """
         현재 버전과 동일하지만 명시적으로 최대 유사도 방식 사용
 
         Args:
             base_recommender: 기존 HybridRecommender 인스턴스 (데이터 재사용)
-            db_config, lightgcn_model_path, lightgcn_data_path: base_recommender 없을 때 사용
+            db_config, als_model_path, als_data_path: base_recommender 없을 때 사용
         """
         if base_recommender is not None:
             # 기존 인스턴스의 데이터 재사용
@@ -60,7 +60,7 @@ class MaxSimilarityRecommender(HybridRecommender):
             self._copy_from_base(base_recommender)
         else:
             # 새로 초기화
-            super().__init__(db_config, lightgcn_model_path, lightgcn_data_path, device)
+            super().__init__(db_config, als_model_path, als_data_path, device)
 
         print("  → Using MAXIMUM SIMILARITY method")
 
@@ -72,12 +72,12 @@ class MaxSimilarityRecommender(HybridRecommender):
         self.sbert_movie_ids = base.sbert_movie_ids
         self.sbert_embeddings = base.sbert_embeddings
         self.sbert_movie_to_idx = base.sbert_movie_to_idx
-        self.lightgcn_movie_to_idx = base.lightgcn_movie_to_idx
-        self.lightgcn_item_embeddings = base.lightgcn_item_embeddings
+        self.als_movie_to_idx = base.als_movie_to_idx
+        self.als_item_factors = base.als_item_factors
         self.common_movie_ids = base.common_movie_ids
         self.movie_id_to_idx = base.movie_id_to_idx
         self.target_sbert_matrix = base.target_sbert_matrix
-        self.target_lightgcn_matrix = base.target_lightgcn_matrix
+        self.target_als_matrix = base.target_als_matrix
         self.target_sbert_norm = base.target_sbert_norm
         self.rating_scores = base.rating_scores
         self.movies_by_year = base.movies_by_year
@@ -88,15 +88,15 @@ class MaxSimilarityRecommender(HybridRecommender):
         self.movie_ott_map = base.movie_ott_map
 
     # _get_user_profile은 부모 클래스의 것을 그대로 사용
-    # 현재 버전: 개별 임베딩 행렬 반환 (N, dim) - 평균 유사도 방식
+    # 현재 버전: 개별 임베딩 행렬 반환 (N, dim) - 최대 유사도 방식
 
     def _get_top_movies(
         self,
         user_sbert_profile: np.ndarray,
-        user_gcn_profile: np.ndarray,
+        user_als_profile: np.ndarray,
         filtered_ids: List[int],
         sbert_weight: float,
-        lightgcn_weight: float,
+        als_weight: float,
         top_k: int = 300,
         exclude_ids: Optional[List[int]] = None,
         preferred_genres: Optional[List[str]] = None
@@ -122,9 +122,9 @@ class MaxSimilarityRecommender(HybridRecommender):
         sbert_similarities = self.target_sbert_norm[indices] @ user_sbert_profile.T  # (M, N)
         sbert_scores = np.max(sbert_similarities, axis=1)  # (M,) - 최대값 사용
 
-        # LightGCN 유사도: 각 후보 영화와 사용자 영화들 중 최대 유사도
-        lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T  # (M, N)
-        lightgcn_scores = np.max(lightgcn_similarities, axis=1)  # (M,) - 최대값 사용
+        # ALS 유사도: 각 후보 영화와 사용자 영화들 중 최대 유사도
+        als_similarities = self.target_als_matrix[indices] @ user_als_profile.T  # (M, N)
+        als_scores = np.max(als_similarities, axis=1)  # (M,) - 최대값 사용
 
         # 나머지는 부모 클래스와 동일 (MinMax 정규화, 최종 점수 계산)
         scaler = MinMaxScaler()
@@ -134,15 +134,15 @@ class MaxSimilarityRecommender(HybridRecommender):
 
         if len(sbert_scores) > 1:
             norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
-            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
+            norm_als = scaler.fit_transform(als_scores.reshape(-1, 1)).squeeze()
             norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
         else:
             norm_sbert = sbert_scores
-            norm_lightgcn = lightgcn_scores
+            norm_als = als_scores
             norm_rating = filtered_rating
 
-        # LightGCN 있는 영화 ID 집합
-        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
+        # ALS 있는 영화 ID 집합
+        als_ids = set(self.als_movie_to_idx.keys())
 
         # 최종 점수 계산
         movie_scores = []
@@ -151,8 +151,8 @@ class MaxSimilarityRecommender(HybridRecommender):
                 continue
 
             # 가중치 재조정
-            if mid in lightgcn_ids:
-                model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+            if mid in als_ids:
+                model_score = sbert_weight * norm_sbert[i] + als_weight * norm_als[i]
                 rec_type = "hybrid"
             else:
                 model_score = norm_sbert[i]
@@ -195,14 +195,14 @@ class MaxSimilarityRecommender(HybridRecommender):
 class AveragedRecommender(HybridRecommender):
     """평균 임베딩 방식 추천 시스템 (현재 버전 상속)"""
 
-    def __init__(self, db_config: dict = None, lightgcn_model_path: str = None,
-                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
+    def __init__(self, db_config: dict = None, als_model_path: str = None,
+                 als_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
         """
         현재 버전과 동일하지만 평균 임베딩 방식 사용
 
         Args:
             base_recommender: 기존 HybridRecommender 인스턴스 (데이터 재사용)
-            db_config, lightgcn_model_path, lightgcn_data_path: base_recommender 없을 때 사용
+            db_config, als_model_path, als_data_path: base_recommender 없을 때 사용
         """
         if base_recommender is not None:
             # 기존 인스턴스의 데이터 재사용 (초기화 스킵)
@@ -210,7 +210,7 @@ class AveragedRecommender(HybridRecommender):
             self._copy_from_base(base_recommender)
         else:
             # 새로 초기화
-            super().__init__(db_config, lightgcn_model_path, lightgcn_data_path, device)
+            super().__init__(db_config, als_model_path, als_data_path, device)
 
         print("  → Using AVERAGED EMBEDDING method")
 
@@ -228,15 +228,15 @@ class AveragedRecommender(HybridRecommender):
         self.sbert_embeddings = base.sbert_embeddings
         self.sbert_movie_to_idx = base.sbert_movie_to_idx
 
-        # LightGCN 관련
-        self.lightgcn_movie_to_idx = base.lightgcn_movie_to_idx
-        self.lightgcn_item_embeddings = base.lightgcn_item_embeddings
+        # ALS 관련
+        self.als_movie_to_idx = base.als_movie_to_idx
+        self.als_item_factors = base.als_item_factors
 
         # 공통 영화 및 인덱스 매핑 (pre-aligned)
         self.common_movie_ids = base.common_movie_ids
         self.movie_id_to_idx = base.movie_id_to_idx
         self.target_sbert_matrix = base.target_sbert_matrix
-        self.target_lightgcn_matrix = base.target_lightgcn_matrix
+        self.target_als_matrix = base.target_als_matrix
         self.target_sbert_norm = base.target_sbert_norm
 
         # 평점 데이터
@@ -269,30 +269,30 @@ class AveragedRecommender(HybridRecommender):
         user_sbert_profile = np.mean(user_sbert_vecs, axis=0)
         user_sbert_profile = user_sbert_profile / (np.linalg.norm(user_sbert_profile) + 1e-10)
 
-        # LightGCN 프로필
-        user_gcn_vecs = []
+        # ALS 프로필
+        user_als_vecs = []
         for mid in user_movie_ids:
-            if mid in self.lightgcn_movie_to_idx:
-                user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
+            if mid in self.als_movie_to_idx:
+                user_als_vecs.append(self.als_item_factors[self.als_movie_to_idx[mid]])
 
-        if not user_gcn_vecs:
-            random_ids = list(self.lightgcn_movie_to_idx.keys())[:5]
+        if not user_als_vecs:
+            random_ids = list(self.als_movie_to_idx.keys())[:5]
             for mid in random_ids:
-                user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
+                user_als_vecs.append(self.als_item_factors[self.als_movie_to_idx[mid]])
 
         # 평균 벡터 계산 및 정규화 (🔧 수정: 정규화 추가)
-        user_gcn_profile = np.mean(user_gcn_vecs, axis=0)
-        user_gcn_profile = user_gcn_profile / (np.linalg.norm(user_gcn_profile) + 1e-10)
+        user_als_profile = np.mean(user_als_vecs, axis=0)
+        user_als_profile = user_als_profile / (np.linalg.norm(user_als_profile) + 1e-10)
 
-        return user_sbert_profile, user_gcn_profile
+        return user_sbert_profile, user_als_profile
 
     def _get_top_movies(
         self,
         user_sbert_profile,
-        user_gcn_profile,
+        user_als_profile,
         filtered_ids: List[int],
         sbert_weight: float,
-        lightgcn_weight: float,
+        als_weight: float,
         top_k: int = 300,
         exclude_ids: Optional[List[int]] = None,
         preferred_genres: Optional[List[str]] = None
@@ -315,7 +315,7 @@ class AveragedRecommender(HybridRecommender):
         indices = [idx for _, idx in filtered_indices]
 
         sbert_scores = self.target_sbert_norm[indices] @ user_sbert_profile
-        lightgcn_scores = self.target_lightgcn_matrix[indices] @ user_gcn_profile
+        als_scores = self.target_als_matrix[indices] @ user_als_profile
 
         # MinMax 정규화
         scaler = MinMaxScaler()
@@ -325,15 +325,15 @@ class AveragedRecommender(HybridRecommender):
 
         if len(sbert_scores) > 1:
             norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
-            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
+            norm_als = scaler.fit_transform(als_scores.reshape(-1, 1)).squeeze()
             norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
         else:
             norm_sbert = sbert_scores
-            norm_lightgcn = lightgcn_scores
+            norm_als = als_scores
             norm_rating = filtered_rating
 
-        # LightGCN 있는 영화 ID 집합
-        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
+        # ALS 있는 영화 ID 집합
+        als_ids = set(self.als_movie_to_idx.keys())
 
         # 최종 점수 계산
         movie_scores = []
@@ -342,8 +342,8 @@ class AveragedRecommender(HybridRecommender):
                 continue
 
             # 가중치 재조정
-            if mid in lightgcn_ids:
-                model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+            if mid in als_ids:
+                model_score = sbert_weight * norm_sbert[i] + als_weight * norm_als[i]
                 rec_type = "hybrid"
             else:
                 model_score = norm_sbert[i]
@@ -379,14 +379,14 @@ class MeanSimilarityRecommender(HybridRecommender):
     개별 영화 임베딩 유지 → 각 후보 영화와 개별 유사도 계산 → 평균
     """
 
-    def __init__(self, db_config: dict = None, lightgcn_model_path: str = None,
-                 lightgcn_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
+    def __init__(self, db_config: dict = None, als_model_path: str = None,
+                 als_data_path: str = None, device: str = None, base_recommender: HybridRecommender = None):
         """
         현재 버전과 동일 (평균 유사도 방식)
 
         Args:
             base_recommender: 기존 HybridRecommender 인스턴스 (데이터 재사용)
-            db_config, lightgcn_model_path, lightgcn_data_path: base_recommender 없을 때 사용
+            db_config, als_model_path, als_data_path: base_recommender 없을 때 사용
         """
         if base_recommender is not None:
             # 기존 인스턴스의 데이터 재사용
@@ -394,7 +394,7 @@ class MeanSimilarityRecommender(HybridRecommender):
             self._copy_from_base(base_recommender)
         else:
             # 새로 초기화
-            super().__init__(db_config, lightgcn_model_path, lightgcn_data_path, device)
+            super().__init__(db_config, als_model_path, als_data_path, device)
 
         print("  → Using MEAN SIMILARITY method (현재 프로덕션 버전)")
 
@@ -407,12 +407,12 @@ class MeanSimilarityRecommender(HybridRecommender):
         self.sbert_movie_ids = base.sbert_movie_ids
         self.sbert_embeddings = base.sbert_embeddings
         self.sbert_movie_to_idx = base.sbert_movie_to_idx
-        self.lightgcn_movie_to_idx = base.lightgcn_movie_to_idx
-        self.lightgcn_item_embeddings = base.lightgcn_item_embeddings
+        self.als_movie_to_idx = base.als_movie_to_idx
+        self.als_item_factors = base.als_item_factors
         self.common_movie_ids = base.common_movie_ids
         self.movie_id_to_idx = base.movie_id_to_idx
         self.target_sbert_matrix = base.target_sbert_matrix
-        self.target_lightgcn_matrix = base.target_lightgcn_matrix
+        self.target_als_matrix = base.target_als_matrix
         self.target_sbert_norm = base.target_sbert_norm
         self.rating_scores = base.rating_scores
         self.movies_by_year = base.movies_by_year
@@ -444,32 +444,32 @@ class MeanSimilarityRecommender(HybridRecommender):
             np.linalg.norm(user_sbert_matrix, axis=1, keepdims=True) + 1e-10
         )
 
-        # LightGCN 프로필 (개별 임베딩 유지)
-        user_gcn_vecs = []
+        # ALS 프로필 (개별 임베딩 유지)
+        user_als_vecs = []
         for mid in user_movie_ids:
-            if mid in self.lightgcn_movie_to_idx:
-                user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
+            if mid in self.als_movie_to_idx:
+                user_als_vecs.append(self.als_item_factors[self.als_movie_to_idx[mid]])
 
-        if not user_gcn_vecs:
-            random_ids = list(self.lightgcn_movie_to_idx.keys())[:5]
+        if not user_als_vecs:
+            random_ids = list(self.als_movie_to_idx.keys())[:5]
             for mid in random_ids:
-                user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
+                user_als_vecs.append(self.als_item_factors[self.als_movie_to_idx[mid]])
 
-        # 행렬로 변환 및 정규화 (N, LightGCN_dim)
-        user_gcn_matrix = np.array(user_gcn_vecs)
-        user_gcn_matrix = user_gcn_matrix / (
-            np.linalg.norm(user_gcn_matrix, axis=1, keepdims=True) + 1e-10
+        # 행렬로 변환 및 정규화 (N, ALS_dim)
+        user_als_matrix = np.array(user_als_vecs)
+        user_als_matrix = user_als_matrix / (
+            np.linalg.norm(user_als_matrix, axis=1, keepdims=True) + 1e-10
         )
 
-        return user_sbert_matrix, user_gcn_matrix
+        return user_sbert_matrix, user_als_matrix
 
     def _get_top_movies(
         self,
         user_sbert_profile,
-        user_gcn_profile,
+        user_als_profile,
         filtered_ids: List[int],
         sbert_weight: float,
-        lightgcn_weight: float,
+        als_weight: float,
         top_k: int = 300,
         exclude_ids: Optional[List[int]] = None,
         preferred_genres: Optional[List[str]] = None
@@ -495,9 +495,9 @@ class MeanSimilarityRecommender(HybridRecommender):
         sbert_similarities = self.target_sbert_norm[indices] @ user_sbert_profile.T  # (M, N)
         sbert_scores = np.mean(sbert_similarities, axis=1)  # (M,)
 
-        # LightGCN 유사도: 각 후보 영화와 사용자 영화들의 유사도 평균
-        lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T  # (M, N)
-        lightgcn_scores = np.mean(lightgcn_similarities, axis=1)  # (M,)
+        # ALS 유사도: 각 후보 영화와 사용자 영화들의 유사도 평균
+        als_similarities = self.target_als_matrix[indices] @ user_als_profile.T  # (M, N)
+        als_scores = np.mean(als_similarities, axis=1)  # (M,)
 
         # 나머지는 현재 버전과 동일 (MinMax 정규화, 최종 점수 계산)
         scaler = MinMaxScaler()
@@ -507,15 +507,15 @@ class MeanSimilarityRecommender(HybridRecommender):
 
         if len(sbert_scores) > 1:
             norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
-            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
+            norm_als = scaler.fit_transform(als_scores.reshape(-1, 1)).squeeze()
             norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
         else:
             norm_sbert = sbert_scores
-            norm_lightgcn = lightgcn_scores
+            norm_als = als_scores
             norm_rating = filtered_rating
 
-        # LightGCN 있는 영화 ID 집합
-        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
+        # ALS 있는 영화 ID 집합
+        als_ids = set(self.als_movie_to_idx.keys())
 
         # 최종 점수 계산
         movie_scores = []
@@ -524,8 +524,8 @@ class MeanSimilarityRecommender(HybridRecommender):
                 continue
 
             # 가중치 재조정
-            if mid in lightgcn_ids:
-                model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+            if mid in als_ids:
+                model_score = sbert_weight * norm_sbert[i] + als_weight * norm_als[i]
                 rec_type = "hybrid"
             else:
                 model_score = norm_sbert[i]
@@ -758,22 +758,51 @@ class RecommenderEvaluator:
         ground_truth: List[int],
         k: int = 10
     ) -> float:
-        """NDCG@K 계산"""
+        """NDCG@K 계산
+        
+        NDCG = DCG / IDCG
+        - DCG: 추천 순서대로의 누적 이득
+        - IDCG: 이상적인 순서(정렬)의 누적 이득
+        """
         top_k = recommendations[:k]
         relevant = set(ground_truth)
 
-        # 관련도 벡터 생성
-        relevance = [1 if movie_id in relevant else 0 for movie_id in top_k]
-        true_relevance = sorted(relevance, reverse=True)
-
-        if sum(true_relevance) == 0:
+        # 추천 순서대로의 관련도 (0 or 1)
+        relevance = np.array([1.0 if movie_id in relevant else 0.0 for movie_id in top_k])
+        
+        # 관련 영화가 없으면 0 반환
+        if relevance.sum() == 0:
             return 0.0
 
-        try:
-            score = ndcg_score([true_relevance], [relevance])
-            return score
-        except:
-            return 0.0
+        # DCG 계산 (Discounted Cumulative Gain)
+        # DCG = sum(rel_i / log2(i + 1)) for i in 1..k
+        dcg = 0.0
+        for i, rel in enumerate(relevance):
+            dcg += rel / np.log2(i + 2)  # i+2 because i starts at 0
+        
+        # IDCG 계산 (Ideal DCG - 관련도 순으로 정렬)
+        ideal_relevance = np.sort(relevance)[::-1]  # 내림차순 정렬
+        idcg = 0.0
+        for i, rel in enumerate(ideal_relevance):
+            idcg += rel / np.log2(i + 2)
+        
+        # NDCG = DCG / IDCG
+        return dcg / idcg if idcg > 0 else 0.0
+
+    def calculate_recall_at_k(
+        self,
+        recommendations: List[int],
+        ground_truth: List[int],
+        k: int = 10
+    ) -> float:
+        """Recall@K 계산
+
+        추천한 K개 중 실제로 사용자가 본 영화의 비율 (전체 테스트 영화 대비)
+        """
+        top_k = recommendations[:k]
+        relevant = set(ground_truth)
+        hits = len(set(top_k) & relevant)
+        return hits / len(relevant) if len(relevant) > 0 else 0.0
 
     def calculate_diversity(
         self,
@@ -801,7 +830,7 @@ class RecommenderEvaluator:
         k: int = 10
     ) -> Dict[str, Any]:
         """
-        추천 시스템 평가
+        추천 시스템 평가 (Top-K 직접 평가 방식)
 
         Args:
             recommender: 추천 시스템 인스턴스
@@ -813,6 +842,7 @@ class RecommenderEvaluator:
             평가 결과 딕셔너리
         """
         precision_scores = []
+        recall_scores = []
         ndcg_scores = []
         diversity_scores = []
         elapsed_times = []
@@ -832,66 +862,69 @@ class RecommenderEvaluator:
         print(f"{'='*60}")
 
         for idx, (user_id, train_movies, test_movies) in enumerate(test_users):
-            # 🔧 수정: 이미 필터링된 데이터이므로 추가 필터링 불필요
-            # (get_test_users_from_ratings_csv에서 이미 필터링됨)
-
             # 추천 시간 측정
             start_time = time.time()
 
             try:
-                # 평가 중에는 출력 억제
-                import io
-                import sys
-                old_stdout = sys.stdout
-                sys.stdout = io.StringIO()
+                # 1. 유저 프로필 생성
+                user_sbert_profile, user_als_profile = recommender._get_user_profile(train_movies)
 
-                result = recommender.recommend(
-                    user_movie_ids=train_movies,  # 이미 필터링됨
-                    available_time=180,
-                    preferred_genres=None,
-                    preferred_otts=None,
-                    allow_adult=False,
-                    excluded_ids_a=[],
-                    excluded_ids_b=[]
+                # 2. 모든 영화 ID 가져오기 (필터링 없음)
+                all_movie_ids = list(recommender.metadata_map.keys())
+                
+                # 3. Train 영화만 제외 (이미 본 영화)
+                candidate_ids = [mid for mid in all_movie_ids if mid not in train_movies]
+                
+                # 4. 순수 임베딩 유사도 계산
+                top_movies = self._get_top_movies_pure(
+                    recommender=recommender,
+                    user_sbert_profile=user_sbert_profile,
+                    user_als_profile=user_als_profile,
+                    candidate_ids=candidate_ids,
+                    sbert_weight=0.7,
+                    als_weight=0.3,
+                    top_k=k
                 )
-
-                # 출력 복원
-                sys.stdout = old_stdout
 
                 elapsed = time.time() - start_time
                 elapsed_times.append(elapsed)
 
-                # Track A 사용 (사용자 선호도 기반)
-                track_a_movies = result['track_a']['movies']
-                track_a_ids = [m['movie_id'] for m in track_a_movies]
+                # 상위 K개 영화 ID 추출
+                top_k_ids = [m['movie_id'] for m in top_movies[:k]]
 
                 # Precision@K 계산
-                precision = self.calculate_precision_at_k(track_a_ids, test_movies, k)
+                precision = self.calculate_precision_at_k(top_k_ids, test_movies, k)
                 precision_scores.append(precision)
 
+                # Recall@K 계산
+                recall = self.calculate_recall_at_k(top_k_ids, test_movies, k)
+                recall_scores.append(recall)
+
                 # NDCG@K 계산
-                ndcg = self.calculate_ndcg_at_k(track_a_ids, test_movies, k)
+                ndcg = self.calculate_ndcg_at_k(top_k_ids, test_movies, k)
                 ndcg_scores.append(ndcg)
 
                 # Diversity 계산
-                diversity = self.calculate_diversity(track_a_movies)
+                diversity = self.calculate_diversity(top_movies[:k])
                 diversity_scores.append(diversity)
 
                 total_stats['users_evaluated'] += 1
 
+                # 진행 상황 출력 (매 10명마다)
                 if (idx + 1) % 10 == 0:
-                    print(f"  진행: {idx + 1}/{len(test_users)} users (평가 완료: {total_stats['users_evaluated']}명)")
+                    print(f"  진행: {idx + 1}/{len(test_users)} users (평가 완료: {total_stats['users_evaluated']}명)", flush=True)
 
             except Exception as e:
-                # 출력 복원 (예외 발생 시에도)
-                sys.stdout = old_stdout
                 total_stats['users_skipped'] += 1
-                print(f"  ⚠️ User {user_id} 평가 실패: {e}")
+                print(f"  ⚠️ User {user_id} 평가 실패: {e}", flush=True)
+                import traceback
+                traceback.print_exc()
                 continue
 
         # 결과 집계
         results = {
             'precision@10': np.mean(precision_scores) if precision_scores else 0.0,
+            'recall@10': np.mean(recall_scores) if recall_scores else 0.0,
             'ndcg@10': np.mean(ndcg_scores) if ndcg_scores else 0.0,
             'diversity': np.mean(diversity_scores) if diversity_scores else 0.0,
             'avg_time': np.mean(elapsed_times) if elapsed_times else 0.0,
@@ -899,6 +932,7 @@ class RecommenderEvaluator:
             'num_users': len(precision_scores),
             # 원본 점수 저장 (통계 검증용)
             'precision_scores': precision_scores,
+            'recall_scores': recall_scores,
             'ndcg_scores': ndcg_scores,
             'diversity_scores': diversity_scores,
             'elapsed_times': elapsed_times,
@@ -906,19 +940,148 @@ class RecommenderEvaluator:
             'stats': total_stats
         }
 
-        print(f"\n📊 평가 결과 ({method_name}):")
-        print(f"  Precision@{k}: {results['precision@10']:.4f}")
-        print(f"  NDCG@{k}: {results['ndcg@10']:.4f}")
-        print(f"  Diversity: {results['diversity']:.4f}")
-        print(f"  평균 추천 시간: {results['avg_time']:.3f}s (±{results['std_time']:.3f}s)")
-        print(f"  평가 사용자 수: {results['num_users']}명")
+        print(f"\n📊 평가 결과 ({method_name}):", flush=True)
+        print(f"  Precision@{k}: {results['precision@10']:.4f}", flush=True)
+        print(f"  Recall@{k}: {results['recall@10']:.4f}", flush=True)
+        print(f"  NDCG@{k}: {results['ndcg@10']:.4f}", flush=True)
+        print(f"  Diversity: {results['diversity']:.4f}", flush=True)
+        print(f"  평균 추천 시간: {results['avg_time']:.3f}s (±{results['std_time']:.3f}s)", flush=True)
+        print(f"  평가 사용자 수: {results['num_users']}명", flush=True)
 
         # 평가 통계 출력
-        print(f"\n📈 평가 통계:")
-        print(f"  평가 완료: {total_stats['users_evaluated']}명")
-        print(f"  스킵: {total_stats['users_skipped']}명")
+        print(f"\n📈 평가 통계:", flush=True)
+        print(f"  평가 완료: {total_stats['users_evaluated']}명", flush=True)
+        print(f"  스킵: {total_stats['users_skipped']}명", flush=True)
 
         return results
+    
+    def _get_top_movies_pure(
+        self,
+        recommender: HybridRecommender,
+        user_sbert_profile: np.ndarray,
+        user_als_profile: np.ndarray,
+        candidate_ids: List[int],
+        sbert_weight: float,
+        als_weight: float,
+        top_k: int
+    ) -> List[Dict[str, Any]]:
+        """순수 임베딩 유사도만으로 상위 영화 선정
+        
+        - 필터링 없음
+        - 장르 부스트 없음
+        - 평점 점수 없음
+        - 정규화만 사용 (SBERT + ALS 공정 결합)
+        """
+        # 후보 영화들의 인덱스
+        candidate_indices = []
+        for mid in candidate_ids:
+            idx = recommender.movie_id_to_idx.get(mid)
+            if idx is not None:
+                candidate_indices.append((mid, idx))
+        
+        if not candidate_indices:
+            return []
+        
+        indices = [idx for _, idx in candidate_indices]
+
+        # ALS 타겟 행렬 정규화 (SBERT와 동일한 스케일로)
+        target_als_norm = recommender.target_als_matrix / (
+            np.linalg.norm(recommender.target_als_matrix, axis=1, keepdims=True) + 1e-10
+        )
+
+        # 유사도 계산 (프로필 방식에 따라 다름)
+        if isinstance(recommender, AveragedRecommender):
+            # 평균 임베딩 방식: (M, dim) @ (dim,) = (M,)
+            sbert_scores = recommender.target_sbert_norm[indices] @ user_sbert_profile
+            als_scores = target_als_norm[indices] @ user_als_profile
+        else:
+            # 최대/평균 유사도 방식: (M, dim) @ (dim, N) = (M, N)
+            sbert_similarities = recommender.target_sbert_norm[indices] @ user_sbert_profile.T
+            als_similarities = target_als_norm[indices] @ user_als_profile.T
+
+            # 최대 또는 평균 (먼저 계산)
+            if isinstance(recommender, MaxSimilarityRecommender):
+                sbert_scores = np.max(sbert_similarities, axis=1)
+                als_scores = np.max(als_similarities, axis=1)
+            elif isinstance(recommender, MeanSimilarityRecommender):
+                sbert_scores = np.mean(sbert_similarities, axis=1)
+                als_scores = np.mean(als_similarities, axis=1)
+            else:
+                raise ValueError(f"Unknown recommender type: {type(recommender)}")
+
+            # 프로덕션과 동일: SBERT와 ALS 따로 정규화 후 결합
+            scaler = MinMaxScaler()
+
+            if len(sbert_scores) > 1:
+                norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
+                norm_als = scaler.fit_transform(als_scores.reshape(-1, 1)).squeeze()
+            else:
+                norm_sbert = sbert_scores
+                norm_als = als_scores
+
+            # ALS 있는 영화 ID 집합
+            als_ids = set(recommender.als_movie_to_idx.keys())
+
+            # 최종 점수 계산 (프로덕션과 동일 로직)
+            final_scores = np.zeros(len(candidate_indices))
+            for i, (mid, _) in enumerate(candidate_indices):
+                if mid in als_ids:
+                    final_scores[i] = sbert_weight * norm_sbert[i] + als_weight * norm_als[i]
+                else:
+                    final_scores[i] = norm_sbert[i]
+
+            # 평가용이므로 sbert_scores를 None으로 (평균 임베딩 분기와 구분)
+            sbert_scores = None
+            als_scores = None
+        
+        # 최종 점수 계산
+        movie_scores = []
+        
+        # 평균 임베딩 방식: SBERT와 ALS 따로 정규화 후 결합
+        if sbert_scores is not None:
+            # MinMax 정규화 (SBERT + ALS 공정 결합)
+            scaler = MinMaxScaler()
+            
+            if len(sbert_scores) > 1:
+                norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
+                norm_als = scaler.fit_transform(als_scores.reshape(-1, 1)).squeeze()
+            else:
+                norm_sbert = sbert_scores
+                norm_als = als_scores
+            
+            # ALS 있는 영화 ID 집합
+            als_ids = set(recommender.als_movie_to_idx.keys())
+            
+            # 최종 점수 계산 (순수 임베딩만)
+            for i, (mid, _) in enumerate(candidate_indices):
+                # ALS 있으면 하이브리드, 없으면 SBERT만
+                if mid in als_ids:
+                    final_score = sbert_weight * norm_sbert[i] + als_weight * norm_als[i]
+                else:
+                    final_score = norm_sbert[i]
+                
+                meta = recommender.metadata_map.get(mid, {})
+                movie_scores.append({
+                    'movie_id': mid,
+                    'title': meta.get('title', 'Unknown'),
+                    'genres': meta.get('genres', []),
+                    'score': final_score
+                })
+        
+        # 최대/평균 유사도 방식: 이미 final_scores 계산됨
+        else:
+            for i, (mid, _) in enumerate(candidate_indices):
+                meta = recommender.metadata_map.get(mid, {})
+                movie_scores.append({
+                    'movie_id': mid,
+                    'title': meta.get('title', 'Unknown'),
+                    'genres': meta.get('genres', []),
+                    'score': final_scores[i]
+                })
+        
+        # 점수순 정렬 후 상위 top_k
+        movie_scores.sort(key=lambda x: x['score'], reverse=True)
+        return movie_scores[:top_k]
 
 
 def interpret_effect_size(d):
@@ -953,8 +1116,8 @@ def main():
 
     # 모델 경로 (ai/ 폴더 기준)
     current_dir = Path(__file__).parent.parent.parent  # ai/ 폴더
-    LIGHTGCN_MODEL_PATH = str(current_dir / "training/lightgcn_model/best_model.pt")
-    LIGHTGCN_DATA_PATH = str(current_dir / "training/lightgcn_data")
+    ALS_MODEL_PATH = str(current_dir / "training/als_data")
+    ALS_DATA_PATH = str(current_dir / "training/als_data")
     RATINGS_CSV_PATH = str(current_dir / "training/original_data/ratings.csv")
 
     print("\n" + "="*60)
@@ -969,8 +1132,8 @@ def main():
 
     base_recommender = HybridRecommender(
         db_config=DB_CONFIG,
-        lightgcn_model_path=LIGHTGCN_MODEL_PATH,
-        lightgcn_data_path=LIGHTGCN_DATA_PATH
+        als_model_path=ALS_MODEL_PATH,
+        als_data_path=ALS_DATA_PATH
     )
     print("✅ 초기화 완료 (이 데이터를 3가지 방식 모두에서 재사용)\n")
 
@@ -1087,18 +1250,21 @@ def main():
 
     print(f"\n🔵 최대 유사도 방식:")
     print(f"  Precision@10: {results_max['precision@10']:.4f}")
+    print(f"  Recall@10: {results_max['recall@10']:.4f}")
     print(f"  NDCG@10: {results_max['ndcg@10']:.4f}")
     print(f"  Diversity: {results_max['diversity']:.4f}")
     print(f"  평균 추천 시간: {results_max['avg_time']:.3f}s (±{results_max['std_time']:.3f}s)")
 
     print(f"\n🔴 평균 임베딩 방식:")
     print(f"  Precision@10: {results_avg['precision@10']:.4f}")
+    print(f"  Recall@10: {results_avg['recall@10']:.4f}")
     print(f"  NDCG@10: {results_avg['ndcg@10']:.4f}")
     print(f"  Diversity: {results_avg['diversity']:.4f}")
     print(f"  평균 추천 시간: {results_avg['avg_time']:.3f}s (±{results_avg['std_time']:.3f}s)")
 
     print(f"\n🟢 평균 유사도 방식:")
     print(f"  Precision@10: {results_mean['precision@10']:.4f}")
+    print(f"  Recall@10: {results_mean['recall@10']:.4f}")
     print(f"  NDCG@10: {results_mean['ndcg@10']:.4f}")
     print(f"  Diversity: {results_mean['diversity']:.4f}")
     print(f"  평균 추천 시간: {results_mean['avg_time']:.3f}s (±{results_mean['std_time']:.3f}s)")
@@ -1109,24 +1275,28 @@ def main():
         
         # 최대 유사도 vs 평균 임베딩
         max_prec_improvement = (results_max['precision@10'] - results_avg['precision@10']) / results_avg['precision@10'] * 100
+        max_recall_improvement = (results_max['recall@10'] - results_avg['recall@10']) / results_avg['recall@10'] * 100 if results_avg['recall@10'] > 0 else 0
         max_ndcg_improvement = (results_max['ndcg@10'] - results_avg['ndcg@10']) / results_avg['ndcg@10'] * 100
         max_div_improvement = (results_max['diversity'] - results_avg['diversity']) / results_avg['diversity'] * 100 if results_avg['diversity'] > 0 else 0
         max_time_change = (results_max['avg_time'] - results_avg['avg_time']) / results_avg['avg_time'] * 100 if results_avg['avg_time'] > 0 else 0
 
         # 평균 유사도 vs 평균 임베딩
         mean_prec_improvement = (results_mean['precision@10'] - results_avg['precision@10']) / results_avg['precision@10'] * 100
+        mean_recall_improvement = (results_mean['recall@10'] - results_avg['recall@10']) / results_avg['recall@10'] * 100 if results_avg['recall@10'] > 0 else 0
         mean_ndcg_improvement = (results_mean['ndcg@10'] - results_avg['ndcg@10']) / results_avg['ndcg@10'] * 100
         mean_div_improvement = (results_mean['diversity'] - results_avg['diversity']) / results_avg['diversity'] * 100 if results_avg['diversity'] > 0 else 0
         mean_time_change = (results_mean['avg_time'] - results_avg['avg_time']) / results_avg['avg_time'] * 100 if results_avg['avg_time'] > 0 else 0
 
         print(f"\n  🔵 최대 유사도 vs 평균 임베딩:")
         print(f"    Precision@10: {max_prec_improvement:+.2f}%")
+        print(f"    Recall@10: {max_recall_improvement:+.2f}%")
         print(f"    NDCG@10: {max_ndcg_improvement:+.2f}%")
         print(f"    Diversity: {max_div_improvement:+.2f}%")
         print(f"    추천 시간: {max_time_change:+.2f}%")
 
         print(f"\n  🟢 평균 유사도 vs 평균 임베딩:")
         print(f"    Precision@10: {mean_prec_improvement:+.2f}%")
+        print(f"    Recall@10: {mean_recall_improvement:+.2f}%")
         print(f"    NDCG@10: {mean_ndcg_improvement:+.2f}%")
         print(f"    Diversity: {mean_div_improvement:+.2f}%")
         print(f"    추천 시간: {mean_time_change:+.2f}%")

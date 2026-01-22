@@ -27,7 +27,7 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS 설정 - 모든 origin 허용 (B2B API는 API Key로 인증)
+# CORS 설정 - 프로덕션 (모든 origin 허용, B2B API는 API Key로 인증)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,6 +35,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# CORS 설정 - 로컬 개발 환경 (credentials 허용)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[
+#         "http://localhost:5173",
+#         "http://localhost:3000",
+#         "http://127.0.0.1:5173",
+#         "http://127.0.0.1:3000",
+#     ],
+#     allow_credentials=True,  # 로그인 쿠키/세션 허용
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # 라우터 등록
 app.include_router(auth_router)
