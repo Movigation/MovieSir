@@ -369,7 +369,7 @@ export default function FeedbackPopup() {
                             onClick={() => handleFeedback('bad')}
                             className="group flex flex-col items-center gap-1.5"
                         >
-                            <div className="w-14 h-14 rounded-[10px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-gray-100 dark:group-hover:bg-white/5">
+                            <div className="w-14 h-14 rounded-[10px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95">
                                 <ThumbsDown className="w-8 h-8 stroke-1 invisible group-hover/popup:visible group-hover:visible" />
                             </div>
                         </button>
@@ -379,7 +379,7 @@ export default function FeedbackPopup() {
                             onClick={() => handleFeedback('good')}
                             className="group flex flex-col items-center gap-1.5"
                         >
-                            <div className="w-14 h-14 rounded-[10px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95 group-hover:bg-red-50 dark:group-hover:bg-red-500/10">
+                            <div className="w-14 h-14 rounded-[10px] bg-white/70 dark:bg-gray-800 shadow-xl border border-black/5 dark:border-white/10 flex items-center justify-center transition-all group-hover:scale-110 group-active:scale-95">
                                 <ThumbsUp className="w-8 h-8 stroke-1 invisible group-hover/popup:visible group-hover:visible" />
                             </div>
                         </button>

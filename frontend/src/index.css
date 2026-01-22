@@ -238,6 +238,7 @@
   display: none;
   /* Chrome, Safari, Opera */
 }
+
 /* 포스터 이미지 최적화 필터 적용 */
 .poster-optimize {
   filter: url('#poster-optimize-filter');

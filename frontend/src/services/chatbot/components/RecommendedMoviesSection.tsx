@@ -1,6 +1,3 @@
-// [용도] 맞춤 추천 영화 섹션 컴포넌트
-// [위치] ChatbotPanel에서 사용
-
 import { useState } from 'react';
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from './MovieCard';
@@ -37,10 +34,6 @@ const RecommendedList = () => {
     const { recommendedMovies, removeRecommendedMovie, setDetailMovieId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-
-
-
-
 
     // 재추천 핸들러
     const handleReRecommend = (movieId: number) => {
