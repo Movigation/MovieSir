@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
+  withCredentials: false,  // 와일드카드 CORS 사용 시 false 필수 (JWT는 Authorization 헤더로 전송)
 })
 
 // Request interceptor: 토큰 자동 첨부
