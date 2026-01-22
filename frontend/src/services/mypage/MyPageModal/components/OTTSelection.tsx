@@ -136,7 +136,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
 
                 {selectedPlatforms.length > 0 && (
                     <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                        <h4 className="text-blue-400 font-medium mb-3">선택된 OTT ({selectedPlatforms.length}개)</h4>
+                        <h3 className="text-blue-400 font-medium mb-3">선택된 OTT ({selectedPlatforms.length}개)</h3>
                         <div className="flex flex-wrap gap-2">
                             {selectedPlatforms.map((platform) => (
                                 <span

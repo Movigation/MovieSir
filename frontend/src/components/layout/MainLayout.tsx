@@ -5,7 +5,6 @@ import { Outlet } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import GlowBackground from '@/components/effects/GlowBackground';
 import { useTheme } from '@/app/providers/ThemeContext';
-// import { WaveFooter } from '@/components/layout/Footer';
 
 export default function MainLayout() {
     const { isDark, toggleTheme } = useTheme();
@@ -14,7 +13,7 @@ export default function MainLayout() {
         // ===== 반응형 웹 표준: 레이아웃 컨테이너 =====
         // 모바일: Header는 fixed bottom이므로 레이아웃 흐름에서 제외
         // 데스크톱: Header는 static이므로 flex-col 흐름에 포함
-        <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900 text-black dark:text-white w-full">
+        <div className="relative min-h-screen bg-gray-50 dark:bg-[#111827] text-black dark:text-white w-full transition-colors duration-300">
             <GlowBackground isDark={isDark} />
 
             {/* 레이아웃 최대 너비 제한 및 중앙 정렬 컨테이너 */}

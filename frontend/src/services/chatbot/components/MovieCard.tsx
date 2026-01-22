@@ -187,6 +187,8 @@ export default function MovieCard({
                     <img
                         src={movie.poster}
                         alt={movie.title}
+                        loading="lazy"
+                        decoding="async"
                         onLoad={() => {
                             setLoadingPhase(1);
                             setTimeout(() => setLoadingPhase(2), 150);
@@ -262,6 +264,7 @@ export default function MovieCard({
                                     )}
                                     <button
                                         onClick={handleReRecommend}
+                                        aria-label={`${movie.title} 재추천받기`}
                                         className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
                                     >
                                         <RefreshCw size={14} className="inline mr-1" />
@@ -274,6 +277,7 @@ export default function MovieCard({
                                     e.stopPropagation();
                                     onClick();
                                 }}
+                                aria-label={`${movie.title} 상세보기`}
                                 className="w-full py-2 bg-white text-black hover:bg-gray-200 text-xs sm:text-sm font-bold uppercase tracking-wider rounded transition-colors shadow-lg"
                             >
                                 상세보기

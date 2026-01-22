@@ -81,9 +81,8 @@ export const getMovieDetail = async (movieId: number): Promise<MovieDetail> => {
       tagline: movie.tagline,
       ott_providers: uniqueOtts.map((ott: any, index: number) => ({
         // ✅ 중복 제거된 otts → ott_providers 변환
-        ott_id: `${ott.provider_id}_${
-          ott.payment_type || "SUBSCRIPTION"
-        }_${index}`, // ✅ 고유 ID 생성
+        ott_id: `${ott.provider_id}_${ott.payment_type || "SUBSCRIPTION"
+          }_${index}`, // ✅ 고유 ID 생성
         ott_name: ott.provider_name,
         ott_logo: "", // 백엔드에서 제공 안 함
         watch_url: ott.url,
@@ -144,35 +143,35 @@ export const postRecommendationsV2 = async (filters: {
 // [용도] 개별 영화 재추천 - 단일 영화 교체
 // [사용법] const result = await postReRecommendSingle({ target_runtime: 120, excluded_ids: [550, 27205], track: "a" });
 export const postReRecommendSingle = async (request: ReRecommendRequest): Promise<ReRecommendResponse> => {
-    try {
-        const response = await axiosInstance.post<ReRecommendResponse>("/api/v2/recommend/single", request);
+  try {
+    const response = await axiosInstance.post<ReRecommendResponse>("/api/v2/recommend/single", request);
 
-        if (response.data.success && response.data.movie) {
-            console.log('[V2 API] 재추천 성공:', response.data.movie.title);
-        } else {
-            console.log('[V2 API] 재추천 결과 없음:', response.data.message);
-        }
-
-        return response.data;
-    } catch (error: any) {
-        console.error("V2 재추천 API 호출 중 오류:", error);
-        throw error;
+    if (response.data.success && response.data.movie) {
+      console.log('[V2 API] 재추천 성공:', response.data.movie.title);
+    } else {
+      console.log('[V2 API] 재추천 결과 없음:', response.data.message);
     }
+
+    return response.data;
+  } catch (error: any) {
+    console.error("V2 재추천 API 호출 중 오류:", error);
+    throw error;
+  }
 };
 
 // [용도] 추천 만족도 조사 제출
 // [사용법] await postSatisfaction("1234567890", true);
 export const postSatisfaction = async (sessionId: string, isPositive: boolean): Promise<any> => {
-    try {
-        const response = await axiosInstance.post("/mypage/satisfaction", {
-            session_id: sessionId,
-            is_positive: isPositive
-        });
-        return response.data;
-    } catch (error) {
-        console.error("만족도 조사 제출 실패:", error);
-        throw error;
-    }
+  try {
+    const response = await axiosInstance.post("/mypage/satisfaction", {
+      session_id: sessionId,
+      is_positive: isPositive
+    });
+    return response.data;
+  } catch (error) {
+    console.error("만족도 조사 제출 실패:", error);
+    throw error;
+  }
 };
 
 // [용도] RecommendedMovieV2를 프론트엔드 Movie 타입으로 변환
@@ -348,23 +347,3 @@ export const getUserRecommendations = async (
     throw new Error("추천 기록을 가져오는 중 오류가 발생했습니다");
   }
 };
-
-// ============================================================
-// [영화 봤어요 체크 API] - REC-03-04
-// ============================================================
-
-// [용도] 영화 봤어요 체크 (백엔드에 기록)
-// [API 스펙] POST api/movies/{movie_id}/watched
-// [사용법] await markMovieAsWatched(550);
-// ⚠️ 현재 주석처리됨 - 필요 시 주석 해제하여 사용
-/*
-export const markMovieAsWatched = async (movieId: number): Promise<void> => {
-    try {
-        await axiosInstance.post(`api/movies/${movieId}/watched`);
-        console.log('✅ 영화 봤어요 체크 완료:', movieId);
-    } catch (error) {
-        console.error('❌ 영화 봤어요 체크 실패:', error);
-        throw error;
-    }
-};
-*/

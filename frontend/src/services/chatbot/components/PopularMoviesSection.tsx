@@ -1,6 +1,3 @@
-// [용도] 인기 영화 섹션 컴포넌트
-// [위치] ChatbotPanel에서 사용
-
 import { useState } from "react";
 import { useMovieStore } from "@/store/useMovieStore";
 import MovieCard from "./MovieCard";
@@ -19,7 +16,7 @@ export default function PopularMoviesSection() {
 
   return (
     <div className="w-full">
-      <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 flex items-center gap-2">
+      <h2 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 flex items-center gap-2">
         {"인기 영화 추천"}
         {totalRuntime > 0 && (
           <span className="text-sm font-medium text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
@@ -27,7 +24,7 @@ export default function PopularMoviesSection() {
             {minutes > 0 || hours === 0 ? `${minutes}분` : ""}
           </span>
         )}
-      </h3>
+      </h2>
       <PopularList />
     </div>
   );

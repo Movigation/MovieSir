@@ -3,6 +3,7 @@ import ChatbotButton from "@/services/chatbot/components/ChatbotButton";
 import ChatbotPanel from "@/services/chatbot/components/ChatbotPanel";
 import type { ChatbotProps } from "@/services/chatbot/components/chatbot.types";
 import { useAuth } from '@/app/providers/AuthContext';
+import { useTheme } from '@/app/providers/ThemeContext';
 
 export default function Chatbot({
   isOpen = false,
@@ -13,7 +14,7 @@ export default function Chatbot({
 }: ChatbotProps & { onLoginRequired?: () => void }) {
   const prevIsOpenRef = useRef(isOpen);
   const { isAuthenticated } = useAuth();
-  const isDark = document.documentElement.classList.contains("dark");
+  const { isDark } = useTheme();
 
   // [상태] 추천 완료 여부 (2단계 위치 이동용)
   const [isRecommended, setIsRecommended] = useState(false);
@@ -26,7 +27,8 @@ export default function Chatbot({
   // [챗봇 버튼 클릭 핸들러] 토글
   const handleChatbotButtonClick = () => {
     if (isOpen) {
-      // setIsTeleporting(true)와 setTimeout 로직은 제거해도 됩니다.
+      // setIsTeleporting(true)를 즉시 호출하여 닫힐 때 버튼 깜빡임 방지
+      setIsTeleporting(true);
       setIsOpen?.(false);
       setIsRecommended(false);
     } else if (!isAuthenticated) {

@@ -179,6 +179,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
         {/* 다크모드 토글 - 데스크톱 전용 */}
         <button
           onClick={handleDarkToggle}
+          aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
           className="hidden sm:flex text-lg sm:text-xl p-1.5 sm:p-2 rounded-lg hover:animate-spin text-gray-900 dark:text-white transition-colors"
         >
           {isDark ? <Sun size={20} /> : <Moon size={20} />}
@@ -188,6 +189,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
       {/* 모바일 전용 상단 우측 다크모드 버튼 (calc 활용) */}
       <button
         onClick={handleDarkToggle}
+        aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
         className={`sm:hidden fixed top-[1rem] right-[1rem] z-base p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white transition-all active:scale-95 ${isChatbotOpen ? 'invisible opacity-0' : 'visible opacity-100'}`}
       >
         {isDark ? <Sun size={20} /> : <Moon size={20} />}
