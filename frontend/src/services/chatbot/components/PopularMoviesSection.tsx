@@ -1,6 +1,3 @@
-// [용도] 인기 영화 섹션 컴포넌트
-// [위치] ChatbotPanel에서 사용
-
 import { useState } from "react";
 import { useMovieStore } from "@/store/useMovieStore";
 import MovieCard from "./MovieCard";
