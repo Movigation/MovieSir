@@ -27,12 +27,8 @@ export default function Api() {
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-10">
-              <a href="/" className="flex items-center gap-2">
-                <img src="/favicon.svg" alt="무비서" className="w-10 h-10" />
-                <span className="text-xl font-semibold text-white">무비서</span>
-                <span className="text-xs font-semibold text-white border border-white/30 bg-white/10 px-1.5 py-0.5 rounded">
-                  API
-                </span>
+              <a href="/">
+                <img src="/api_logo.svg" alt="무비서 API" className="h-14" />
               </a>
               <ul className="hidden md:flex items-center gap-1">
                 <li>
@@ -43,44 +39,28 @@ export default function Api() {
                     API 문서
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    to="/support"
-                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    문의
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/contact"
-                    className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    도입 문의
-                  </Link>
-                </li>
               </ul>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <a
                 href="https://demo.moviesir.cloud"
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
-                무비서 이용하기
+                서비스 체험하기
               </a>
+              <Link
+                to="/contact"
+                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                도입 문의
+              </Link>
               <a
                 href="https://console.moviesir.cloud/login"
-                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
+                className="ml-4 px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
               >
                 콘솔
-              </a>
-              <a
-                href="https://console.moviesir.cloud/register"
-                className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-400 transition-colors"
-              >
-                회원가입
               </a>
             </div>
           </div>

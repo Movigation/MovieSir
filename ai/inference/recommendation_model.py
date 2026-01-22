@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 import os
 
 """
-Noise 방식
+Hybrid Recommendation System (SBERT + ALS) with Noise-based Diversity
 """
 
 
@@ -55,15 +55,15 @@ class HybridRecommender:
     def __init__(
         self,
         db_config: dict,
-        lightgcn_model_path: str,
-        lightgcn_data_path: str,
+        als_model_path: str,
+        als_data_path: str,
         device: str = None
     ):
         """
         Args:
             db_config: PostgreSQL 연결 설정
-            lightgcn_model_path: LightGCN 모델 경로
-            lightgcn_data_path: LightGCN 데이터 경로
+            als_model_path: ALS 모델 경로 (폴더)
+            als_data_path: ALS 데이터 경로 (폴더)
             device: 연산 장치 (cuda/cpu)
         """
         self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -71,16 +71,16 @@ class HybridRecommender:
         # DB 연결
         self.db = DatabaseConnection(**db_config)
 
-        print("Initializing Hybrid Recommender (Noise-based Diversity)...")
+        print("Initializing Hybrid Recommender (SBERT + ALS, Noise-based Diversity)...")
 
         # 1. 데이터 로드 (DB에서)
         self._load_metadata_from_db()
         self._load_sbert_data_from_db()
         self._load_ott_data_from_db()
 
-        # 2. LightGCN 로드 (파일에서)
-        self._load_lightgcn_data(lightgcn_data_path)
-        self._load_lightgcn_model(lightgcn_model_path)
+        # 2. ALS 로드 (파일에서)
+        self._load_als_data(als_data_path)
+        self._load_als_model(als_model_path)
 
         # 3. Pre-alignment
         print("Pre-aligning models...")
@@ -174,60 +174,50 @@ class HybridRecommender:
 
         print(f"  OTT data loaded: {len(self.movie_ott_map):,} movies")
 
-    def _load_lightgcn_data(self, data_path: str):
-        """LightGCN 매핑 데이터 로드 (tmdb_id → movie_id 변환)"""
+    def _load_als_data(self, data_path: str):
+        """ALS 매핑 데이터 로드 (movie_id → index 직접 매핑)"""
         data_path = Path(data_path)
-        with open(data_path / 'id_mappings.pkl', 'rb') as f:
+        with open(data_path / 'mappings.pkl', 'rb') as f:
             mappings = pickle.load(f)
 
-        # LightGCN은 tmdb_id → index 매핑을 사용
-        lightgcn_tmdb_to_idx = mappings['tmdb2id']
+        # ALS는 item2idx를 사용 (MovieLens movie_id → index)
+        # item2idx의 key가 이미 DB의 movie_id와 동일하므로 직접 사용
+        als_item_to_idx = mappings['item2idx']
 
-        # tmdb_id → movie_id 매핑 생성 (metadata_map 역방향)
-        tmdb_to_movie_id = {}
-        for movie_id, meta in self.metadata_map.items():
-            tmdb_id = meta.get('tmdb_id')
-            if tmdb_id is not None:
-                tmdb_to_movie_id[tmdb_id] = movie_id
+        # movie_id → ALS index 매핑 (직접 사용)
+        self.als_movie_to_idx = {}
+        for movie_id, als_idx in als_item_to_idx.items():
+            # metadata_map에 존재하는 영화만 포함
+            if movie_id in self.metadata_map:
+                self.als_movie_to_idx[movie_id] = als_idx
 
-        # movie_id → LightGCN index 매핑으로 변환
-        self.lightgcn_movie_to_idx = {}
-        for tmdb_id, lgcn_idx in lightgcn_tmdb_to_idx.items():
-            movie_id = tmdb_to_movie_id.get(tmdb_id)
-            if movie_id is not None:
-                self.lightgcn_movie_to_idx[movie_id] = lgcn_idx
+        print(f"  ALS movies: {len(self.als_movie_to_idx):,}")
 
-        print(f"  LightGCN movies: {len(self.lightgcn_movie_to_idx):,}")
+    def _load_als_model(self, model_path: str):
+        """ALS 모델 로드 (item factors)"""
+        print(f"Loading ALS model from {model_path}")
+        model_path = Path(model_path)
 
-    def _load_lightgcn_model(self, model_path: str):
-        """LightGCN 모델 로드"""
-        print(f"Loading LightGCN model from {model_path}")
-        checkpoint = torch.load(model_path, map_location=self.device)
-
-        if isinstance(checkpoint, dict):
-            if 'model_state_dict' in checkpoint:
-                self.lightgcn_item_embeddings = checkpoint['model_state_dict']['item_embedding.weight'].cpu().numpy()
-            elif 'item_embeddings' in checkpoint:
-                self.lightgcn_item_embeddings = checkpoint['item_embeddings'].cpu().numpy()
-            else:
-                self.lightgcn_item_embeddings = checkpoint['item_embedding.weight'].cpu().numpy()
+        # ALS item factors는 numpy 배열로 저장됨
+        self.als_item_factors = np.load(model_path / 'als_item_factors.npy')
+        print(f"  ALS item factors shape: {self.als_item_factors.shape}")
 
     def _align_models(self):
-        """SBERT와 LightGCN 모델 정렬 (SBERT 전체 사용)"""
-        # SBERT 임베딩이 있는 모든 영화 포함 (LightGCN 없어도 OK)
+        """SBERT와 ALS 모델 정렬 (SBERT 전체 사용)"""
+        # SBERT 임베딩이 있는 모든 영화 포함 (ALS 없어도 OK)
         self.common_movie_ids = sorted(list(self.sbert_movie_to_idx.keys()))
 
-        # LightGCN 있는 영화 ID 집합
-        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
+        # ALS 있는 영화 ID 집합
+        als_ids = set(self.als_movie_to_idx.keys())
 
         # 역매핑 딕셔너리 생성 (O(1) 인덱스 조회용)
         self.movie_id_to_idx = {}
         self.target_sbert_matrix = []
-        self.target_lightgcn_matrix = []
+        self.target_als_matrix = []
 
-        # LightGCN 차원 확인
-        lightgcn_dim = self.lightgcn_item_embeddings.shape[1]
-        zero_lightgcn = np.zeros(lightgcn_dim)
+        # ALS 차원 확인
+        als_dim = self.als_item_factors.shape[1]
+        zero_als = np.zeros(als_dim)
 
         for idx, mid in enumerate(self.common_movie_ids):
             # 역매핑 저장
@@ -237,22 +227,22 @@ class HybridRecommender:
             s_idx = self.sbert_movie_to_idx[mid]
             self.target_sbert_matrix.append(self.sbert_embeddings[s_idx])
 
-            # LightGCN 임베딩 (선택: 없으면 0 벡터)
-            if mid in lightgcn_ids:
-                l_idx = self.lightgcn_movie_to_idx[mid]
-                self.target_lightgcn_matrix.append(self.lightgcn_item_embeddings[l_idx])
+            # ALS 임베딩 (선택: 없으면 0 벡터)
+            if mid in als_ids:
+                a_idx = self.als_movie_to_idx[mid]
+                self.target_als_matrix.append(self.als_item_factors[a_idx])
             else:
-                self.target_lightgcn_matrix.append(zero_lightgcn)
+                self.target_als_matrix.append(zero_als)
 
         self.target_sbert_matrix = np.array(self.target_sbert_matrix)
-        self.target_lightgcn_matrix = np.array(self.target_lightgcn_matrix)
+        self.target_als_matrix = np.array(self.target_als_matrix)
 
         self.target_sbert_norm = self.target_sbert_matrix / (
             np.linalg.norm(self.target_sbert_matrix, axis=1, keepdims=True) + 1e-10
         )
 
-        # LightGCN 없는 영화 개수 확인
-        sbert_only = len(self.common_movie_ids) - len(set(self.common_movie_ids) & lightgcn_ids)
+        # ALS 없는 영화 개수 확인
+        sbert_only = len(self.common_movie_ids) - len(set(self.common_movie_ids) & als_ids)
         print(f"Created reverse mapping dictionary for {len(self.movie_id_to_idx):,} movies")
         if sbert_only > 0:
             print(f"  ⚠️  {sbert_only} movies have SBERT only (will use SBERT weight 1.0)")
@@ -336,7 +326,11 @@ class HybridRecommender:
         print(f"  OTT index: {len(self.movies_by_ott)} providers")
 
     def _get_user_profile(self, user_movie_ids: List[int]):
-        """사용자 프로필 벡터 생성 - 개별 임베딩 행렬 반환 (최대 유사도 계산용)"""
+        """사용자 프로필 벡터 생성 - 개별 임베딩 행렬 반환 (최대 유사도 계산용)
+
+        Returns:
+            tuple: (user_sbert_matrix, user_als_matrix) - SBERT와 ALS 프로필 행렬
+        """
         # SBERT 프로필 (개별 임베딩 유지)
         user_sbert_vecs = []
         for mid in user_movie_ids:
@@ -354,21 +348,21 @@ class HybridRecommender:
             np.linalg.norm(user_sbert_matrix, axis=1, keepdims=True) + 1e-10
         )
 
-        # LightGCN 프로필 (개별 임베딩 유지)
-        user_gcn_vecs = []
+        # ALS 프로필 (개별 임베딩 유지)
+        user_als_vecs = []
         for mid in user_movie_ids:
-            if mid in self.lightgcn_movie_to_idx:
-                user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
+            if mid in self.als_movie_to_idx:
+                user_als_vecs.append(self.als_item_factors[self.als_movie_to_idx[mid]])
 
-        if not user_gcn_vecs:
-            random_ids = list(self.lightgcn_movie_to_idx.keys())[:5]
+        if not user_als_vecs:
+            random_ids = list(self.als_movie_to_idx.keys())[:5]
             for mid in random_ids:
-                user_gcn_vecs.append(self.lightgcn_item_embeddings[self.lightgcn_movie_to_idx[mid]])
+                user_als_vecs.append(self.als_item_factors[self.als_movie_to_idx[mid]])
 
-        # 배열로 변환 (N, LightGCN_dim)
-        user_gcn_matrix = np.array(user_gcn_vecs)
+        # 배열로 변환 (N, ALS_dim)
+        user_als_matrix = np.array(user_als_vecs)
 
-        return user_sbert_matrix, user_gcn_matrix
+        return user_sbert_matrix, user_als_matrix
 
     def _apply_filters(
         self,
@@ -406,15 +400,29 @@ class HybridRecommender:
     def _get_top_movies(
         self,
         user_sbert_profile: np.ndarray,
-        user_gcn_profile: np.ndarray,
+        user_als_profile: np.ndarray,
         filtered_ids: List[int],
         sbert_weight: float,
-        lightgcn_weight: float,
+        als_weight: float,
         top_k: int = 300,
         exclude_ids: Optional[List[int]] = None,
         preferred_genres: Optional[List[str]] = None  # ← 추가
     ) -> List[Dict[str, Any]]:
-        """상위 영화 선정 (모델 점수 + 평점 점수)"""
+        """상위 영화 선정 (하이브리드: SBERT + ALS + 평점 점수)
+
+        Args:
+            user_sbert_profile: 사용자 SBERT 프로필 행렬
+            user_als_profile: 사용자 ALS 프로필 행렬
+            filtered_ids: 필터링된 영화 ID 리스트
+            sbert_weight: SBERT 가중치
+            als_weight: ALS 가중치
+            top_k: 반환할 상위 영화 개수
+            exclude_ids: 제외할 영화 ID 리스트
+            preferred_genres: 선호 장르 (장르 부스트용)
+
+        Returns:
+            상위 영화 리스트 (점수 내림차순)
+        """
         exclude_ids = exclude_ids or []
         # 🔒 O(1) 중복 체크를 위해 set으로 변환
         exclude_set = set(exclude_ids)
@@ -435,13 +443,13 @@ class HybridRecommender:
         # SBERT 유사도: (M, SBERT_dim) @ (SBERT_dim, N) = (M, N)
         # M: 필터된 영화 수, N: 사용자 프로필 영화 수
         sbert_similarities = self.target_sbert_norm[indices] @ user_sbert_profile.T
-        
-        # LightGCN 유사도: (M, LightGCN_dim) @ (LightGCN_dim, N) = (M, N)
-        lightgcn_similarities = self.target_lightgcn_matrix[indices] @ user_gcn_profile.T
-        
-        # 각 후보 영화의 평균 유사도 계산 (모든 사용자 영화와의 평균)
-        sbert_scores = np.mean(sbert_similarities, axis=1)  # (M,)
-        lightgcn_scores = np.mean(lightgcn_similarities, axis=1)  # (M,)
+
+        # ALS 유사도: (M, ALS_dim) @ (ALS_dim, N) = (M, N)
+        als_similarities = self.target_als_matrix[indices] @ user_als_profile.T
+
+        # 각 후보 영화의 최대 유사도 계산 (모든 사용자 영화 중 최대값)
+        sbert_scores = np.max(sbert_similarities, axis=1)  # (M,)
+        als_scores = np.max(als_similarities, axis=1)  # (M,)
 
         # MinMax 정규화
         scaler = MinMaxScaler()
@@ -451,16 +459,16 @@ class HybridRecommender:
 
         if len(sbert_scores) > 1:
             norm_sbert = scaler.fit_transform(sbert_scores.reshape(-1, 1)).squeeze()
-            norm_lightgcn = scaler.fit_transform(lightgcn_scores.reshape(-1, 1)).squeeze()
+            norm_als = scaler.fit_transform(als_scores.reshape(-1, 1)).squeeze()
             # 평점 점수도 0~1 정규화 (블록버스터 편향 제거)
             norm_rating = scaler.fit_transform(filtered_rating.reshape(-1, 1)).squeeze()
         else:
             norm_sbert = sbert_scores
-            norm_lightgcn = lightgcn_scores
+            norm_als = als_scores
             norm_rating = filtered_rating
 
-        # LightGCN 있는 영화 ID 집합 (가중치 재조정용)
-        lightgcn_ids = set(self.lightgcn_movie_to_idx.keys())
+        # ALS 있는 영화 ID 집합 (가중치 재조정용)
+        als_ids = set(self.als_movie_to_idx.keys())
 
         # 최종 점수 계산
         movie_scores = []
@@ -469,10 +477,10 @@ class HybridRecommender:
             if mid in exclude_set:
                 continue
 
-            # 가중치 재조정: LightGCN 없으면 SBERT만 사용
-            if mid in lightgcn_ids:
-                # 하이브리드: SBERT + LightGCN
-                model_score = sbert_weight * norm_sbert[i] + lightgcn_weight * norm_lightgcn[i]
+            # 가중치 재조정: ALS 없으면 SBERT만 사용
+            if mid in als_ids:
+                # 하이브리드: SBERT + ALS
+                model_score = sbert_weight * norm_sbert[i] + als_weight * norm_als[i]
                 rec_type = "hybrid"
             else:
                 # SBERT만: 가중치 1.0
@@ -703,7 +711,10 @@ class HybridRecommender:
         negative_movie_ids: Optional[List[int]] = None  # NEW
     ) -> Dict[str, Any]:
         """
-        초기 추천 - 영화 조합 반환
+        초기 추천 - 영화 조합 반환 (하이브리드: SBERT + ALS)
+
+        Track A: SBERT 0.7 + ALS 0.3 (장르 필터 적용, 사용자 선호 강조)
+        Track B: SBERT 0.4 + ALS 0.6 (장르 필터 없음, 협업 필터링 강조)
 
         Args:
             user_movie_ids: 사용자가 본 영화 ID 리스트
@@ -736,7 +747,7 @@ class HybridRecommender:
         start_time = time.time()
 
         # 사용자 프로필 생성
-        user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
+        user_sbert_profile, user_als_profile = self._get_user_profile(user_movie_ids)
         
         # 사용자 프로필 구성 영화 출력 (영화 제목 포함)
         print(f"\n📊 User Profile ({len(user_movie_ids)} movies from positive feedback + onboarding):")
@@ -762,10 +773,10 @@ class HybridRecommender:
         print(f"Track A filtered: {len(filtered_a)} movies")
 
         top_candidates_a = self._get_top_movies(
-            user_sbert_profile, user_gcn_profile,
+            user_sbert_profile, user_als_profile,
             filtered_a,
             sbert_weight=0.7,
-            lightgcn_weight=0.3,
+            als_weight=0.3,
             top_k=300,
             exclude_ids=exclude_a,
             preferred_genres=preferred_genres  # ← Track A는 장르 가중치 적용
@@ -790,10 +801,10 @@ class HybridRecommender:
             print(f"Track A relaxed: {len(filtered_a_relaxed)} movies")
 
             top_candidates_a_relaxed = self._get_top_movies(
-                user_sbert_profile, user_gcn_profile,
+                user_sbert_profile, user_als_profile,
                 filtered_a_relaxed,
                 sbert_weight=0.7,
-                lightgcn_weight=0.3,
+                als_weight=0.3,
                 top_k=300,
                 exclude_ids=exclude_a,
                 preferred_genres=preferred_genres  # ← Track A는 장르 가중치 적용
@@ -837,10 +848,10 @@ class HybridRecommender:
         ))
 
         top_candidates_b = self._get_top_movies(
-            user_sbert_profile, user_gcn_profile,
+            user_sbert_profile, user_als_profile,
             filtered_b,
             sbert_weight=0.4,
-            lightgcn_weight=0.6,
+            als_weight=0.6,
             top_k=300,
             exclude_ids=exclude_b,
             preferred_genres=None  # ← Track B는 장르 가중치 없음
@@ -887,7 +898,10 @@ class HybridRecommender:
         negative_movie_ids: Optional[List[int]] = None  # NEW
     ) -> Optional[Dict[str, Any]]:
         """
-        개별 영화 재추천 - 단일 영화 반환
+        개별 영화 재추천 - 단일 영화 반환 (하이브리드: SBERT + ALS)
+
+        Track A: SBERT 0.7 + ALS 0.3
+        Track B: SBERT 0.4 + ALS 0.6
 
         Args:
             user_movie_ids: 사용자가 본 영화 ID 리스트
@@ -897,6 +911,7 @@ class HybridRecommender:
             preferred_genres: 선호 장르 (Track A용)
             preferred_otts: 구독 OTT (Track A용)
             allow_adult: 성인물 허용 여부
+            negative_movie_ids: 부정 피드백 영화 ID (유사도 페널티)
 
         Returns:
             { 'tmdb_id': int, 'title': str, 'runtime': int, ... } 또는 None
@@ -918,7 +933,7 @@ class HybridRecommender:
         start_time = time.time()
         
         # 사용자 프로필 생성
-        user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
+        user_sbert_profile, user_als_profile = self._get_user_profile(user_movie_ids)
         print(f"📊 User Profile: {len(user_movie_ids)} movies (positive feedback + onboarding)")
 
         # 런타임 범위: 대체할 영화와 비슷한 길이
@@ -927,8 +942,8 @@ class HybridRecommender:
         max_runtime = target_runtime  # 100% (초과 불가)
 
         # 사용자 프로필
-        user_sbert_profile, user_gcn_profile = self._get_user_profile(user_movie_ids)
-        
+        user_sbert_profile, user_als_profile = self._get_user_profile(user_movie_ids)
+
         # 사용자 프로필 구성 영화 출력 (영화 제목 포함)
         print(f"\n📊 User Profile Composition ({len(user_movie_ids)} movies):")
         for i, mid in enumerate(user_movie_ids[:10], 1):  # 최대 10개만 출력
@@ -948,7 +963,7 @@ class HybridRecommender:
                 min_year=2000,
                 allow_adult=allow_adult
             )
-            sbert_w, lgcn_w = 0.7, 0.3
+            sbert_w, als_w = 0.7, 0.3
             use_genre_weight = preferred_genres  # ← Track A는 장르 가중치 사용
         else:
             filtered = self._apply_filters(
@@ -957,7 +972,7 @@ class HybridRecommender:
                 min_year=2000,
                 allow_adult=allow_adult
             )
-            sbert_w, lgcn_w = 0.4, 0.6
+            sbert_w, als_w = 0.4, 0.6
             use_genre_weight = None  # ← Track B는 장르 가중치 없음
 
         # 🚀 최적화: 3단계 런타임 Fallback (90-100 → 70-100 → 0-100)
@@ -1009,10 +1024,10 @@ class HybridRecommender:
         print(f"Excluding {len(all_exclude)} movies (user movies + already recommended)")
 
         top_candidates = self._get_top_movies(
-            user_sbert_profile, user_gcn_profile,
+            user_sbert_profile, user_als_profile,
             runtime_filtered,  # 런타임 필터링된 영화만
             sbert_weight=sbert_w,
-            lightgcn_weight=lgcn_w,
+            als_weight=als_w,
             top_k=300,
             exclude_ids=all_exclude,
             preferred_genres=use_genre_weight  # ← Track A일 때만 장르 가중치
@@ -1049,16 +1064,16 @@ class HybridRecommender:
                 print(f"[Level 1 Retry] 70-100% range: {len(runtime_filtered)} movies")
                 
                 top_candidates = self._get_top_movies(
-                    user_sbert_profile, user_gcn_profile,
+                    user_sbert_profile, user_als_profile,
                     runtime_filtered,
                     sbert_weight=sbert_w,
-                    lightgcn_weight=lgcn_w,
+                    als_weight=als_w,
                     top_k=300,
                     exclude_ids=all_exclude,
                     preferred_genres=use_genre_weight
                 )
                 print(f"Top candidates after Level 1: {len(top_candidates)} movies")
-            
+
             # Level 2 시도
             if not top_candidates and fallback_level == 1:
                 fallback_level = 2
@@ -1070,12 +1085,12 @@ class HybridRecommender:
                         if 0 < runtime <= max_runtime:
                             runtime_filtered.append(mid)
                 print(f"[Level 2 Retry] 0-100% range: {len(runtime_filtered)} movies")
-                
+
                 top_candidates = self._get_top_movies(
-                    user_sbert_profile, user_gcn_profile,
+                    user_sbert_profile, user_als_profile,
                     runtime_filtered,
                     sbert_weight=sbert_w,
-                    lightgcn_weight=lgcn_w,
+                    als_weight=als_w,
                     top_k=300,
                     exclude_ids=all_exclude,
                     preferred_genres=use_genre_weight

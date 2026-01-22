@@ -74,12 +74,8 @@ export default function Login() {
       <main className="relative flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[400px]">
           {/* Logo */}
-          <a href="https://api.moviesir.cloud" className="flex items-center justify-center gap-2 mb-10">
-            <img src="/favicon.svg" alt="무비서" className="w-12 h-12" />
-            <span className="text-2xl font-bold text-white">무비서</span>
-            <span className="text-sm font-semibold text-blue-400 border border-blue-400/50 px-2 py-0.5 rounded">
-              API
-            </span>
+          <a href="https://api.moviesir.cloud" className="flex items-center justify-center mb-10">
+            <img src="/console_logo.svg" alt="무비서 Console" className="h-14" />
           </a>
 
           {/* Form Card - Glass Effect */}
