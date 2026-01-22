@@ -6,10 +6,12 @@ on:
     paths:
       - 'backend/**'
       - 'docker-compose.yml'
+      - 'nginx/**'
   pull_request:
     branches: [dev, main]
     paths:
       - 'backend/**'
+      - 'nginx/**'
   workflow_dispatch:
 
 jobs:
