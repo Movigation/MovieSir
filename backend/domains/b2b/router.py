@@ -15,7 +15,7 @@ from .schemas import (
     DashboardResponse, LogEntry, LogsResponse, OAuthCallback,
     ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest,
     B2CUserResponse, B2CUserDetailResponse, B2CUsersListResponse, B2CStatsResponse,
-    B2CUserActivitiesResponse, B2CLiveActivitiesResponse
+    B2CUserActivitiesResponse, B2CLiveActivitiesResponse, SessionMoviesResponse
 )
 from . import service
 
@@ -552,3 +552,19 @@ def get_b2c_live_activities(
     - 대시보드에서 Live Logs처럼 실시간 모니터링용
     """
     return service.get_b2c_live_activities(db, limit)
+
+
+@router.get("/admin/sessions/{session_id}/movies", response_model=SessionMoviesResponse)
+def get_session_movies(
+    session_id: int,
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] 추천 세션의 영화 목록 조회
+    - Live Feed에서 영화 클릭 시 상세 정보 표시용
+    """
+    result = service.get_session_movies(db, session_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다")
+    return result

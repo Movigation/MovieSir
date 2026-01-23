@@ -1126,12 +1126,27 @@ def get_b2c_live_activities(db: Session, limit: int = 15) -> dict:
         if runtime_str:
             desc_parts.append(runtime_str)
 
+        # 추천받은 영화 제목 가져오기
+        movie_title = None
+        if session.recommended_movie_ids and len(session.recommended_movie_ids) > 0:
+            # 첫 번째 영화 제목 조회
+            first_movie = db.query(Movie).filter(
+                Movie.movie_id == session.recommended_movie_ids[0]
+            ).first()
+            if first_movie:
+                movie_count = len(session.recommended_movie_ids)
+                if movie_count > 1:
+                    movie_title = f"'{first_movie.title}' 외 {movie_count - 1}편"
+                else:
+                    movie_title = f"'{first_movie.title}'"
+
         activities.append({
             "user_id": str(session.user_id),
             "user_nickname": user.nickname or user.email.split('@')[0],
             "type": "recommendation",
             "description": f"추천 요청: {' / '.join(desc_parts)}",
-            "movie_title": None,
+            "movie_title": movie_title,
+            "session_id": session.session_id,  # 클릭해서 영화 목록 보기용
             "created_at": session.created_at,
         })
 
@@ -1170,4 +1185,69 @@ def get_b2c_live_activities(db: Session, limit: int = 15) -> dict:
 
     return {
         "activities": activities[:limit],
+    }
+
+
+def get_session_movies(db: Session, session_id: int) -> dict:
+    """추천 세션의 영화 목록 조회 (어드민 전용)"""
+    from backend.domains.recommendation.models import RecommendationSession
+    from backend.domains.movie.models import Movie
+    from backend.domains.user.models import User
+
+    # 세션 조회
+    session = db.query(RecommendationSession).filter(
+        RecommendationSession.session_id == session_id
+    ).first()
+
+    if not session:
+        return None
+
+    # 유저 정보 조회
+    user = None
+    if session.user_id:
+        user = db.query(User).filter(User.user_id == session.user_id).first()
+
+    user_nickname = "Guest"
+    if user:
+        user_nickname = user.nickname or user.email.split('@')[0]
+
+    # 추천된 영화 목록 조회
+    movies = []
+    if session.recommended_movie_ids:
+        movie_records = db.query(Movie).filter(
+            Movie.movie_id.in_(session.recommended_movie_ids)
+        ).all()
+
+        # movie_id 순서 유지
+        movie_map = {m.movie_id: m for m in movie_records}
+        for movie_id in session.recommended_movie_ids:
+            movie = movie_map.get(movie_id)
+            if movie:
+                # 장르 파싱 (JSON 문자열 또는 리스트)
+                genres = []
+                if movie.genres:
+                    if isinstance(movie.genres, list):
+                        genres = movie.genres
+                    elif isinstance(movie.genres, str):
+                        import json
+                        try:
+                            genres = json.loads(movie.genres)
+                        except:
+                            genres = []
+
+                movies.append({
+                    "movie_id": movie.movie_id,
+                    "title": movie.title,
+                    "poster_path": movie.poster_path,
+                    "release_date": str(movie.release_date) if movie.release_date else None,
+                    "genres": genres,
+                })
+
+    return {
+        "session_id": session.session_id,
+        "user_nickname": user_nickname,
+        "req_genres": session.req_genres or [],
+        "req_runtime_max": session.req_runtime_max,
+        "movies": movies,
+        "created_at": session.created_at,
     }

@@ -38,6 +38,24 @@ interface B2CLiveActivity {
   type: string
   description: string
   movie_title: string | null
+  session_id: number | null
+  created_at: string
+}
+
+interface SessionMovie {
+  movie_id: number
+  title: string
+  poster_path: string | null
+  release_date: string | null
+  genres: string[]
+}
+
+interface SessionMoviesData {
+  session_id: number
+  user_nickname: string
+  req_genres: string[]
+  req_runtime_max: number | null
+  movies: SessionMovie[]
   created_at: string
 }
 
@@ -51,8 +69,23 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [b2cActivities, setB2cActivities] = useState<B2CLiveActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [sessionModal, setSessionModal] = useState<SessionMoviesData | null>(null)
+  const [loadingSession, setLoadingSession] = useState(false)
   const { token, company } = useAuthStore()
   const navigate = useNavigate()
+
+  // 세션 영화 목록 조회
+  const fetchSessionMovies = async (sessionId: number) => {
+    setLoadingSession(true)
+    try {
+      const { data } = await api.get(`/b2b/admin/sessions/${sessionId}/movies`)
+      setSessionModal(data)
+    } catch (err) {
+      console.error('Failed to fetch session movies:', err)
+    } finally {
+      setLoadingSession(false)
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -448,52 +481,42 @@ export default function Dashboard() {
                   )
                 } else {
                   const activity = item.data
+                  // B2C 활동 타입에 따른 API 엔드포인트 매핑
+                  const endpointMap: Record<string, string> = {
+                    'recommendation': '/v1/recommend',
+                    'ott_click': '/ott-click',
+                    'satisfaction_positive': '/feedback',
+                    'satisfaction_negative': '/feedback',
+                  }
+                  const endpoint = endpointMap[activity.type] || '/api'
+
+                  // 추천 타입이고 session_id가 있으면 클릭 가능
+                  const isClickable = activity.type === 'recommendation' && activity.session_id
+
                   return (
                     <div key={`b2c-${activity.user_id}-${activity.created_at}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        activity.type === 'recommendation' ? 'bg-blue-500/20' :
-                        activity.type === 'ott_click' ? 'bg-green-500/20' :
-                        activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20' :
-                        'bg-red-500/20'
-                      }`}>
-                        {activity.type === 'recommendation' && (
-                          <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                        )}
-                        {activity.type === 'ott_click' && (
-                          <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                        {activity.type === 'satisfaction_positive' && (
-                          <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                          </svg>
-                        )}
-                        {activity.type === 'satisfaction_negative' && (
-                          <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
-                          </svg>
-                        )}
+                      <div className="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-medium text-white truncate">{activity.user_nickname}</span>
-                          <span className={`text-[10px] px-1 py-0.5 rounded ${
-                            activity.type === 'recommendation' ? 'bg-blue-500/20 text-blue-400' :
-                            activity.type === 'ott_click' ? 'bg-green-500/20 text-green-400' :
-                            activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20 text-cyan-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>
-                            {activity.type === 'recommendation' ? '추천' :
-                             activity.type === 'ott_click' ? 'OTT' :
-                             activity.type === 'satisfaction_positive' ? '👍' : '👎'}
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <span className="text-xs font-medium text-cyan-400 flex-shrink-0">{activity.user_nickname}</span>
+                        {isClickable ? (
+                          <button
+                            onClick={() => fetchSessionMovies(activity.session_id!)}
+                            className="text-[10px] text-yellow-400 hover:text-yellow-300 truncate underline underline-offset-2 cursor-pointer"
+                          >
+                            {activity.movie_title || activity.description}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 truncate">
+                            {activity.movie_title || activity.description}
                           </span>
-                        </div>
-                        {activity.movie_title && (
-                          <p className="text-[10px] text-gray-500 truncate">🎬 {activity.movie_title}</p>
                         )}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-500/20 text-green-400 flex-shrink-0">POST</span>
+                        <span className="text-xs text-gray-300 font-mono truncate">{endpoint}</span>
+                        <span className="text-[10px] font-medium text-green-400 flex-shrink-0">200</span>
                       </div>
                       <span className="text-[10px] text-gray-500 flex-shrink-0">
                         {new Date(activity.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
@@ -506,6 +529,81 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Session Movies Modal */}
+      {(sessionModal || loadingSession) && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a24] rounded-xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            {loadingSession ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400" />
+              </div>
+            ) : sessionModal && (
+              <>
+                {/* Header */}
+                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {sessionModal.user_nickname}님의 추천 결과
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {sessionModal.req_genres.length > 0 ? sessionModal.req_genres.join(', ') : '전체 장르'}
+                      {sessionModal.req_runtime_max && ` / ${sessionModal.req_runtime_max}분 이내`}
+                      <span className="mx-2">•</span>
+                      {new Date(sessionModal.created_at).toLocaleString('ko-KR')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSessionModal(null)}
+                    className="text-gray-400 hover:text-white p-1"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Movie Grid */}
+                <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    {sessionModal.movies.map((movie, idx) => (
+                      <div key={movie.movie_id} className="group">
+                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-white/5">
+                          {movie.poster_path ? (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                              alt={movie.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-500">
+                              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="absolute top-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                            #{idx + 1}
+                          </div>
+                        </div>
+                        <p className="mt-1.5 text-xs text-white truncate">{movie.title}</p>
+                        {movie.release_date && (
+                          <p className="text-[10px] text-gray-500">{movie.release_date.slice(0, 4)}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {sessionModal.movies.length === 0 && (
+                    <div className="text-center text-gray-500 py-10">
+                      추천된 영화가 없습니다
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

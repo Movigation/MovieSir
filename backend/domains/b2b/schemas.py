@@ -244,9 +244,29 @@ class B2CLiveActivity(BaseModel):
     type: str
     description: str
     movie_title: Optional[str] = None
+    session_id: Optional[int] = None  # recommendation 타입일 때 세션 ID
     created_at: datetime
 
 
 class B2CLiveActivitiesResponse(BaseModel):
     """B2C 실시간 활동 피드 응답"""
     activities: List[B2CLiveActivity]
+
+
+class SessionMovieInfo(BaseModel):
+    """세션 추천 영화 정보"""
+    movie_id: int
+    title: str
+    poster_path: Optional[str] = None
+    release_date: Optional[str] = None
+    genres: List[str] = []
+
+
+class SessionMoviesResponse(BaseModel):
+    """세션 영화 목록 응답"""
+    session_id: int
+    user_nickname: str
+    req_genres: List[str] = []
+    req_runtime_max: Optional[int] = None
+    movies: List[SessionMovieInfo]
+    created_at: datetime
