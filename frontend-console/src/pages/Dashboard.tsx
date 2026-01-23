@@ -23,16 +23,6 @@ interface DashboardData {
   chart_data: { date: string; count: number; success: number; error: number }[]
 }
 
-interface LogEntry {
-  id: string
-  date: string  // YYYY-MM-DD
-  time: string  // HH:MM:SS
-  method: string
-  endpoint: string
-  status: number
-  latency: number
-}
-
 // 통합 피드 아이템 (백엔드에서 정렬된 채로 옴)
 interface UnifiedFeedItem {
   kind: 'api' | 'b2c'
