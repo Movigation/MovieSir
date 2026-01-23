@@ -15,7 +15,8 @@ from .schemas import (
     DashboardResponse, LogEntry, LogsResponse, OAuthCallback,
     ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest,
     B2CUserResponse, B2CUserDetailResponse, B2CUsersListResponse, B2CStatsResponse,
-    B2CUserActivitiesResponse, B2CLiveActivitiesResponse, SessionMoviesResponse
+    B2CUserActivitiesResponse, B2CLiveActivitiesResponse, SessionMoviesResponse,
+    UnifiedLiveFeedResponse
 )
 from . import service
 
@@ -552,6 +553,21 @@ def get_b2c_live_activities(
     - 대시보드에서 Live Logs처럼 실시간 모니터링용
     """
     return service.get_b2c_live_activities(db, limit)
+
+
+@router.get("/live-feed", response_model=UnifiedLiveFeedResponse)
+def get_unified_live_feed(
+    limit: int = Query(default=20, ge=1, le=50),
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    통합 실시간 피드 (API 로그 + B2C 활동)
+    - 어드민: API 로그 + B2C 활동 혼합
+    - 일반: API 로그만
+    - 모든 시간은 KST로 변환되어 반환
+    """
+    return service.get_unified_live_feed(db, company.company_id, limit)
 
 
 @router.get("/admin/sessions/{session_id}/movies", response_model=SessionMoviesResponse)

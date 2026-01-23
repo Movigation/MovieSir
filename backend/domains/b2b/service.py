@@ -1251,3 +1251,144 @@ def get_session_movies(db: Session, session_id: int) -> dict:
         "movies": movies,
         "created_at": session.created_at,
     }
+
+
+def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict:
+    """
+    통합 실시간 피드 (API 로그 + B2C 활동)
+    - 어드민: API 로그 + B2C 활동
+    - 일반: API 로그만
+    - 모든 시간은 KST로 통일하여 반환
+    """
+    from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
+    from backend.domains.movie.models import Movie
+    from backend.domains.user.models import User
+
+    items = []
+
+    # 1. API 로그 조회
+    api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
+    key_ids = [k.key_id for k in api_keys]
+
+    if key_ids:
+        logs = db.query(ApiLog).filter(
+            ApiLog.key_id.in_(key_ids)
+        ).order_by(ApiLog.created_at.desc()).limit(limit).all()
+
+        for log in logs:
+            endpoint = log.endpoint or "/v1/recommend"
+            method = "POST" if "recommend" in endpoint else "GET"
+
+            # UTC → KST 변환 (+9시간)
+            kst_time = (log.created_at + timedelta(hours=9)) if log.created_at else None
+
+            if kst_time:
+                items.append({
+                    "kind": "api",
+                    "date": kst_time.strftime("%Y-%m-%d"),
+                    "time": kst_time.strftime("%H:%M:%S"),
+                    "timestamp": log.created_at,  # 정렬용 (UTC)
+                    "log_id": str(log.log_id),
+                    "method": method,
+                    "endpoint": endpoint,
+                    "status": log.status_code or 200,
+                    "latency": log.process_time_ms or 0,
+                })
+
+    # 2. B2C 활동 조회 (어드민 회사만 - company_id 확인 없이 모든 B2C 활동)
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+    is_admin = company and company.is_admin
+
+    if is_admin:
+        # 추천 세션 조회
+        sessions = db.query(RecommendationSession, User).outerjoin(
+            User, RecommendationSession.user_id == User.user_id
+        ).filter(
+            RecommendationSession.user_id.isnot(None)
+        ).order_by(RecommendationSession.created_at.desc()).limit(limit).all()
+
+        for session, user in sessions:
+            if not user:
+                continue
+
+            genres_str = ", ".join(session.req_genres) if session.req_genres else "전체"
+            runtime_str = f"{session.req_runtime_max}분" if session.req_runtime_max else ""
+            desc_parts = [genres_str]
+            if runtime_str:
+                desc_parts.append(runtime_str)
+
+            # 추천받은 영화 제목
+            movie_title = None
+            if session.recommended_movie_ids and len(session.recommended_movie_ids) > 0:
+                first_movie = db.query(Movie).filter(
+                    Movie.movie_id == session.recommended_movie_ids[0]
+                ).first()
+                if first_movie:
+                    movie_count = len(session.recommended_movie_ids)
+                    if movie_count > 1:
+                        movie_title = f"'{first_movie.title}' 외 {movie_count - 1}편"
+                    else:
+                        movie_title = f"'{first_movie.title}'"
+
+            # UTC → KST 변환 (+9시간)
+            kst_time = (session.created_at + timedelta(hours=9)) if session.created_at else None
+
+            if kst_time:
+                items.append({
+                    "kind": "b2c",
+                    "date": kst_time.strftime("%Y-%m-%d"),
+                    "time": kst_time.strftime("%H:%M:%S"),
+                    "timestamp": session.created_at,  # 정렬용 (UTC)
+                    "user_id": str(session.user_id),
+                    "user_nickname": user.nickname or user.email.split('@')[0],
+                    "activity_type": "recommendation",
+                    "description": f"추천 요청: {' / '.join(desc_parts)}",
+                    "movie_title": movie_title,
+                    "session_id": session.session_id,
+                })
+
+        # 피드백 조회
+        feedbacks = db.query(UserMovieFeedback, User, Movie).outerjoin(
+            User, UserMovieFeedback.user_id == User.user_id
+        ).outerjoin(
+            Movie, UserMovieFeedback.movie_id == Movie.movie_id
+        ).order_by(UserMovieFeedback.created_at.desc()).limit(limit).all()
+
+        for feedback, user, movie in feedbacks:
+            if not user:
+                continue
+
+            movie_title = movie.title if movie else f"영화 #{feedback.movie_id}"
+
+            if feedback.feedback_type == "ott_click":
+                description = f"'{movie_title}' OTT 클릭"
+            elif feedback.feedback_type == "satisfaction_positive":
+                description = f"'{movie_title}' 좋아요"
+            elif feedback.feedback_type == "satisfaction_negative":
+                description = f"'{movie_title}' 별로예요"
+            else:
+                description = f"'{movie_title}' 피드백"
+
+            # UTC → KST 변환 (+9시간)
+            kst_time = (feedback.created_at + timedelta(hours=9)) if feedback.created_at else None
+
+            if kst_time:
+                items.append({
+                    "kind": "b2c",
+                    "date": kst_time.strftime("%Y-%m-%d"),
+                    "time": kst_time.strftime("%H:%M:%S"),
+                    "timestamp": feedback.created_at,  # 정렬용 (UTC)
+                    "user_id": str(feedback.user_id),
+                    "user_nickname": user.nickname or user.email.split('@')[0],
+                    "activity_type": feedback.feedback_type,
+                    "description": description,
+                    "movie_title": movie_title,
+                    "session_id": None,
+                })
+
+    # 시간순 정렬 (최신순) - UTC timestamp 기준
+    items.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    return {
+        "items": items[:limit],
+    }

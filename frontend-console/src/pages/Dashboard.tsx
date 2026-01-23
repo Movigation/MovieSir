@@ -33,14 +33,24 @@ interface LogEntry {
   latency: number
 }
 
-interface B2CLiveActivity {
-  user_id: string
-  user_nickname: string
-  type: string
-  description: string
-  movie_title: string | null
-  session_id: number | null
-  created_at: string
+// 통합 피드 아이템 (백엔드에서 정렬된 채로 옴)
+interface UnifiedFeedItem {
+  kind: 'api' | 'b2c'
+  date: string
+  time: string
+  // API 로그 전용
+  log_id?: string
+  method?: string
+  endpoint?: string
+  status?: number
+  latency?: number
+  // B2C 활동 전용
+  user_id?: string
+  user_nickname?: string
+  activity_type?: string
+  description?: string
+  movie_title?: string | null
+  session_id?: number | null
 }
 
 interface SessionMovie {
@@ -60,15 +70,10 @@ interface SessionMoviesData {
   created_at: string
 }
 
-// 통합 피드 아이템 타입
-type FeedItem =
-  | { kind: 'api'; data: LogEntry }
-  | { kind: 'b2c'; data: B2CLiveActivity }
-
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const [b2cActivities, setB2cActivities] = useState<B2CLiveActivity[]>([])
+  const [unifiedFeed, setUnifiedFeed] = useState<UnifiedFeedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [sessionModal, setSessionModal] = useState<SessionMoviesData | null>(null)
   const [loadingSession, setLoadingSession] = useState(false)
@@ -91,12 +96,14 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashboardRes, logsRes] = await Promise.all([
+        const [dashboardRes, logsRes, feedRes] = await Promise.all([
           api.get('/b2b/dashboard'),
           api.get('/b2b/logs?limit=10'),
+          api.get('/b2b/live-feed?limit=20'),
         ])
         setData(dashboardRes.data)
         setLogs(logsRes.data.logs)
+        setUnifiedFeed(feedRes.data.items)
       } catch (err) {
         console.error(err)
       } finally {
@@ -106,41 +113,20 @@ export default function Dashboard() {
     fetchData()
   }, [token])
 
-  // Live Logs 5초 폴링
+  // 통합 Live Feed 5초 폴링
   useEffect(() => {
-    const fetchLogs = async () => {
+    const fetchFeed = async () => {
       try {
-        const { data } = await api.get('/b2b/logs?limit=10')
-        setLogs(data.logs)
+        const { data } = await api.get('/b2b/live-feed?limit=20')
+        setUnifiedFeed(data.items)
       } catch (err) {
-        console.error('Failed to fetch logs:', err)
+        console.error('Failed to fetch live feed:', err)
       }
     }
 
-    const interval = setInterval(fetchLogs, 5000)
+    const interval = setInterval(fetchFeed, 5000)
     return () => clearInterval(interval)
   }, [token])
-
-  // B2C Live Activity 폴링 (어드민 전용)
-  useEffect(() => {
-    if (!company?.is_admin) return
-
-    const fetchB2CActivities = async () => {
-      try {
-        const { data } = await api.get('/b2b/admin/b2c-live?limit=15')
-        setB2cActivities(data.activities)
-      } catch (err) {
-        console.error('Failed to fetch B2C activities:', err)
-      }
-    }
-
-    // 초기 로드
-    fetchB2CActivities()
-
-    // 5초 폴링
-    const interval = setInterval(fetchB2CActivities, 5000)
-    return () => clearInterval(interval)
-  }, [company?.is_admin])
 
   if (loading) {
     return (
@@ -439,42 +425,16 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-            {/* API Logs + B2C Activities 통합 (어드민은 둘 다, 일반은 API만) */}
-            {(() => {
-              // API 로그를 FeedItem으로 변환
-              const apiItems: FeedItem[] = logs.map(log => ({ kind: 'api' as const, data: log }))
-              // B2C 활동을 FeedItem으로 변환 (어드민만)
-              const b2cItems: FeedItem[] = company?.is_admin
-                ? b2cActivities.map(activity => ({ kind: 'b2c' as const, data: activity }))
-                : []
-
-              // 통합 후 시간순 정렬 (최신순)
-              const getTimestamp = (item: FeedItem): number => {
+            {/* 통합 Live Feed (백엔드에서 정렬됨) */}
+            {unifiedFeed.length === 0 ? (
+              <div className="text-center text-gray-500 text-sm py-8">
+                아직 활동이 없습니다
+              </div>
+            ) : (
+              unifiedFeed.map((item, index) => {
                 if (item.kind === 'api') {
-                  // API log: date + time → "2025-01-23 14:32:15"
-                  return new Date(`${item.data.date} ${item.data.time}`).getTime()
-                } else {
-                  // B2C activity: created_at ISO string
-                  return new Date(item.data.created_at).getTime()
-                }
-              }
-              const allItems = [...apiItems, ...b2cItems]
-                .sort((a, b) => getTimestamp(b) - getTimestamp(a))
-                .slice(0, 20)
-
-              if (allItems.length === 0) {
-                return (
-                  <div className="text-center text-gray-500 text-sm py-8">
-                    아직 활동이 없습니다
-                  </div>
-                )
-              }
-
-              return allItems.map((item, index) => {
-                if (item.kind === 'api') {
-                  const log = item.data
                   return (
-                    <div key={`api-${log.id}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                    <div key={`api-${item.log_id}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                       <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                         <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -482,18 +442,17 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          log.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                        }`}>{log.method}</span>
-                        <span className="text-xs text-gray-300 font-mono truncate">{log.endpoint}</span>
+                          item.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                        }`}>{item.method}</span>
+                        <span className="text-xs text-gray-300 font-mono truncate">{item.endpoint}</span>
                         <span className={`text-[10px] font-medium ${
-                          log.status === 200 ? 'text-green-400' : log.status === 429 ? 'text-yellow-400' : 'text-red-400'
-                        }`}>{log.status}</span>
+                          item.status === 200 ? 'text-green-400' : item.status === 429 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>{item.status}</span>
                       </div>
-                      <span className="text-[10px] text-gray-500 flex-shrink-0">{log.time}</span>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">{item.time}</span>
                     </div>
                   )
                 } else {
-                  const activity = item.data
                   // B2C 활동 타입에 따른 API 엔드포인트 매핑
                   const endpointMap: Record<string, string> = {
                     'recommendation': '/v1/recommend',
@@ -501,44 +460,42 @@ export default function Dashboard() {
                     'satisfaction_positive': '/feedback',
                     'satisfaction_negative': '/feedback',
                   }
-                  const endpoint = endpointMap[activity.type] || '/api'
+                  const endpoint = endpointMap[item.activity_type || ''] || '/api'
 
                   // 추천 타입이고 session_id가 있으면 클릭 가능
-                  const isClickable = activity.type === 'recommendation' && activity.session_id
+                  const isClickable = item.activity_type === 'recommendation' && item.session_id
 
                   return (
-                    <div key={`b2c-${activity.user_id}-${activity.created_at}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                    <div key={`b2c-${item.user_id}-${item.time}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                       <div className="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
                         <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <span className="text-xs font-medium text-cyan-400 flex-shrink-0">{activity.user_nickname}</span>
+                        <span className="text-xs font-medium text-cyan-400 flex-shrink-0">{item.user_nickname}</span>
                         {isClickable ? (
                           <button
-                            onClick={() => fetchSessionMovies(activity.session_id!)}
+                            onClick={() => fetchSessionMovies(item.session_id!)}
                             className="text-[10px] text-yellow-400 hover:text-yellow-300 truncate underline underline-offset-2 cursor-pointer"
                           >
-                            {activity.movie_title || activity.description}
+                            {item.movie_title || item.description}
                           </button>
                         ) : (
                           <span className="text-[10px] text-gray-400 truncate">
-                            {activity.movie_title || activity.description}
+                            {item.movie_title || item.description}
                           </span>
                         )}
                         <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-500/20 text-green-400 flex-shrink-0">POST</span>
                         <span className="text-xs text-gray-300 font-mono truncate">{endpoint}</span>
                         <span className="text-[10px] font-medium text-green-400 flex-shrink-0">200</span>
                       </div>
-                      <span className="text-[10px] text-gray-500 flex-shrink-0">
-                        {new Date(activity.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">{item.time}</span>
                     </div>
                   )
                 }
               })
-            })()}
+            )}
           </div>
         </div>
       </div>

@@ -270,3 +270,32 @@ class SessionMoviesResponse(BaseModel):
     req_runtime_max: Optional[int] = None
     movies: List[SessionMovieInfo]
     created_at: datetime
+
+
+# ==================== Unified Live Feed ====================
+
+class UnifiedFeedItem(BaseModel):
+    """통합 실시간 피드 아이템"""
+    kind: str  # 'api' or 'b2c'
+    # 공통 시간 필드 (KST 기준)
+    date: str  # YYYY-MM-DD
+    time: str  # HH:MM:SS
+    timestamp: datetime  # 정렬용 원본 타임스탬프
+    # API 로그 전용 필드
+    log_id: Optional[str] = None
+    method: Optional[str] = None
+    endpoint: Optional[str] = None
+    status: Optional[int] = None
+    latency: Optional[int] = None
+    # B2C 활동 전용 필드
+    user_id: Optional[str] = None
+    user_nickname: Optional[str] = None
+    activity_type: Optional[str] = None
+    description: Optional[str] = None
+    movie_title: Optional[str] = None
+    session_id: Optional[int] = None
+
+
+class UnifiedLiveFeedResponse(BaseModel):
+    """통합 실시간 피드 응답"""
+    items: List[UnifiedFeedItem]
