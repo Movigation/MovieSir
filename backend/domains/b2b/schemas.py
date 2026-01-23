@@ -52,6 +52,7 @@ class CompanyResponse(BaseModel):
     email: str
     plan: str
     oauth_provider: Optional[str] = None
+    is_admin: bool = False
     created_at: Optional[datetime] = None
 
     class Config:
@@ -160,3 +161,56 @@ class SuccessResponse(BaseModel):
     """표준 성공 응답"""
     success: bool = True
     message: str
+
+
+# ==================== B2C Admin ====================
+
+class B2CUserResponse(BaseModel):
+    """B2C 사용자 정보 응답"""
+    user_id: str
+    email: str
+    nickname: str
+    role: str
+    is_email_verified: bool
+    onboarding_completed: bool
+    created_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class B2CUserDetailResponse(BaseModel):
+    """B2C 사용자 상세 정보 응답"""
+    user_id: str
+    email: str
+    nickname: str
+    role: str
+    is_email_verified: bool
+    onboarding_completed: bool
+    created_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    ott_subscriptions: List[str] = []
+    recommendation_count: int = 0
+    last_recommendation_at: Optional[datetime] = None
+
+
+class B2CUsersListResponse(BaseModel):
+    """B2C 사용자 목록 응답"""
+    users: List[B2CUserResponse]
+    total: int
+    page: int
+    page_size: int
+    has_more: bool
+
+
+class B2CStatsResponse(BaseModel):
+    """B2C 통계 응답"""
+    total_users: int
+    active_users: int
+    deleted_users: int
+    verified_users: int
+    onboarded_users: int
+    today_signups: int
+    weekly_signups: int
+    monthly_signups: int

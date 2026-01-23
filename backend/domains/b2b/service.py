@@ -169,6 +169,7 @@ def company_to_response(company: Company) -> CompanyResponse:
         email=company.manager_email,
         plan=company.plan_type,
         oauth_provider=company.oauth_provider,
+        is_admin=company.is_admin or False,
         created_at=company.created_at,
     )
 
@@ -849,4 +850,181 @@ def forgot_password(db: Session, email: str) -> bool:
     # 이메일 발송
     send_reset_password_email(email, temp_password)
 
+    return True
+
+
+# ==================== B2C Admin Service ====================
+
+def get_b2c_users(
+    db: Session,
+    page: int = 1,
+    page_size: int = 20,
+    search: Optional[str] = None
+) -> dict:
+    """B2C 사용자 목록 조회 (어드민 전용)"""
+    from backend.domains.user.models import User
+
+    query = db.query(User)
+
+    # 검색어가 있으면 이메일 또는 닉네임으로 필터
+    if search:
+        query = query.filter(
+            (User.email.ilike(f"%{search}%")) |
+            (User.nickname.ilike(f"%{search}%"))
+        )
+
+    # 전체 개수
+    total = query.count()
+
+    # 페이지네이션
+    offset = (page - 1) * page_size
+    users = query.order_by(User.created_at.desc()).offset(offset).limit(page_size).all()
+
+    return {
+        "users": [
+            {
+                "user_id": str(u.user_id),
+                "email": u.email,
+                "nickname": u.nickname,
+                "role": u.role or "USER",
+                "is_email_verified": u.is_email_verified or False,
+                "onboarding_completed": u.onboarding_completed_at is not None,
+                "created_at": u.created_at,
+                "deleted_at": u.deleted_at,
+            }
+            for u in users
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "has_more": offset + len(users) < total,
+    }
+
+
+def get_b2c_user_detail(db: Session, user_id: str) -> Optional[dict]:
+    """B2C 사용자 상세 정보 조회 (어드민 전용)"""
+    from backend.domains.user.models import User
+    from backend.domains.movie.models import OttProvider
+    from uuid import UUID
+
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        return None
+
+    user = db.query(User).filter(User.user_id == user_uuid).first()
+    if not user:
+        return None
+
+    # OTT 구독 정보
+    ott_names = []
+    if hasattr(user, 'ott_subscriptions') and user.ott_subscriptions:
+        for sub in user.ott_subscriptions:
+            if sub.provider:
+                ott_names.append(sub.provider.provider_name)
+
+    # 추천 횟수 (b2c.recommendation_sessions에서 조회)
+    from sqlalchemy import text
+    rec_count_result = db.execute(
+        text("SELECT COUNT(*) FROM b2c.recommendation_sessions WHERE user_id = :uid"),
+        {"uid": str(user_uuid)}
+    ).scalar() or 0
+
+    # 마지막 추천 시간
+    last_rec_result = db.execute(
+        text("SELECT MAX(created_at) FROM b2c.recommendation_sessions WHERE user_id = :uid"),
+        {"uid": str(user_uuid)}
+    ).scalar()
+
+    return {
+        "user_id": str(user.user_id),
+        "email": user.email,
+        "nickname": user.nickname,
+        "role": user.role or "USER",
+        "is_email_verified": user.is_email_verified or False,
+        "onboarding_completed": user.onboarding_completed_at is not None,
+        "created_at": user.created_at,
+        "deleted_at": user.deleted_at,
+        "ott_subscriptions": ott_names,
+        "recommendation_count": rec_count_result,
+        "last_recommendation_at": last_rec_result,
+    }
+
+
+def get_b2c_stats(db: Session) -> dict:
+    """B2C 통계 조회 (어드민 전용)"""
+    from backend.domains.user.models import User
+    from datetime import datetime, timedelta
+
+    today = datetime.utcnow().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+
+    # 전체 통계
+    total_users = db.query(User).count()
+    active_users = db.query(User).filter(User.deleted_at.is_(None)).count()
+    deleted_users = db.query(User).filter(User.deleted_at.isnot(None)).count()
+    verified_users = db.query(User).filter(User.is_email_verified == True).count()
+    onboarded_users = db.query(User).filter(User.onboarding_completed_at.isnot(None)).count()
+
+    # 기간별 가입자
+    today_signups = db.query(User).filter(
+        func.date(User.created_at) == today
+    ).count()
+
+    weekly_signups = db.query(User).filter(
+        func.date(User.created_at) >= week_ago
+    ).count()
+
+    monthly_signups = db.query(User).filter(
+        func.date(User.created_at) >= month_ago
+    ).count()
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "deleted_users": deleted_users,
+        "verified_users": verified_users,
+        "onboarded_users": onboarded_users,
+        "today_signups": today_signups,
+        "weekly_signups": weekly_signups,
+        "monthly_signups": monthly_signups,
+    }
+
+
+def deactivate_b2c_user(db: Session, user_id: str) -> bool:
+    """B2C 사용자 비활성화 (어드민 전용)"""
+    from backend.domains.user.models import User
+    from uuid import UUID
+
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        return False
+
+    user = db.query(User).filter(User.user_id == user_uuid).first()
+    if not user:
+        return False
+
+    user.deleted_at = datetime.utcnow()
+    db.commit()
+    return True
+
+
+def activate_b2c_user(db: Session, user_id: str) -> bool:
+    """B2C 사용자 활성화 (어드민 전용)"""
+    from backend.domains.user.models import User
+    from uuid import UUID
+
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        return False
+
+    user = db.query(User).filter(User.user_id == user_uuid).first()
+    if not user:
+        return False
+
+    user.deleted_at = None
+    db.commit()
     return True

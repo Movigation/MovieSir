@@ -13,7 +13,8 @@ from .schemas import (
     CompanyRegister, CompanyLogin, TokenResponse,
     ApiKeyCreate, ApiKeyResponse, UpdateApiKeyRequest,
     DashboardResponse, LogEntry, LogsResponse, OAuthCallback,
-    ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest
+    ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest,
+    B2CUserResponse, B2CUserDetailResponse, B2CUsersListResponse, B2CStatsResponse
 )
 from . import service
 
@@ -434,3 +435,92 @@ def update_company_info(
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ==================== B2C Admin Endpoints ====================
+
+async def get_admin_company(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """어드민 권한 체크 (is_admin=True인 회사만)"""
+    company = await get_current_company(credentials, db)
+    if not company.is_admin:
+        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다")
+    return company
+
+
+@router.get("/admin/b2c-users", response_model=B2CUsersListResponse)
+def list_b2c_users(
+    page: int = Query(default=1, ge=1, description="페이지 번호"),
+    page_size: int = Query(default=20, ge=1, le=100, description="페이지 크기"),
+    search: Optional[str] = Query(default=None, description="검색어 (이메일/닉네임)"),
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 사용자 목록 조회
+    - page: 페이지 번호
+    - page_size: 페이지 크기 (최대 100)
+    - search: 검색어 (이메일 또는 닉네임)
+    """
+    return service.get_b2c_users(db, page, page_size, search)
+
+
+@router.get("/admin/b2c-users/{user_id}", response_model=B2CUserDetailResponse)
+def get_b2c_user(
+    user_id: str,
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 사용자 상세 정보 조회
+    """
+    user = service.get_b2c_user_detail(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    return user
+
+
+@router.get("/admin/b2c-stats", response_model=B2CStatsResponse)
+def get_b2c_stats(
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 통계 조회
+    - 총 사용자, 활성 사용자, 탈퇴 사용자
+    - 이메일 인증 완료, 온보딩 완료
+    - 오늘/주간/월간 가입자
+    """
+    return service.get_b2c_stats(db)
+
+
+@router.patch("/admin/b2c-users/{user_id}/deactivate")
+def deactivate_b2c_user(
+    user_id: str,
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 사용자 비활성화 (소프트 삭제)
+    """
+    success = service.deactivate_b2c_user(db, user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    return {"success": True, "message": "사용자가 비활성화되었습니다"}
+
+
+@router.patch("/admin/b2c-users/{user_id}/activate")
+def activate_b2c_user(
+    user_id: str,
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 사용자 활성화
+    """
+    success = service.activate_b2c_user(db, user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    return {"success": True, "message": "사용자가 활성화되었습니다"}
