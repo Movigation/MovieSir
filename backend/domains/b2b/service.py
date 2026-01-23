@@ -1283,8 +1283,9 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
             endpoint = log.endpoint or "/v1/recommend"
             method = "POST" if "recommend" in endpoint else "GET"
 
-            # 어드민이면 /v1/recommend, /v1/recommend_single은 B2C 활동으로 표시되므로 API 로그에서 제외
-            if is_admin and "recommend" in endpoint:
+            # 어드민이면 /v1/recommend는 B2C 활동으로 표시되므로 API 로그에서 제외
+            # (recommend_single은 세션을 생성하지 않으므로 API 로그로 표시)
+            if is_admin and endpoint == "/v1/recommend":
                 continue
 
             # UTC → KST 변환 (+9시간)
