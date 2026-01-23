@@ -1256,7 +1256,7 @@ def get_session_movies(db: Session, session_id: int) -> dict:
 def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict:
     """
     통합 실시간 피드 (API 로그 + B2C 활동)
-    - 어드민: API 로그 + B2C 활동
+    - 어드민: B2C 활동 + API 로그 (단, /v1/recommend는 B2C 활동으로 표시되므로 제외)
     - 일반: API 로그만
     - 모든 시간은 KST로 통일하여 반환
     """
@@ -1265,6 +1265,10 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
     from backend.domains.user.models import User
 
     items = []
+
+    # 어드민 여부 먼저 확인
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+    is_admin = company and company.is_admin
 
     # 1. API 로그 조회
     api_keys = db.query(ApiKey).filter(ApiKey.company_id == company_id).all()
@@ -1278,6 +1282,10 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
         for log in logs:
             endpoint = log.endpoint or "/v1/recommend"
             method = "POST" if "recommend" in endpoint else "GET"
+
+            # 어드민이면 /v1/recommend, /v1/recommend_single은 B2C 활동으로 표시되므로 API 로그에서 제외
+            if is_admin and "recommend" in endpoint:
+                continue
 
             # UTC → KST 변환 (+9시간)
             kst_time = (log.created_at + timedelta(hours=9)) if log.created_at else None
@@ -1294,10 +1302,6 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
                     "status": log.status_code or 200,
                     "latency": log.process_time_ms or 0,
                 })
-
-    # 2. B2C 활동 조회 (어드민 회사만 - company_id 확인 없이 모든 B2C 활동)
-    company = db.query(Company).filter(Company.company_id == company_id).first()
-    is_admin = company and company.is_admin
 
     if is_admin:
         # 추천 세션 조회
