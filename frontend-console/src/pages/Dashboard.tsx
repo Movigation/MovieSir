@@ -25,7 +25,8 @@ interface DashboardData {
 
 interface LogEntry {
   id: string
-  time: string
+  date: string  // YYYY-MM-DD
+  time: string  // HH:MM:SS
   method: string
   endpoint: string
   status: number
@@ -446,8 +447,20 @@ export default function Dashboard() {
               const b2cItems: FeedItem[] = company?.is_admin
                 ? b2cActivities.map(activity => ({ kind: 'b2c' as const, data: activity }))
                 : []
-              // 통합 및 정렬 (최신순)
-              const allItems = [...apiItems, ...b2cItems].slice(0, 20)
+
+              // 통합 후 시간순 정렬 (최신순)
+              const getTimestamp = (item: FeedItem): number => {
+                if (item.kind === 'api') {
+                  // API log: date + time → "2025-01-23 14:32:15"
+                  return new Date(`${item.data.date} ${item.data.time}`).getTime()
+                } else {
+                  // B2C activity: created_at ISO string
+                  return new Date(item.data.created_at).getTime()
+                }
+              }
+              const allItems = [...apiItems, ...b2cItems]
+                .sort((a, b) => getTimestamp(b) - getTimestamp(a))
+                .slice(0, 20)
 
               if (allItems.length === 0) {
                 return (
