@@ -177,15 +177,12 @@ export const postSatisfaction = async (sessionId: string, isPositive: boolean): 
 // [용도] OTT 클릭 로깅 (Live Feed용)
 // [사용법] await logOttClick(12345, 8);
 export const logOttClick = async (movieId: number, providerId: number): Promise<void> => {
-  console.log(`📊 [API] OTT 클릭 로깅 시도: movieId=${movieId}, providerId=${providerId}`);
   try {
-    const response = await axiosInstance.post(`/api/movies/${movieId}/play`, {
+    await axiosInstance.post(`/api/movies/${movieId}/play`, {
       provider_id: providerId
     });
-    console.log(`✅ [API] OTT 클릭 로깅 완료:`, response.data);
-  } catch (error: any) {
-    // 로깅 실패해도 사용자 경험에 영향 없도록 에러만 출력
-    console.error("❌ [API] OTT 클릭 로깅 실패:", error?.response?.status, error?.response?.data || error.message);
+  } catch (error) {
+    // 로깅 실패해도 사용자 경험에 영향 없음
   }
 };
 
