@@ -443,6 +443,7 @@ export default function Dashboard() {
                   // B2C 활동 타입에 따른 API 엔드포인트 매핑
                   const endpointMap: Record<string, string> = {
                     'recommendation': '/v1/recommend',
+                    're_recommendation': '/v1/recommend_single',
                     'ott_click': '/ott-click',
                     'satisfaction_positive': '/feedback',
                     'satisfaction_negative': '/feedback',
