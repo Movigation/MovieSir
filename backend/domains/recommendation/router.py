@@ -108,6 +108,14 @@ def recommend_single_movie(
     )
 
     if movie:
+        # 재추천 활동 로깅 (B2C 활동 피드용)
+        service.log_re_recommendation(
+            db=db,
+            user_id=user_id,
+            source_movie_id=req.source_movie_id,
+            result_movie_id=movie.get('movie_id'),
+            session_id=req.session_id
+        )
         return {
             "movie": movie,
             "success": True,

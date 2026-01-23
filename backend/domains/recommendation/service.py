@@ -222,3 +222,35 @@ def save_recommendation_session(
     session_id = result.fetchone()[0]
     db.commit()
     return session_id
+
+
+def log_re_recommendation(
+    db: Session,
+    user_id: str,
+    source_movie_id: Optional[int],
+    result_movie_id: Optional[int],
+    session_id: Optional[int] = None
+):
+    """
+    재추천 활동 로깅 (user_movie_feedback 테이블)
+    - source_movie_id: 교체 대상 영화 (session_id 필드에 저장)
+    - result_movie_id: 새로 추천된 영화 (movie_id 필드에 저장)
+
+    Note: re_recommendation 타입에서는 session_id 필드를 source_movie_id로 사용
+    """
+    if result_movie_id is None:
+        return  # 추천 실패 시 로깅 안함
+
+    db.execute(
+        text("""
+            INSERT INTO user_movie_feedback
+            (user_id, movie_id, session_id, feedback_type, created_at)
+            VALUES (:uid, :mid, :sid, 're_recommendation', NOW())
+        """),
+        {
+            "uid": user_id,
+            "mid": result_movie_id,  # 새로 추천된 영화 ID
+            "sid": source_movie_id   # 교체 대상 영화 ID (session_id 필드 재활용)
+        }
+    )
+    db.commit()
