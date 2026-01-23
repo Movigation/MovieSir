@@ -72,7 +72,6 @@ interface SessionMoviesData {
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
-  const [logs, setLogs] = useState<LogEntry[]>([])
   const [unifiedFeed, setUnifiedFeed] = useState<UnifiedFeedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [sessionModal, setSessionModal] = useState<SessionMoviesData | null>(null)
@@ -96,13 +95,11 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashboardRes, logsRes, feedRes] = await Promise.all([
+        const [dashboardRes, feedRes] = await Promise.all([
           api.get('/b2b/dashboard'),
-          api.get('/b2b/logs?limit=10'),
           api.get('/b2b/live-feed?limit=20'),
         ])
         setData(dashboardRes.data)
-        setLogs(logsRes.data.logs)
         setUnifiedFeed(feedRes.data.items)
       } catch (err) {
         console.error(err)
