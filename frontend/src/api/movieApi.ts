@@ -174,6 +174,20 @@ export const postSatisfaction = async (sessionId: string, isPositive: boolean): 
   }
 };
 
+// [용도] OTT 클릭 로깅 (Live Feed용)
+// [사용법] await logOttClick(12345, 8);
+export const logOttClick = async (movieId: number, providerId: number): Promise<void> => {
+  try {
+    await axiosInstance.post(`/api/movies/${movieId}/play`, {
+      provider_id: providerId
+    });
+    console.log(`📊 [API] OTT 클릭 로깅 완료: movieId=${movieId}, providerId=${providerId}`);
+  } catch (error) {
+    // 로깅 실패해도 사용자 경험에 영향 없도록 에러만 출력
+    console.error("OTT 클릭 로깅 실패:", error);
+  }
+};
+
 // [용도] RecommendedMovieV2를 프론트엔드 Movie 타입으로 변환
 export const convertV2MovieToMovie = (v2Movie: RecommendedMovieV2): Movie => ({
   id: v2Movie.movie_id,
