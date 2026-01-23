@@ -44,6 +44,29 @@ interface UserActivity {
   created_at: string
 }
 
+// OTT 로고 매핑 (로컬 파일 사용)
+const OTT_LOGOS: Record<string, string> = {
+  'Netflix': '/logos/NETFLEX_Logo.svg',
+  '넷플릭스': '/logos/NETFLEX_Logo.svg',
+  'Apple TV+': '/logos/Apple_TV_logo.svg',
+  'Apple TV': '/logos/Apple_TV_logo.svg',
+  '애플 TV+': '/logos/Apple_TV_logo.svg',
+  'Disney+': '/logos/Disney+_logo.svg',
+  'Disney Plus': '/logos/Disney+_logo.svg',
+  '디즈니+': '/logos/Disney+_logo.svg',
+  'TVING': '/logos/TVING_Logo.svg',
+  'Tving': '/logos/TVING_Logo.svg',
+  '티빙': '/logos/TVING_Logo.svg',
+  'Watcha': '/logos/WATCHA_Logo_Main.svg',
+  'WATCHA': '/logos/WATCHA_Logo_Main.svg',
+  '왓챠': '/logos/WATCHA_Logo_Main.svg',
+}
+
+// OTT 로고 URL 가져오기
+const getOttLogoUrl = (providerName: string): string | null => {
+  return OTT_LOGOS[providerName] || null
+}
+
 export default function Users() {
   const { company } = useAuthStore()
   const navigate = useNavigate()
@@ -551,25 +574,28 @@ export default function Users() {
                         <div className="bg-white/5 rounded-lg p-3">
                           <p className="text-xs text-gray-500 mb-2">구독 중인 OTT</p>
                           <div className="flex flex-wrap gap-2">
-                            {selectedUser.ott_subscriptions.map((ott) => (
-                              <div
-                                key={ott.provider_name}
-                                className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded"
-                              >
-                                {ott.logo_path ? (
-                                  <img
-                                    src={`https://image.tmdb.org/t/p/w45${ott.logo_path}`}
-                                    alt={ott.provider_name}
-                                    className="w-5 h-5 rounded"
-                                  />
-                                ) : (
-                                  <div className="w-5 h-5 rounded bg-purple-500/20 flex items-center justify-center text-[10px] text-purple-400">
-                                    {ott.provider_name.charAt(0)}
-                                  </div>
-                                )}
-                                <span className="text-xs text-gray-300">{ott.provider_name}</span>
-                              </div>
-                            ))}
+                            {selectedUser.ott_subscriptions.map((ott) => {
+                              const logoUrl = getOttLogoUrl(ott.provider_name)
+                              return (
+                                <div
+                                  key={ott.provider_name}
+                                  className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded"
+                                >
+                                  {logoUrl ? (
+                                    <img
+                                      src={logoUrl}
+                                      alt={ott.provider_name}
+                                      className="w-5 h-5 rounded object-contain"
+                                    />
+                                  ) : (
+                                    <div className="w-5 h-5 rounded bg-purple-500/20 flex items-center justify-center text-[10px] text-purple-400">
+                                      {ott.provider_name.charAt(0)}
+                                    </div>
+                                  )}
+                                  <span className="text-xs text-gray-300">{ott.provider_name}</span>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       )}

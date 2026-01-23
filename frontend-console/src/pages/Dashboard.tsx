@@ -41,6 +41,11 @@ interface B2CLiveActivity {
   created_at: string
 }
 
+// 통합 피드 아이템 타입
+type FeedItem =
+  | { kind: 'api'; data: LogEntry }
+  | { kind: 'b2c'; data: B2CLiveActivity }
+
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -341,14 +346,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Section: Table + Recent */}
-      <div className={`grid grid-cols-1 gap-4 lg:gap-6 ${company?.is_admin ? 'lg:grid-cols-12' : 'lg:grid-cols-12'}`}>
+      {/* Bottom Section: Summary + Live Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
         {/* API Usage Summary */}
-        <div className="lg:col-span-8 bg-[#16161d] rounded-xl p-4 lg:p-5">
+        <div className="lg:col-span-5 bg-[#16161d] rounded-xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-white">API 사용 요약</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-white/5 rounded-lg">
               <p className="text-2xl font-bold text-blue-400">{data.today}</p>
               <p className="text-xs text-gray-500 mt-1">오늘 호출</p>
@@ -382,111 +387,125 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Recent Logs */}
-        <div className={`bg-[#16161d] rounded-xl p-4 lg:p-5 ${company?.is_admin ? 'lg:col-span-4' : 'lg:col-span-4'}`}>
+        {/* Unified Live Feed */}
+        <div className="lg:col-span-7 bg-[#16161d] rounded-xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-medium text-white">Live Logs</h2>
+              <h2 className="text-sm font-medium text-white">Live Feed</h2>
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              {company?.is_admin && (
+                <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">+B2C</span>
+              )}
             </div>
-            <button onClick={() => navigate('/logs')} className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+            <div className="flex items-center gap-2">
+              {company?.is_admin && (
+                <button onClick={() => navigate('/users')} className="text-xs text-cyan-400 hover:text-cyan-300">유저 관리</button>
+              )}
+              <button onClick={() => navigate('/logs')} className="text-xs text-blue-400 hover:text-blue-300">전체 로그</button>
+            </div>
           </div>
-          <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
-            {logs.map((log) => (
-              <div key={log.id} className="flex items-center gap-1.5 lg:gap-2 text-[10px] lg:text-xs py-1.5 border-b border-white/5 last:border-0">
-                <span className="text-gray-500 w-12 lg:w-14 flex-shrink-0">{log.time}</span>
-                <span className={`w-10 lg:w-12 px-1 lg:px-1.5 py-0.5 rounded text-center font-medium flex-shrink-0 ${
-                  log.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                }`}>{log.method}</span>
-                <span className="flex-1 text-gray-300 font-mono truncate min-w-0">{log.endpoint}</span>
-                <span className={`w-7 lg:w-8 text-right flex-shrink-0 ${
-                  log.status === 200 ? 'text-green-400' : log.status === 429 ? 'text-yellow-400' : 'text-red-400'
-                }`}>{log.status}</span>
-              </div>
-            ))}
+          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+            {/* API Logs + B2C Activities 통합 (어드민은 둘 다, 일반은 API만) */}
+            {(() => {
+              // API 로그를 FeedItem으로 변환
+              const apiItems: FeedItem[] = logs.map(log => ({ kind: 'api' as const, data: log }))
+              // B2C 활동을 FeedItem으로 변환 (어드민만)
+              const b2cItems: FeedItem[] = company?.is_admin
+                ? b2cActivities.map(activity => ({ kind: 'b2c' as const, data: activity }))
+                : []
+              // 통합 및 정렬 (최신순)
+              const allItems = [...apiItems, ...b2cItems].slice(0, 20)
+
+              if (allItems.length === 0) {
+                return (
+                  <div className="text-center text-gray-500 text-sm py-8">
+                    아직 활동이 없습니다
+                  </div>
+                )
+              }
+
+              return allItems.map((item, index) => {
+                if (item.kind === 'api') {
+                  const log = item.data
+                  return (
+                    <div key={`api-${log.id}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          log.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                        }`}>{log.method}</span>
+                        <span className="text-xs text-gray-300 font-mono truncate">{log.endpoint}</span>
+                        <span className={`text-[10px] font-medium ${
+                          log.status === 200 ? 'text-green-400' : log.status === 429 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>{log.status}</span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">{log.time}</span>
+                    </div>
+                  )
+                } else {
+                  const activity = item.data
+                  return (
+                    <div key={`b2c-${activity.user_id}-${activity.created_at}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        activity.type === 'recommendation' ? 'bg-blue-500/20' :
+                        activity.type === 'ott_click' ? 'bg-green-500/20' :
+                        activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20' :
+                        'bg-red-500/20'
+                      }`}>
+                        {activity.type === 'recommendation' && (
+                          <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                        )}
+                        {activity.type === 'ott_click' && (
+                          <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                        {activity.type === 'satisfaction_positive' && (
+                          <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                        )}
+                        {activity.type === 'satisfaction_negative' && (
+                          <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium text-white truncate">{activity.user_nickname}</span>
+                          <span className={`text-[10px] px-1 py-0.5 rounded ${
+                            activity.type === 'recommendation' ? 'bg-blue-500/20 text-blue-400' :
+                            activity.type === 'ott_click' ? 'bg-green-500/20 text-green-400' :
+                            activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20 text-cyan-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {activity.type === 'recommendation' ? '추천' :
+                             activity.type === 'ott_click' ? 'OTT' :
+                             activity.type === 'satisfaction_positive' ? '👍' : '👎'}
+                          </span>
+                        </div>
+                        {activity.movie_title && (
+                          <p className="text-[10px] text-gray-500 truncate">🎬 {activity.movie_title}</p>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">
+                        {new Date(activity.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  )
+                }
+              })
+            })()}
           </div>
         </div>
       </div>
-
-      {/* B2C Live Activity (어드민 전용) */}
-      {company?.is_admin && (
-        <div className="mt-6 bg-[#16161d] rounded-xl p-4 lg:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-medium text-white">B2C Live Activity</h2>
-              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">ADMIN</span>
-            </div>
-            <button onClick={() => navigate('/users')} className="text-xs text-blue-400 hover:text-blue-300">유저 관리</button>
-          </div>
-          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-            {b2cActivities.length === 0 ? (
-              <div className="text-center text-gray-500 text-sm py-8">
-                아직 활동이 없습니다
-              </div>
-            ) : (
-              b2cActivities.map((activity, index) => (
-                <div key={`${activity.user_id}-${activity.created_at}-${index}`} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                  {/* 아이콘 */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === 'recommendation' ? 'bg-blue-500/20' :
-                    activity.type === 'ott_click' ? 'bg-green-500/20' :
-                    activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20' :
-                    'bg-red-500/20'
-                  }`}>
-                    {activity.type === 'recommendation' && (
-                      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    )}
-                    {activity.type === 'ott_click' && (
-                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                    {activity.type === 'satisfaction_positive' && (
-                      <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                      </svg>
-                    )}
-                    {activity.type === 'satisfaction_negative' && (
-                      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* 내용 */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-white truncate">{activity.user_nickname}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                        activity.type === 'recommendation' ? 'bg-blue-500/20 text-blue-400' :
-                        activity.type === 'ott_click' ? 'bg-green-500/20 text-green-400' :
-                        activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20 text-cyan-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>
-                        {activity.type === 'recommendation' ? '추천' :
-                         activity.type === 'ott_click' ? 'OTT' :
-                         activity.type === 'satisfaction_positive' ? '👍' : '👎'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 truncate">{activity.description}</p>
-                    {activity.movie_title && (
-                      <p className="text-[10px] text-gray-500 mt-1 truncate">🎬 {activity.movie_title}</p>
-                    )}
-                  </div>
-
-                  {/* 시간 */}
-                  <span className="text-[10px] text-gray-500 flex-shrink-0">
-                    {new Date(activity.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
