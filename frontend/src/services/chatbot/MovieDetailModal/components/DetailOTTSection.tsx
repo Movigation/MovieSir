@@ -102,12 +102,16 @@ export default function DetailOTTSection({
                 ott={ott}
                 onClick={() => {
                   // 1. 백엔드 API 호출 (로그인 사용자만, Live Feed용)
+                  console.log(`🔍 [OTT Click] userId=${userId}, ott_id=${ott.ott_id}, movieId=${movieId}`);
                   if (userId) {
                     // ott_id 형식: "8_SUBSCRIPTION_0" -> provider_id = 8
                     const providerId = parseInt(ott.ott_id.split("_")[0], 10);
+                    console.log(`🔍 [OTT Click] Parsed providerId=${providerId}`);
                     if (!isNaN(providerId)) {
                       logOttClick(movieId, providerId);
                     }
+                  } else {
+                    console.log(`⚠️ [OTT Click] userId가 없어서 API 호출 스킵`);
                   }
 
                   // 2. 클릭 정보 localStorage 저장 (최대 20개 제한) - 피드백 팝업용
