@@ -1371,14 +1371,8 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
             elif feedback.feedback_type == "satisfaction_negative":
                 description = f"'{movie_title}' 별로예요"
             elif feedback.feedback_type == "re_recommendation":
-                # 재추천: session_id 필드에 source_movie_id가 저장됨
-                source_movie_id = feedback.session_id
-                if source_movie_id:
-                    source_movie = db.query(Movie).filter(Movie.movie_id == source_movie_id).first()
-                    source_title = source_movie.title if source_movie else f"영화 #{source_movie_id}"
-                    description = f"'{source_title}' → '{movie_title}' 재추천"
-                else:
-                    description = f"'{movie_title}' 재추천"
+                # 재추천: 새로 추천된 영화만 표시 (FK 제약으로 source 추적 불가)
+                description = f"'{movie_title}' 재추천"
             else:
                 description = f"'{movie_title}' 피드백"
 
