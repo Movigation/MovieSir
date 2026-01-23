@@ -20,23 +20,30 @@ interface LogsResponse {
 
 type TabType = 'api' | 'livefeed'
 
-// Live Feed 엔트리 타입 (대시보드와 동일)
-interface LiveFeedEntry {
-  kind: string
+// 통합 피드 아이템 (Dashboard와 동일)
+interface UnifiedFeedItem {
+  kind: 'api' | 'b2c'
   date: string
   time: string
-  user_id: string
-  user_nickname: string
-  activity_type: string
-  description: string
-  movie_title: string
-  session_id: number | null
+  // API 로그 전용
+  log_id?: string
+  method?: string
+  endpoint?: string
+  status?: number
+  latency?: number
+  // B2C 활동 전용
+  user_id?: string
+  user_nickname?: string
+  activity_type?: string
+  description?: string
+  movie_title?: string | null
+  session_id?: number | null
 }
 
 export default function Logs() {
   const [activeTab, setActiveTab] = useState<TabType>('livefeed')
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const [liveFeed, setLiveFeed] = useState<LiveFeedEntry[]>([])
+  const [liveFeed, setLiveFeed] = useState<UnifiedFeedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
@@ -108,11 +115,12 @@ export default function Logs() {
     }
   }, [logs.length, startDate, endDate])
 
-  // Live Feed: B2C 유저 활동 (대시보드와 동일)
+  // Live Feed: 통합 피드 (대시보드와 동일)
   const fetchLiveFeed = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await api.get<{ items: LiveFeedEntry[] }>('/b2b/live-feed?limit=100')
+      const { data } = await api.get<{ items: UnifiedFeedItem[] }>('/b2b/live-feed?limit=100')
+      console.log('[Live Feed] 응답:', data.items?.length || 0, '개')
       setLiveFeed(data.items || [])
     } catch (err) {
       console.error('Failed to fetch live feed:', err)
@@ -444,33 +452,27 @@ export default function Logs() {
       {activeTab === 'livefeed' && (
         <>
           {/* Live Feed Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">전체 활동</p>
+              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">전체</p>
               <p className="text-xl lg:text-2xl font-semibold text-white">{liveFeed.length}</p>
             </div>
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">추천</p>
-              <p className="text-xl lg:text-2xl font-semibold text-blue-400">
-                {liveFeed.filter(f => f.activity_type === 'recommendation').length}
-              </p>
-            </div>
-            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">OTT 클릭</p>
+              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">API 호출</p>
               <p className="text-xl lg:text-2xl font-semibold text-purple-400">
-                {liveFeed.filter(f => f.activity_type === 'ott_click').length}
+                {liveFeed.filter(f => f.kind === 'api').length}
               </p>
             </div>
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">좋아요</p>
+              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">B2C 추천</p>
+              <p className="text-xl lg:text-2xl font-semibold text-cyan-400">
+                {liveFeed.filter(f => f.kind === 'b2c' && f.activity_type === 'recommendation').length}
+              </p>
+            </div>
+            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
+              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">B2C 기타</p>
               <p className="text-xl lg:text-2xl font-semibold text-green-400">
-                {liveFeed.filter(f => f.activity_type === 'satisfaction_positive').length}
-              </p>
-            </div>
-            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">별로예요</p>
-              <p className="text-xl lg:text-2xl font-semibold text-red-400">
-                {liveFeed.filter(f => f.activity_type === 'satisfaction_negative').length}
+                {liveFeed.filter(f => f.kind === 'b2c' && f.activity_type !== 'recommendation').length}
               </p>
             </div>
           </div>
@@ -478,14 +480,41 @@ export default function Logs() {
           {/* Live Feed List */}
           <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-sm font-medium text-white">실시간 로그</h2>
+              <h2 className="text-sm font-medium text-white">Live Feed</h2>
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              {isAdmin && (
+                <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">+B2C</span>
+              )}
               <span className="text-xs text-gray-500">({liveFeed.length}개)</span>
             </div>
 
             <div className="space-y-2 max-h-[600px] overflow-y-auto custom-scrollbar">
               {liveFeed.map((item, index) => {
-                // B2C 활동 타입에 따른 API 엔드포인트 매핑
+                // API 로그인 경우
+                if (item.kind === 'api') {
+                  return (
+                    <div key={`api-${item.log_id}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          item.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                        }`}>{item.method}</span>
+                        <span className="text-xs text-gray-300 font-mono truncate">{item.endpoint}</span>
+                        <span className={`text-[10px] font-medium ${
+                          item.status === 200 ? 'text-green-400' : item.status === 429 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>{item.status}</span>
+                        {item.latency && <span className="text-[10px] text-gray-500">{item.latency}ms</span>}
+                      </div>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">{item.date}<br/>{item.time}</span>
+                    </div>
+                  )
+                }
+
+                // B2C 활동인 경우
                 const endpointMap: Record<string, string> = {
                   'recommendation': '/v1/recommend',
                   're_recommendation': '/v1/recommend_single',
@@ -497,7 +526,7 @@ export default function Logs() {
 
                 return (
                   <div
-                    key={`${item.user_id}-${item.time}-${index}`}
+                    key={`b2c-${item.user_id}-${item.time}-${index}`}
                     className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
                   >
                     {/* 유저 아이콘 */}
