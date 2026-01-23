@@ -245,7 +245,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         track: trackType,
         genres: state.filters.genres,
         exclude_adult: state.filters.exclude_adult,
-        session_id: state.sessionId,  // 추천 세션 ID (로깅용)
+        session_id: state.sessionId ?? undefined,  // 추천 세션 ID (로깅용)
       });
 
       if (response.success && response.movie) {
