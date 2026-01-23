@@ -1399,6 +1399,10 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
                     "description": f"추천 요청: {' / '.join(desc_parts)}",
                     "movie_title": movie_title,
                     "session_id": session.session_id,
+                    # API 스타일 필드 추가
+                    "method": "POST",
+                    "endpoint": "/v1/recommend",
+                    "status": 200,
                 })
 
         # 피드백 조회

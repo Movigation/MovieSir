@@ -18,7 +18,10 @@ interface LogsResponse {
   has_more: boolean
 }
 
-interface ActivityEntry {
+type TabType = 'api' | 'livefeed'
+
+// Live Feed 엔트리 타입 (대시보드와 동일)
+interface LiveFeedEntry {
   kind: string
   date: string
   time: string
@@ -30,34 +33,9 @@ interface ActivityEntry {
   session_id: number | null
 }
 
-interface ActivityResponse {
-  items: ActivityEntry[]
-}
-
-type TabType = 'api' | 'activity' | 'livefeed'
-
-// Live Feed 통합 엔트리 타입
-interface LiveFeedEntry {
-  id: string
-  type: 'api' | 'activity'
-  date: string
-  time: string
-  timestamp: number
-  // API 로그 필드
-  method?: string
-  endpoint?: string
-  status?: number
-  latency?: number
-  // 활동 필드
-  user_nickname?: string
-  activity_type?: string
-  description?: string
-}
-
 export default function Logs() {
   const [activeTab, setActiveTab] = useState<TabType>('livefeed')
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const [activities, setActivities] = useState<ActivityEntry[]>([])
   const [liveFeed, setLiveFeed] = useState<LiveFeedEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -65,7 +43,6 @@ export default function Logs() {
   const [total, setTotal] = useState(0)
   const [filter, setFilter] = useState<'all' | 'success' | 'error'>('all')
   const [methodFilter, setMethodFilter] = useState<string>('all')
-  const [activityFilter, setActivityFilter] = useState<string>('all')
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
   const { token, company } = useAuthStore()
@@ -131,72 +108,12 @@ export default function Logs() {
     }
   }, [logs.length, startDate, endDate])
 
-  const fetchActivities = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data } = await api.get<ActivityResponse>('/b2b/live-feed?limit=100')
-      setActivities(data.items || [])
-    } catch (err) {
-      console.error('Failed to fetch activities:', err)
-      setActivities([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Live Feed: API 로그 + 유저 활동 통합
+  // Live Feed: B2C 유저 활동 (대시보드와 동일)
   const fetchLiveFeed = useCallback(async () => {
     setLoading(true)
     try {
-      // 병렬로 두 데이터 소스 로드
-      const [logsRes, activitiesRes] = await Promise.all([
-        api.get<LogsResponse>('/b2b/logs?limit=50&offset=0'),
-        api.get<ActivityResponse>('/b2b/live-feed?limit=50')
-      ])
-
-      const apiLogs = logsRes.data.logs || []
-      const userActivities = activitiesRes.data.items || []
-
-      // 통합 엔트리로 변환
-      const combined: LiveFeedEntry[] = []
-
-      // API 로그 변환
-      apiLogs.forEach((log) => {
-        const dateStr = log.date // "2025-01-23"
-        const timeStr = log.time // "14:30:25"
-        combined.push({
-          id: `api-${log.id}`,
-          type: 'api',
-          date: log.date,
-          time: log.time,
-          timestamp: new Date(`${dateStr}T${timeStr}`).getTime(),
-          method: log.method,
-          endpoint: log.endpoint,
-          status: log.status,
-          latency: log.latency,
-        })
-      })
-
-      // 유저 활동 변환
-      userActivities.forEach((activity, idx) => {
-        const dateStr = activity.date
-        const timeStr = activity.time
-        combined.push({
-          id: `activity-${activity.user_id}-${idx}`,
-          type: 'activity',
-          date: activity.date,
-          time: activity.time,
-          timestamp: new Date(`${dateStr}T${timeStr}`).getTime(),
-          user_nickname: activity.user_nickname,
-          activity_type: activity.activity_type,
-          description: activity.description,
-        })
-      })
-
-      // 시간순 정렬 (최신순)
-      combined.sort((a, b) => b.timestamp - a.timestamp)
-
-      setLiveFeed(combined)
+      const { data } = await api.get<{ items: LiveFeedEntry[] }>('/b2b/live-feed?limit=100')
+      setLiveFeed(data.items || [])
     } catch (err) {
       console.error('Failed to fetch live feed:', err)
       setLiveFeed([])
@@ -209,8 +126,6 @@ export default function Logs() {
   useEffect(() => {
     if (activeTab === 'api') {
       fetchLogs(true)
-    } else if (activeTab === 'activity') {
-      fetchActivities()
     } else if (activeTab === 'livefeed') {
       fetchLiveFeed()
     }
@@ -250,8 +165,6 @@ export default function Logs() {
       if (!startDate && !endDate) {
         if (activeTab === 'api') {
           fetchLogs(true)
-        } else if (activeTab === 'activity') {
-          fetchActivities()
         } else if (activeTab === 'livefeed') {
           fetchLiveFeed()
         }
@@ -267,10 +180,6 @@ export default function Logs() {
     return true
   })
 
-  const filteredActivities = activities.filter((activity) => {
-    if (activityFilter === 'all') return true
-    return activity.activity_type === activityFilter
-  })
 
   const successCount = logs.filter((l) => l.status < 400).length
   const errorCount = logs.filter((l) => l.status >= 400).length
@@ -285,43 +194,7 @@ export default function Logs() {
   // 오늘 날짜
   const today = new Date().toISOString().split('T')[0]
 
-  // 활동 타입 아이콘
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'recommendation':
-        return '🎬'
-      case 'ott_click':
-        return '📺'
-      case 'satisfaction_positive':
-        return '👍'
-      case 'satisfaction_negative':
-        return '👎'
-      case 're_recommendation':
-        return '🔄'
-      default:
-        return '📋'
-    }
-  }
-
-  // 활동 타입 라벨
-  const getActivityLabel = (type: string) => {
-    switch (type) {
-      case 'recommendation':
-        return '추천'
-      case 'ott_click':
-        return 'OTT 클릭'
-      case 'satisfaction_positive':
-        return '좋아요'
-      case 'satisfaction_negative':
-        return '별로예요'
-      case 're_recommendation':
-        return '재추천'
-      default:
-        return type
-    }
-  }
-
-  if (loading && logs.length === 0 && activities.length === 0 && liveFeed.length === 0) {
+  if (loading && logs.length === 0 && liveFeed.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
@@ -345,9 +218,7 @@ export default function Logs() {
               ? `${startDate || '~'} ~ ${endDate || '~'} 기간 로그`
               : activeTab === 'api'
                 ? '실시간 API 로그를 확인하세요'
-                : activeTab === 'activity'
-                  ? '실시간 유저 활동을 확인하세요'
-                  : '전체 로그를 실시간으로 확인하세요'
+                : '전체 로그를 실시간으로 확인하세요'
             }
           </p>
         </div>
@@ -427,28 +298,16 @@ export default function Logs() {
           Live Feed
         </button>
         {isAdmin && (
-          <>
-            <button
-              onClick={() => setActiveTab('api')}
-              className={`px-4 py-2 text-sm rounded-md transition-colors ${
-                activeTab === 'api'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              API 로그
-            </button>
-            <button
-              onClick={() => setActiveTab('activity')}
-              className={`px-4 py-2 text-sm rounded-md transition-colors ${
-                activeTab === 'activity'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              유저 활동
-            </button>
-          </>
+          <button
+            onClick={() => setActiveTab('api')}
+            className={`px-4 py-2 text-sm rounded-md transition-colors ${
+              activeTab === 'api'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            API 로그
+          </button>
         )}
       </div>
 
@@ -581,130 +440,37 @@ export default function Logs() {
         </>
       )}
 
-      {/* User Activity Tab */}
-      {activeTab === 'activity' && (
+      {/* Live Feed Tab - 전체 로그 통합 뷰 */}
+      {activeTab === 'livefeed' && (
         <>
-          {/* Activity Stats */}
+          {/* Live Feed Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 mb-6">
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
               <p className="text-[10px] lg:text-xs text-gray-500 mb-2">전체 활동</p>
-              <p className="text-xl lg:text-2xl font-semibold text-white">{activities.length}</p>
+              <p className="text-xl lg:text-2xl font-semibold text-white">{liveFeed.length}</p>
             </div>
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
               <p className="text-[10px] lg:text-xs text-gray-500 mb-2">추천</p>
               <p className="text-xl lg:text-2xl font-semibold text-blue-400">
-                {activities.filter(a => a.activity_type === 'recommendation').length}
+                {liveFeed.filter(f => f.activity_type === 'recommendation').length}
               </p>
             </div>
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
               <p className="text-[10px] lg:text-xs text-gray-500 mb-2">OTT 클릭</p>
               <p className="text-xl lg:text-2xl font-semibold text-purple-400">
-                {activities.filter(a => a.activity_type === 'ott_click').length}
+                {liveFeed.filter(f => f.activity_type === 'ott_click').length}
               </p>
             </div>
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
               <p className="text-[10px] lg:text-xs text-gray-500 mb-2">좋아요</p>
               <p className="text-xl lg:text-2xl font-semibold text-green-400">
-                {activities.filter(a => a.activity_type === 'satisfaction_positive').length}
+                {liveFeed.filter(f => f.activity_type === 'satisfaction_positive').length}
               </p>
             </div>
             <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
               <p className="text-[10px] lg:text-xs text-gray-500 mb-2">별로예요</p>
               <p className="text-xl lg:text-2xl font-semibold text-red-400">
-                {activities.filter(a => a.activity_type === 'satisfaction_negative').length}
-              </p>
-            </div>
-          </div>
-
-          {/* Activity List */}
-          <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-medium text-white">유저 활동</h2>
-                <span className="text-xs text-gray-500">({filteredActivities.length}개 표시)</span>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                <select
-                  value={activityFilter}
-                  onChange={(e) => setActivityFilter(e.target.value)}
-                  className="px-2 lg:px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-[10px] lg:text-xs focus:ring-2 focus:ring-blue-500 flex-shrink-0"
-                >
-                  <option value="all">전체</option>
-                  <option value="recommendation">추천</option>
-                  <option value="ott_click">OTT 클릭</option>
-                  <option value="satisfaction_positive">좋아요</option>
-                  <option value="satisfaction_negative">별로예요</option>
-                  <option value="re_recommendation">재추천</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
-              <table className="w-full">
-                <thead className="sticky top-0 bg-[#16161d]">
-                  <tr className="text-left text-[10px] lg:text-xs text-gray-500 border-b border-white/5">
-                    <th className="pb-3 font-medium">날짜</th>
-                    <th className="pb-3 font-medium">시간</th>
-                    <th className="pb-3 font-medium">유저</th>
-                    <th className="pb-3 font-medium">타입</th>
-                    <th className="pb-3 font-medium">내용</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredActivities.map((activity, idx) => (
-                    <tr key={`${activity.user_id}-${idx}`} className="hover:bg-white/5 transition-colors">
-                      <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-500 font-mono whitespace-nowrap">{activity.date}</td>
-                      <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-400 font-mono whitespace-nowrap">{activity.time}</td>
-                      <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-300 whitespace-nowrap">{activity.user_nickname}</td>
-                      <td className="py-2 lg:py-3">
-                        <span className="flex items-center gap-1 text-[10px] lg:text-xs">
-                          <span>{getActivityIcon(activity.activity_type)}</span>
-                          <span className="text-gray-400">{getActivityLabel(activity.activity_type)}</span>
-                        </span>
-                      </td>
-                      <td className="py-2 lg:py-3 text-[10px] lg:text-sm text-gray-300 truncate max-w-[150px] lg:max-w-[300px]">
-                        {activity.description}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredActivities.length === 0 && !loading && (
-              <div className="py-8 text-center text-gray-500 text-sm">
-                {activities.length === 0 ? '아직 유저 활동 기록이 없습니다' : '필터에 맞는 활동이 없습니다'}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Live Feed Tab - 전체 로그 통합 뷰 */}
-      {activeTab === 'livefeed' && (
-        <>
-          {/* Live Feed Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
-            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">전체 로그</p>
-              <p className="text-xl lg:text-2xl font-semibold text-white">{liveFeed.length}</p>
-            </div>
-            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">API 호출</p>
-              <p className="text-xl lg:text-2xl font-semibold text-blue-400">
-                {liveFeed.filter(f => f.type === 'api').length}
-              </p>
-            </div>
-            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">유저 활동</p>
-              <p className="text-xl lg:text-2xl font-semibold text-purple-400">
-                {liveFeed.filter(f => f.type === 'activity').length}
-              </p>
-            </div>
-            <div className="bg-[#16161d] rounded-xl p-4 lg:p-5">
-              <p className="text-[10px] lg:text-xs text-gray-500 mb-2">OTT 클릭</p>
-              <p className="text-xl lg:text-2xl font-semibold text-green-400">
-                {liveFeed.filter(f => f.activity_type === 'ott_click').length}
+                {liveFeed.filter(f => f.activity_type === 'satisfaction_negative').length}
               </p>
             </div>
           </div>
@@ -718,63 +484,43 @@ export default function Logs() {
             </div>
 
             <div className="space-y-2 max-h-[600px] overflow-y-auto custom-scrollbar">
-              {liveFeed.map((entry) => (
-                <div
-                  key={entry.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                    entry.type === 'api' ? 'bg-blue-500/5 hover:bg-blue-500/10' : 'bg-purple-500/5 hover:bg-purple-500/10'
-                  }`}
-                >
-                  {/* 아이콘 */}
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                    entry.type === 'api' ? 'bg-blue-500/20' : 'bg-purple-500/20'
-                  }`}>
-                    {entry.type === 'api' ? (
-                      <span className="text-blue-400">
-                        {entry.method === 'GET' ? '📥' : '📤'}
-                      </span>
-                    ) : (
-                      <span>{getActivityIcon(entry.activity_type || '')}</span>
-                    )}
-                  </div>
+              {liveFeed.map((item, index) => {
+                // B2C 활동 타입에 따른 API 엔드포인트 매핑
+                const endpointMap: Record<string, string> = {
+                  'recommendation': '/v1/recommend',
+                  're_recommendation': '/v1/recommend_single',
+                  'ott_click': '/ott-click',
+                  'satisfaction_positive': '/feedback',
+                  'satisfaction_negative': '/feedback',
+                }
+                const endpoint = endpointMap[item.activity_type || ''] || '/api'
 
-                  {/* 내용 */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {entry.type === 'api' ? (
-                        <>
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            entry.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                          }`}>
-                            {entry.method}
-                          </span>
-                          <span className="text-xs text-gray-400 font-mono truncate">{entry.endpoint}</span>
-                          <span className={`text-[10px] font-medium ${
-                            (entry.status || 0) < 400 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {entry.status}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-xs text-gray-300">{entry.user_nickname}</span>
-                          <span className="text-[10px] text-gray-500">•</span>
-                          <span className="text-[10px] text-gray-400">{getActivityLabel(entry.activity_type || '')}</span>
-                        </>
-                      )}
+                return (
+                  <div
+                    key={`${item.user_id}-${item.time}-${index}`}
+                    className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    {/* 유저 아이콘 */}
+                    <div className="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </div>
-                    {entry.type === 'activity' && entry.description && (
-                      <p className="text-[10px] lg:text-xs text-gray-500 truncate">{entry.description}</p>
-                    )}
+                    {/* 내용 */}
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <span className="text-xs font-medium text-cyan-400 flex-shrink-0">{item.user_nickname}</span>
+                      <span className="text-[10px] text-gray-400 truncate">
+                        {item.movie_title || item.description}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-500/20 text-green-400 flex-shrink-0">POST</span>
+                      <span className="text-xs text-gray-300 font-mono truncate">{endpoint}</span>
+                      <span className="text-[10px] font-medium text-green-400 flex-shrink-0">200</span>
+                    </div>
+                    {/* 시간 */}
+                    <span className="text-[10px] text-gray-500 flex-shrink-0">{item.date}<br/>{item.time}</span>
                   </div>
-
-                  {/* 시간 */}
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-[10px] text-gray-500">{entry.date}</p>
-                    <p className="text-[10px] text-gray-400">{entry.time}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {liveFeed.length === 0 && !loading && (

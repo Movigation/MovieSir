@@ -139,7 +139,12 @@ def click_ott(
     current_user: User = Depends(get_current_user)
 ):
     """OTT 링크 클릭 로깅"""
-    service.log_click(db, str(current_user.user_id), movie_id, req.provider_id)
+    # 클릭 로깅 (실패해도 URL 반환은 계속)
+    try:
+        service.log_click(db, str(current_user.user_id), movie_id, req.provider_id)
+    except Exception as e:
+        print(f"[WARN] OTT 클릭 로깅 실패: {e}")
+        db.rollback()
 
     url_row = db.execute(
         text("SELECT link_url FROM movie_ott_map WHERE movie_id=:mid AND provider_id=:pid"),
