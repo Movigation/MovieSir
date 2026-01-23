@@ -207,6 +207,26 @@ def update_company(db: Session, company_id: int, name: Optional[str] = None, ema
     return company
 
 
+def delete_company(db: Session, company_id: int) -> bool:
+    """회사 계정 영구 삭제 (API 키, 로그 등 모두 삭제)"""
+    company = db.query(Company).filter(Company.company_id == company_id).first()
+
+    if not company:
+        raise ValueError("회사를 찾을 수 없습니다")
+
+    # API 키 삭제 (CASCADE로 api_logs도 삭제됨)
+    db.query(ApiKey).filter(ApiKey.company_id == company_id).delete()
+
+    # api_usage 삭제
+    db.query(ApiUsage).filter(ApiUsage.company_id == company_id).delete()
+
+    # 회사 삭제
+    db.delete(company)
+    db.commit()
+
+    return True
+
+
 # ==================== API Key Service ====================
 
 def create_api_key(db: Session, company_id: int, data: ApiKeyCreate) -> Tuple[ApiKey, str]:
@@ -1036,7 +1056,7 @@ def activate_b2c_user(db: Session, user_id: str) -> bool:
 def get_b2c_user_activities(db: Session, user_id: str, limit: int = 20) -> dict:
     """B2C 사용자 최근 활동 조회 (어드민 전용)"""
     from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
-    from backend.domains.movie.models import Movie
+    from backend.domains.movie.models import Movie, OttProvider
     from uuid import UUID
     from sqlalchemy import text
 
@@ -1075,18 +1095,33 @@ def get_b2c_user_activities(db: Session, user_id: str, limit: int = 20) -> dict:
     for feedback, movie in feedbacks:
         movie_title = movie.title if movie else f"영화 #{feedback.movie_id}"
         movie_poster = movie.poster_path if movie else None
+        feedback_type = feedback.feedback_type or ""
 
-        if feedback.feedback_type == "ott_click":
-            description = f"'{movie_title}' OTT 링크 클릭"
-        elif feedback.feedback_type == "satisfaction_positive":
+        # OTT 클릭: feedback_type이 'ott_click:8' 형태로 provider_id 포함
+        if feedback_type.startswith("ott_click"):
+            ott_name = "OTT"
+            if ":" in feedback_type:
+                try:
+                    provider_id = int(feedback_type.split(":")[1])
+                    provider = db.query(OttProvider).filter(
+                        OttProvider.provider_id == provider_id
+                    ).first()
+                    if provider:
+                        ott_name = provider.provider_name
+                except (ValueError, IndexError):
+                    pass
+            description = f"'{movie_title}' {ott_name} 링크 클릭"
+        elif feedback_type == "satisfaction_positive":
             description = f"'{movie_title}' 만족도 긍정 응답"
-        elif feedback.feedback_type == "satisfaction_negative":
+        elif feedback_type == "satisfaction_negative":
             description = f"'{movie_title}' 만족도 부정 응답"
         else:
-            description = f"'{movie_title}' {feedback.feedback_type}"
+            description = f"'{movie_title}' {feedback_type}"
 
+        # activity type에서 provider_id 제거
+        activity_type = feedback_type.split(":")[0] if ":" in feedback_type else feedback_type
         activities.append({
-            "type": feedback.feedback_type,
+            "type": activity_type,
             "description": description,
             "movie_title": movie_title,
             "movie_poster": movie_poster,
@@ -1105,7 +1140,7 @@ def get_b2c_user_activities(db: Session, user_id: str, limit: int = 20) -> dict:
 def get_b2c_live_activities(db: Session, limit: int = 15) -> dict:
     """B2C 전체 유저 실시간 활동 피드 (어드민 전용)"""
     from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
-    from backend.domains.movie.models import Movie
+    from backend.domains.movie.models import Movie, OttProvider
     from backend.domains.user.models import User
 
     activities = []
@@ -1161,20 +1196,35 @@ def get_b2c_live_activities(db: Session, limit: int = 15) -> dict:
         if not user:
             continue
         movie_title = movie.title if movie else f"영화 #{feedback.movie_id}"
+        feedback_type = feedback.feedback_type or ""
 
-        if feedback.feedback_type == "ott_click":
-            description = f"'{movie_title}' OTT 클릭"
-        elif feedback.feedback_type == "satisfaction_positive":
+        # OTT 클릭: feedback_type이 'ott_click:8' 형태로 provider_id 포함
+        if feedback_type.startswith("ott_click"):
+            ott_name = "OTT"
+            if ":" in feedback_type:
+                try:
+                    provider_id = int(feedback_type.split(":")[1])
+                    provider = db.query(OttProvider).filter(
+                        OttProvider.provider_id == provider_id
+                    ).first()
+                    if provider:
+                        ott_name = provider.provider_name
+                except (ValueError, IndexError):
+                    pass
+            description = f"'{movie_title}' {ott_name} 클릭"
+        elif feedback_type == "satisfaction_positive":
             description = f"'{movie_title}' 좋아요"
-        elif feedback.feedback_type == "satisfaction_negative":
+        elif feedback_type == "satisfaction_negative":
             description = f"'{movie_title}' 별로예요"
         else:
             description = f"'{movie_title}' 피드백"
 
+        # activity type에서 provider_id 제거
+        activity_type = feedback_type.split(":")[0] if ":" in feedback_type else feedback_type
         activities.append({
             "user_id": str(feedback.user_id),
             "user_nickname": user.nickname or user.email.split('@')[0],
-            "type": feedback.feedback_type,
+            "type": activity_type,
             "description": description,
             "movie_title": movie_title,
             "created_at": feedback.created_at,
@@ -1261,7 +1311,7 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
     - 모든 시간은 KST로 통일하여 반환
     """
     from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
-    from backend.domains.movie.models import Movie
+    from backend.domains.movie.models import Movie, OttProvider
     from backend.domains.user.models import User
 
     items = []
@@ -1363,14 +1413,28 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
                 continue
 
             movie_title = movie.title if movie else f"영화 #{feedback.movie_id}"
+            feedback_type = feedback.feedback_type or ""
 
-            if feedback.feedback_type == "ott_click":
-                description = f"'{movie_title}' OTT 클릭"
-            elif feedback.feedback_type == "satisfaction_positive":
+            # OTT 클릭: feedback_type이 'ott_click:8' 형태로 provider_id 포함
+            if feedback_type.startswith("ott_click"):
+                ott_name = "OTT"
+                # provider_id 파싱 (예: 'ott_click:8' → 8)
+                if ":" in feedback_type:
+                    try:
+                        provider_id = int(feedback_type.split(":")[1])
+                        provider = db.query(OttProvider).filter(
+                            OttProvider.provider_id == provider_id
+                        ).first()
+                        if provider:
+                            ott_name = provider.provider_name
+                    except (ValueError, IndexError):
+                        pass
+                description = f"'{movie_title}' {ott_name} 클릭"
+            elif feedback_type == "satisfaction_positive":
                 description = f"'{movie_title}' 좋아요"
-            elif feedback.feedback_type == "satisfaction_negative":
+            elif feedback_type == "satisfaction_negative":
                 description = f"'{movie_title}' 별로예요"
-            elif feedback.feedback_type == "re_recommendation":
+            elif feedback_type == "re_recommendation":
                 # 재추천: 새로 추천된 영화만 표시 (FK 제약으로 source 추적 불가)
                 description = f"'{movie_title}' 재추천"
             else:
@@ -1380,6 +1444,8 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
             kst_time = (feedback.created_at + timedelta(hours=9)) if feedback.created_at else None
 
             if kst_time:
+                # activity_type에서 provider_id 제거 (예: 'ott_click:8' → 'ott_click')
+                activity_type = feedback_type.split(":")[0] if ":" in feedback_type else feedback_type
                 items.append({
                     "kind": "b2c",
                     "date": kst_time.strftime("%Y-%m-%d"),
@@ -1387,7 +1453,7 @@ def get_unified_live_feed(db: Session, company_id: int, limit: int = 20) -> dict
                     "timestamp": feedback.created_at,  # 정렬용 (UTC)
                     "user_id": str(feedback.user_id),
                     "user_nickname": user.nickname or user.email.split('@')[0],
-                    "activity_type": feedback.feedback_type,
+                    "activity_type": activity_type,
                     "description": description,
                     "movie_title": movie_title,
                     "session_id": None,

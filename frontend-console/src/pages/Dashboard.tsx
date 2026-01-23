@@ -9,9 +9,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts'
 
 interface DashboardData {
@@ -139,14 +136,7 @@ export default function Dashboard() {
   const totalError = data.chart_data.reduce((sum, d) => sum + d.error, 0)
   const totalCalls = totalSuccess + totalError
   const successPercent = totalCalls > 0 ? Math.round((totalSuccess / totalCalls) * 100) : 0
-  const errorPercent = totalCalls > 0 ? Math.round((totalError / totalCalls) * 100) : 0
-  const limitPercent = 100 - successPercent - errorPercent
 
-  const usageOverviewData = [
-    { name: '성공', value: successPercent, color: '#3b82f6' },
-    { name: '에러', value: errorPercent, color: '#ef4444' },
-    { name: '제한', value: limitPercent, color: '#f59e0b' },
-  ]
 
   return (
     <div className="p-4 lg:p-8">
@@ -275,7 +265,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Chart */}
-        <div className="lg:col-span-6 bg-[#16161d] rounded-xl p-4 lg:p-5 order-1 lg:order-2">
+        <div className="lg:col-span-9 bg-[#16161d] rounded-xl p-4 lg:p-5 order-1 lg:order-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-white">API Calls</h2>
             <div className="flex gap-4 text-xs">
@@ -313,42 +303,6 @@ export default function Dashboard() {
                 <Area type="monotone" dataKey="error" stroke="#ef4444" strokeWidth={2} fill="url(#errorGradient)" name="에러" />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Usage Overview Donut */}
-        <div className="lg:col-span-3 bg-[#16161d] rounded-xl p-4 lg:p-5 order-3">
-          <h2 className="text-sm font-medium text-white mb-4">Usage Overview</h2>
-          <div className="h-36 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={usageOverviewData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={60}
-                  paddingAngle={3}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  <Cell fill="rgba(59, 130, 246, 0.7)" />
-                  <Cell fill="rgba(239, 68, 68, 0.7)" />
-                  <Cell fill="rgba(245, 158, 11, 0.7)" />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-2 mt-2">
-            {usageOverviewData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-gray-400">{item.name}</span>
-                </div>
-                <span className="font-medium text-white">{item.value}%</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>

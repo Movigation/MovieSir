@@ -46,7 +46,7 @@ def _get_email_html(code: str) -> str:
                     <!-- 헤더: 로고 + 브랜드 -->
                     <tr>
                         <td style="padding:28px 24px 20px; text-align:center;">
-                            <img src="https://moviesir.cloud/moviesir-logo.png" alt="무비서" width="72" height="72" style="display:block; margin:0 auto 12px; border-radius:50%;">
+                            <img src="https://demo.moviesir.cloud/moviesir-logo.png" alt="무비서" width="72" height="72" style="display:block; margin:0 auto 12px; border-radius:50%;">
                             <p class="brand-text" style="margin:0; font-size:20px; font-weight:600; color:#3B82F6;">무비서</p>
                             <p class="info-text" style="margin:4px 0 0; font-size:12px; color:#94a3b8;">이동 시간 맞춤형 콘텐츠 서비스</p>
                         </td>

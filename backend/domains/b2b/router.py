@@ -439,6 +439,22 @@ def update_company_info(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.delete("/me")
+def delete_company(
+    company=Depends(get_current_company),
+    db: Session = Depends(get_db)
+):
+    """
+    회사 계정 영구 삭제
+    - 모든 API 키, 로그, 설정이 영구 삭제됩니다
+    """
+    try:
+        service.delete_company(db, company.company_id)
+        return {"success": True, "message": "계정이 삭제되었습니다"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # ==================== B2C Admin Endpoints ====================
 
 async def get_admin_company(
