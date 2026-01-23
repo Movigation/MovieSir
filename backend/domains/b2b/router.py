@@ -14,7 +14,8 @@ from .schemas import (
     ApiKeyCreate, ApiKeyResponse, UpdateApiKeyRequest,
     DashboardResponse, LogEntry, LogsResponse, OAuthCallback,
     ChangePasswordRequest, ForgotPasswordRequest, UpdateCompanyRequest,
-    B2CUserResponse, B2CUserDetailResponse, B2CUsersListResponse, B2CStatsResponse
+    B2CUserResponse, B2CUserDetailResponse, B2CUsersListResponse, B2CStatsResponse,
+    B2CUserActivitiesResponse, B2CLiveActivitiesResponse
 )
 from . import service
 
@@ -524,3 +525,30 @@ def activate_b2c_user(
     if not success:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
     return {"success": True, "message": "사용자가 활성화되었습니다"}
+
+
+@router.get("/admin/b2c-users/{user_id}/activities", response_model=B2CUserActivitiesResponse)
+def get_b2c_user_activities(
+    user_id: str,
+    limit: int = Query(default=20, ge=1, le=100),
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 사용자 최근 활동 조회
+    - 추천 요청, OTT 클릭, 만족도 응답 등
+    """
+    return service.get_b2c_user_activities(db, user_id, limit)
+
+
+@router.get("/admin/b2c-live", response_model=B2CLiveActivitiesResponse)
+def get_b2c_live_activities(
+    limit: int = Query(default=15, ge=1, le=50),
+    company=Depends(get_admin_company),
+    db: Session = Depends(get_db)
+):
+    """
+    [어드민] B2C 전체 유저 실시간 활동 피드
+    - 대시보드에서 Live Logs처럼 실시간 모니터링용
+    """
+    return service.get_b2c_live_activities(db, limit)

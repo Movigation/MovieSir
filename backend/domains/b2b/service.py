@@ -916,12 +916,15 @@ def get_b2c_user_detail(db: Session, user_id: str) -> Optional[dict]:
     if not user:
         return None
 
-    # OTT 구독 정보
-    ott_names = []
+    # OTT 구독 정보 (로고 포함)
+    ott_list = []
     if hasattr(user, 'ott_subscriptions') and user.ott_subscriptions:
         for sub in user.ott_subscriptions:
             if sub.provider:
-                ott_names.append(sub.provider.provider_name)
+                ott_list.append({
+                    "provider_name": sub.provider.provider_name,
+                    "logo_path": sub.provider.logo_path
+                })
 
     # 추천 횟수 (b2c.recommendation_sessions에서 조회)
     from sqlalchemy import text
@@ -945,7 +948,7 @@ def get_b2c_user_detail(db: Session, user_id: str) -> Optional[dict]:
         "onboarding_completed": user.onboarding_completed_at is not None,
         "created_at": user.created_at,
         "deleted_at": user.deleted_at,
-        "ott_subscriptions": ott_names,
+        "ott_subscriptions": ott_list,
         "recommendation_count": rec_count_result,
         "last_recommendation_at": last_rec_result,
     }
@@ -1028,3 +1031,143 @@ def activate_b2c_user(db: Session, user_id: str) -> bool:
     user.deleted_at = None
     db.commit()
     return True
+
+
+def get_b2c_user_activities(db: Session, user_id: str, limit: int = 20) -> dict:
+    """B2C 사용자 최근 활동 조회 (어드민 전용)"""
+    from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
+    from backend.domains.movie.models import Movie
+    from uuid import UUID
+    from sqlalchemy import text
+
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        return {"activities": [], "total": 0}
+
+    activities = []
+
+    # 1. 최근 추천 세션 조회
+    sessions = db.query(RecommendationSession).filter(
+        RecommendationSession.user_id == user_uuid
+    ).order_by(RecommendationSession.created_at.desc()).limit(limit).all()
+
+    for session in sessions:
+        genres_str = ", ".join(session.req_genres) if session.req_genres else "전체"
+        runtime_str = f"{session.req_runtime_max}분 이내" if session.req_runtime_max else "제한없음"
+        movie_count = len(session.recommended_movie_ids) if session.recommended_movie_ids else 0
+
+        activities.append({
+            "type": "recommendation",
+            "description": f"추천 요청: {genres_str} / {runtime_str} ({movie_count}편 추천)",
+            "movie_title": None,
+            "movie_poster": None,
+            "created_at": session.created_at,
+        })
+
+    # 2. 최근 피드백 조회 (OTT 클릭, 만족도)
+    feedbacks = db.query(UserMovieFeedback, Movie).outerjoin(
+        Movie, UserMovieFeedback.movie_id == Movie.movie_id
+    ).filter(
+        UserMovieFeedback.user_id == user_uuid
+    ).order_by(UserMovieFeedback.created_at.desc()).limit(limit).all()
+
+    for feedback, movie in feedbacks:
+        movie_title = movie.title if movie else f"영화 #{feedback.movie_id}"
+        movie_poster = movie.poster_path if movie else None
+
+        if feedback.feedback_type == "ott_click":
+            description = f"'{movie_title}' OTT 링크 클릭"
+        elif feedback.feedback_type == "satisfaction_positive":
+            description = f"'{movie_title}' 만족도 긍정 응답"
+        elif feedback.feedback_type == "satisfaction_negative":
+            description = f"'{movie_title}' 만족도 부정 응답"
+        else:
+            description = f"'{movie_title}' {feedback.feedback_type}"
+
+        activities.append({
+            "type": feedback.feedback_type,
+            "description": description,
+            "movie_title": movie_title,
+            "movie_poster": movie_poster,
+            "created_at": feedback.created_at,
+        })
+
+    # 시간순 정렬 (최신순)
+    activities.sort(key=lambda x: x["created_at"], reverse=True)
+
+    return {
+        "activities": activities[:limit],
+        "total": len(activities),
+    }
+
+
+def get_b2c_live_activities(db: Session, limit: int = 15) -> dict:
+    """B2C 전체 유저 실시간 활동 피드 (어드민 전용)"""
+    from backend.domains.recommendation.models import RecommendationSession, UserMovieFeedback
+    from backend.domains.movie.models import Movie
+    from backend.domains.user.models import User
+
+    activities = []
+
+    # 1. 최근 추천 세션 조회 (유저 정보 포함)
+    sessions = db.query(RecommendationSession, User).outerjoin(
+        User, RecommendationSession.user_id == User.user_id
+    ).filter(
+        RecommendationSession.user_id.isnot(None)
+    ).order_by(RecommendationSession.created_at.desc()).limit(limit).all()
+
+    for session, user in sessions:
+        if not user:
+            continue
+        genres_str = ", ".join(session.req_genres) if session.req_genres else "전체"
+        runtime_str = f"{session.req_runtime_max}분" if session.req_runtime_max else ""
+        desc_parts = [genres_str]
+        if runtime_str:
+            desc_parts.append(runtime_str)
+
+        activities.append({
+            "user_id": str(session.user_id),
+            "user_nickname": user.nickname or user.email.split('@')[0],
+            "type": "recommendation",
+            "description": f"추천 요청: {' / '.join(desc_parts)}",
+            "movie_title": None,
+            "created_at": session.created_at,
+        })
+
+    # 2. 최근 피드백 조회 (유저 + 영화 정보 포함)
+    feedbacks = db.query(UserMovieFeedback, User, Movie).outerjoin(
+        User, UserMovieFeedback.user_id == User.user_id
+    ).outerjoin(
+        Movie, UserMovieFeedback.movie_id == Movie.movie_id
+    ).order_by(UserMovieFeedback.created_at.desc()).limit(limit).all()
+
+    for feedback, user, movie in feedbacks:
+        if not user:
+            continue
+        movie_title = movie.title if movie else f"영화 #{feedback.movie_id}"
+
+        if feedback.feedback_type == "ott_click":
+            description = f"'{movie_title}' OTT 클릭"
+        elif feedback.feedback_type == "satisfaction_positive":
+            description = f"'{movie_title}' 좋아요"
+        elif feedback.feedback_type == "satisfaction_negative":
+            description = f"'{movie_title}' 별로예요"
+        else:
+            description = f"'{movie_title}' 피드백"
+
+        activities.append({
+            "user_id": str(feedback.user_id),
+            "user_nickname": user.nickname or user.email.split('@')[0],
+            "type": feedback.feedback_type,
+            "description": description,
+            "movie_title": movie_title,
+            "created_at": feedback.created_at,
+        })
+
+    # 시간순 정렬 (최신순)
+    activities.sort(key=lambda x: x["created_at"], reverse=True)
+
+    return {
+        "activities": activities[:limit],
+    }

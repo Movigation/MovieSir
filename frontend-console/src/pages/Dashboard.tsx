@@ -32,9 +32,19 @@ interface LogEntry {
   latency: number
 }
 
+interface B2CLiveActivity {
+  user_id: string
+  user_nickname: string
+  type: string
+  description: string
+  movie_title: string | null
+  created_at: string
+}
+
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
+  const [b2cActivities, setB2cActivities] = useState<B2CLiveActivity[]>([])
   const [loading, setLoading] = useState(true)
   const { token, company } = useAuthStore()
   const navigate = useNavigate()
@@ -71,6 +81,27 @@ export default function Dashboard() {
     const interval = setInterval(fetchLogs, 5000)
     return () => clearInterval(interval)
   }, [token])
+
+  // B2C Live Activity 폴링 (어드민 전용)
+  useEffect(() => {
+    if (!company?.is_admin) return
+
+    const fetchB2CActivities = async () => {
+      try {
+        const { data } = await api.get('/b2b/admin/b2c-live?limit=15')
+        setB2cActivities(data.activities)
+      } catch (err) {
+        console.error('Failed to fetch B2C activities:', err)
+      }
+    }
+
+    // 초기 로드
+    fetchB2CActivities()
+
+    // 5초 폴링
+    const interval = setInterval(fetchB2CActivities, 5000)
+    return () => clearInterval(interval)
+  }, [company?.is_admin])
 
   if (loading) {
     return (
@@ -311,7 +342,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Section: Table + Recent */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+      <div className={`grid grid-cols-1 gap-4 lg:gap-6 ${company?.is_admin ? 'lg:grid-cols-12' : 'lg:grid-cols-12'}`}>
         {/* API Usage Summary */}
         <div className="lg:col-span-8 bg-[#16161d] rounded-xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
@@ -352,7 +383,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Logs */}
-        <div className="lg:col-span-4 bg-[#16161d] rounded-xl p-4 lg:p-5">
+        <div className={`bg-[#16161d] rounded-xl p-4 lg:p-5 ${company?.is_admin ? 'lg:col-span-4' : 'lg:col-span-4'}`}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-medium text-white">Live Logs</h2>
@@ -376,6 +407,86 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* B2C Live Activity (어드민 전용) */}
+      {company?.is_admin && (
+        <div className="mt-6 bg-[#16161d] rounded-xl p-4 lg:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-medium text-white">B2C Live Activity</h2>
+              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">ADMIN</span>
+            </div>
+            <button onClick={() => navigate('/users')} className="text-xs text-blue-400 hover:text-blue-300">유저 관리</button>
+          </div>
+          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+            {b2cActivities.length === 0 ? (
+              <div className="text-center text-gray-500 text-sm py-8">
+                아직 활동이 없습니다
+              </div>
+            ) : (
+              b2cActivities.map((activity, index) => (
+                <div key={`${activity.user_id}-${activity.created_at}-${index}`} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                  {/* 아이콘 */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    activity.type === 'recommendation' ? 'bg-blue-500/20' :
+                    activity.type === 'ott_click' ? 'bg-green-500/20' :
+                    activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20' :
+                    'bg-red-500/20'
+                  }`}>
+                    {activity.type === 'recommendation' && (
+                      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    )}
+                    {activity.type === 'ott_click' && (
+                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                    {activity.type === 'satisfaction_positive' && (
+                      <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                      </svg>
+                    )}
+                    {activity.type === 'satisfaction_negative' && (
+                      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* 내용 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-white truncate">{activity.user_nickname}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        activity.type === 'recommendation' ? 'bg-blue-500/20 text-blue-400' :
+                        activity.type === 'ott_click' ? 'bg-green-500/20 text-green-400' :
+                        activity.type === 'satisfaction_positive' ? 'bg-cyan-500/20 text-cyan-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {activity.type === 'recommendation' ? '추천' :
+                         activity.type === 'ott_click' ? 'OTT' :
+                         activity.type === 'satisfaction_positive' ? '👍' : '👎'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 truncate">{activity.description}</p>
+                    {activity.movie_title && (
+                      <p className="text-[10px] text-gray-500 mt-1 truncate">🎬 {activity.movie_title}</p>
+                    )}
+                  </div>
+
+                  {/* 시간 */}
+                  <span className="text-[10px] text-gray-500 flex-shrink-0">
+                    {new Date(activity.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

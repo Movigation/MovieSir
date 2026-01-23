@@ -165,6 +165,12 @@ class SuccessResponse(BaseModel):
 
 # ==================== B2C Admin ====================
 
+class OttSubscriptionResponse(BaseModel):
+    """OTT 구독 정보"""
+    provider_name: str
+    logo_path: Optional[str] = None
+
+
 class B2CUserResponse(BaseModel):
     """B2C 사용자 정보 응답"""
     user_id: str
@@ -190,7 +196,7 @@ class B2CUserDetailResponse(BaseModel):
     onboarding_completed: bool
     created_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
-    ott_subscriptions: List[str] = []
+    ott_subscriptions: List[OttSubscriptionResponse] = []
     recommendation_count: int = 0
     last_recommendation_at: Optional[datetime] = None
 
@@ -214,3 +220,33 @@ class B2CStatsResponse(BaseModel):
     today_signups: int
     weekly_signups: int
     monthly_signups: int
+
+
+class B2CUserActivity(BaseModel):
+    """B2C 유저 활동 항목"""
+    type: str  # 'recommendation', 'ott_click', 'satisfaction_positive', 'satisfaction_negative'
+    description: str
+    movie_title: Optional[str] = None
+    movie_poster: Optional[str] = None
+    created_at: datetime
+
+
+class B2CUserActivitiesResponse(BaseModel):
+    """B2C 유저 활동 목록 응답"""
+    activities: List[B2CUserActivity]
+    total: int
+
+
+class B2CLiveActivity(BaseModel):
+    """B2C 실시간 활동 (전체 유저)"""
+    user_id: str
+    user_nickname: str
+    type: str
+    description: str
+    movie_title: Optional[str] = None
+    created_at: datetime
+
+
+class B2CLiveActivitiesResponse(BaseModel):
+    """B2C 실시간 활동 피드 응답"""
+    activities: List[B2CLiveActivity]
