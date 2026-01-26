@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AuthProvider } from "@/app/providers/AuthContext";
 import { ThemeProvider } from "@/app/providers/ThemeContext";
 import AppRoutes from '@/router/AppRoutes';
