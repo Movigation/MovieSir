@@ -63,7 +63,7 @@ export default function IntroScreen({ onComplete, duration = 7500 }: IntroScreen
       <div className={`intro-scene brand-scene ${phase >= 3 ? 'active' : ''}`}>
         <img src="/moviesir-logo.png" alt="MovieSir" className="brand-logo" />
         <div className="brand-text">
-          <span className="brand-sub">이동 시간 맞춤형 컨텐츠</span>
+          <span className="brand-sub">이동 시간 맞춤형 콘텐츠 추천 서비스</span>
           <span className="brand-name">무비서</span>
         </div>
       </div>
