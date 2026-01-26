@@ -1,0 +1,195 @@
+/* ===== 컨테이너 ===== */
+.intro-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  overflow: hidden;
+  transition: opacity 1s ease-out;
+}
+
+.intro-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ===== 배경 - 여행 느낌 (일몰/새벽 하늘) ===== */
+.intro-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #0f0f1a 0%,
+    #1a1a2e 25%,
+    #16213e 50%,
+    #1a1a2e 75%,
+    #0f0f1a 100%
+  );
+}
+
+/* ===== 씬 ===== */
+.intro-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.intro-scene.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.intro-scene.exit {
+  opacity: 0;
+  transform: translateY(-40px);
+}
+
+/* ===== 메인 텍스트 (더 크게) ===== */
+.text-container {
+  overflow: hidden;
+}
+
+.main-text {
+  display: block;
+  font-size: clamp(1.8rem, 8vw, 7rem);
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+  animation: text-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  white-space: nowrap;
+}
+
+@keyframes text-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Lottie ===== */
+.lottie-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lottie-anim {
+  width: clamp(200px, 40vw, 350px);
+  height: clamp(200px, 40vw, 350px);
+}
+
+/* ===== 브랜드 씬 ===== */
+.brand-scene {
+  gap: 30px;
+}
+
+.brand-logo {
+  width: clamp(100px, 20vw, 160px);
+  height: clamp(100px, 20vw, 160px);
+  object-fit: contain;
+  filter: drop-shadow(0 0 50px rgba(59, 130, 246, 0.6));
+  animation: logo-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes logo-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.brand-sub {
+  font-size: clamp(0.9rem, 3.5vw, 1.8rem);
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  animation: fade-up 0.6s ease-out 0.2s forwards;
+  white-space: nowrap;
+}
+
+.brand-name {
+  font-size: clamp(2.5rem, 12vw, 6rem);
+  font-weight: 800;
+  color: #3B82F6;
+  text-shadow: 0 0 40px rgba(59, 130, 246, 0.5);
+  letter-spacing: -0.02em;
+  opacity: 0;
+  animation: fade-up 0.6s ease-out 0.4s forwards;
+  white-space: nowrap;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 스킵 버튼 ===== */
+.skip-btn {
+  position: absolute;
+  bottom: 32px;
+  right: 32px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.skip-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 640px) {
+  .intro-scene {
+    gap: 30px;
+  }
+
+  .skip-btn {
+    bottom: 24px;
+    right: 24px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
