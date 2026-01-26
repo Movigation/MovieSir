@@ -69,7 +69,7 @@ ${formData.message}`
       <header className="border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/">
-            <img src="/api_logo.svg" alt="무비서 API" className="h-10" />
+            <img src="/api_logo_black.svg" alt="무비서 API" className="h-14" />
           </Link>
           <nav className="flex items-center gap-6">
             <Link to="/docs" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
