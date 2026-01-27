@@ -129,6 +129,20 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 <br/>
 
+### API 연동 사례: Air-Demo
+
+> **크로스 클라우드 호환성 검증** — GCP(Cloud Run)에서 KakaoCloud VPC의 무비서 API를 호출
+
+항공사 기내 영화 추천 데모앱 [**Air-Demo**](https://github.com/Movigation/Air-Demo)가 무비서 B2B API를 실제로 연동하여, <br />비행 시간에 맞는 최적의 영화 조합을 추천합니다.
+
+> 본 애플리케이션의 UI/UX 디자인 및 프론트엔드/백엔드 구현은 **Movigation 팀**이 직접 설계하고 개발하였습니다.
+
+|                    탑승권 화면                     |                      장르 선택                      |                   영화 추천 결과                    |
+| :------------------------------------------------: | :-------------------------------------------------: | :-------------------------------------------------: |
+| <img src="./docs/air-demo_main.png" width="180" /> | <img src="./docs/air-demo_main2.png" width="180" /> | <img src="./docs/air-demo_main3.png" width="180" /> |
+
+<br/>
+
 ---
 
 ## 무비서 Console
