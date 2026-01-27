@@ -3,13 +3,23 @@ import ChatbotButton from "@/services/chatbot/components/ChatbotButton";
 import ChatbotPanel from "@/services/chatbot/components/ChatbotPanel";
 import type { ChatbotProps } from "@/services/chatbot/components/chatbot.types";
 import { useAuth } from '@/app/providers/AuthContext';
+import { useTheme } from '@/app/providers/ThemeContext';
 
-export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: ChatbotProps & { onLoginRequired?: () => void }) {
+export default function Chatbot({
+  isOpen = false,
+  setIsOpen,
+  onLoginRequired,
+  isTutorialActive,
+  tutorialStep
+}: ChatbotProps & { onLoginRequired?: () => void }) {
+  const prevIsOpenRef = useRef(isOpen);
   const { isAuthenticated } = useAuth();
-  const isDark = document.documentElement.classList.contains("dark");
+  const { isDark } = useTheme();
 
   // [상태] 추천 완료 여부 (2단계 위치 이동용)
   const [isRecommended, setIsRecommended] = useState(false);
+  // [상태] 원위치 복귀 시 투명화 (순간이동 효과)
+  const [isTeleporting, setIsTeleporting] = useState(false);
 
   // [반응형] 챗봇 버튼 ref (애니메이션용)
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -17,14 +27,13 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
   // [챗봇 버튼 클릭 핸들러] 토글
   const handleChatbotButtonClick = () => {
     if (isOpen) {
-      // 이미 열려있으면 닫기
+      // setIsTeleporting(true)를 즉시 호출하여 닫힐 때 버튼 깜빡임 방지
+      setIsTeleporting(true);
       setIsOpen?.(false);
-      setIsRecommended(false);  // 추천 상태 초기화
+      setIsRecommended(false);
     } else if (!isAuthenticated) {
-      // 비로그인 시 로그인 모달 표시
       onLoginRequired?.();
     } else {
-      // 로그인 상태면 챗봇 열기
       setIsOpen?.(true);
     }
   };
@@ -50,12 +59,23 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
     return () => button.removeEventListener('wheel', handleWheel);
   }, [isOpen]);
 
-  // 챗봇 닫힐 때 추천 상태 초기화
   useEffect(() => {
-    if (!isOpen) {
-      setIsRecommended(false);
+    // 조건: 이전에 열려있었고(true), 지금 닫혔다면(false)
+    if (prevIsOpenRef.current === true && isOpen === false) {
+      setIsTeleporting(true);
+      setIsRecommended(false); // 닫힐 때 추천 상태 초기화 (재오픈 시 위치 오류 방지)
+
+      // 500ms 후 다시 보이게 처리
+      const timer = setTimeout(() => {
+        setIsTeleporting(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+
+    // 매 렌더링 끝에 현재 상태를 Ref에 업데이트
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]); // isOpen이 바뀔 때마다 실행
 
   return (
     <>
@@ -66,27 +86,32 @@ export default function Chatbot({ isOpen = false, setIsOpen, onLoginRequired }: 
         <div
           ref={buttonRef}
           className={`
-            inline-block w-28 h-28
-            transition-all duration-500 ease-out
+              inline-block w-28 h-28
+              transition-all ease-out
+              ${isTeleporting ? "duration-0 opacity-0 scale-0" : "duration-500 opacity-100 scale-100"}
+            ${isTutorialActive && tutorialStep === 0 ? 'tutorial-highlight-target' : ''}
             ${!isOpen
-              ? "relative translate-y-[200px] sm:translate-y-[150px]"
+              ? "relative translate-y-[200px] sm:translate-y-[150px] sm:translate-x-0"
               : isRecommended
-                // 추천 상태일 때는 버튼이 화면 중앙 아래에 고정 (모바일)
-                ? "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-[60] sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-43%] xl:ml-[-40%] 2xl:ml-[-17%]"
-                : "fixed bottom-[-25px] sm:top-[15%] lg:top-[15%] xl:top-[15%] 2xl:top-[7%] left-1/2 -translate-x-1/2 z-[60] sm:left-1/2 lg:left-1/2 xl:left-1/2 2xl:left-1/2 sm:ml-[-40%] lg:ml-[-30%] xl:ml-[-23%] 2xl:ml-[-12%]"
+                ? "fixed bottom-[-25px] left-1/2 -translate-x-1/2 z-chatbot-btn sm:relative sm:top-0 sm:bottom-auto sm:left-auto sm:translate-x-[-306px] sm:translate-y-[-20px] xl:translate-x-[-600px] xl:translate-y-[-20px] 2xl:translate-y-[-20px]"
+                : "fixed bottom-[-25px] left-1/2 -translate-x-1/2 z-chatbot-btn sm:relative sm:top-0 sm:bottom-auto sm:left-auto sm:translate-x-[-306px] sm:translate-y-[-20px] xl:translate-x-[-306px] xl:translate-y-[-20px] 2xl:translate-y-[-20px]"
             }
           `}
         >
           {/* 챗봇 버튼 내부 컨테이너 (scale만 담당) */}
-          <div className={`
-            inline-block w-28
-            ${!isOpen
-              ? ""
-              : isRecommended
-                ? "scale-[0.35] sm:scale-100"
-                : "scale-[0.35] sm:scale-100"
-            }
-          `}>
+          <div
+            className={`
+              inline-block w-28
+              ${!isOpen
+                ? ""
+                : isRecommended
+                  ? "scale-[0.35] sm:scale-100"
+                  : "scale-[0.35] sm:scale-100"
+              }
+            `}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <ChatbotButton
               isDark={isDark}
               onClick={handleChatbotButtonClick}

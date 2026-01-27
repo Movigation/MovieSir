@@ -1,0 +1,30 @@
+<svg width="280" height="50" viewBox="0 0 280 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 아이콘 -->
+  <g transform="translate(0, 0) scale(0.33)">
+    <g filter="url(#filter0_f)">
+      <path d="M75 130C105.376 130 130 105.376 130 75C130 44.6243 105.376 20 75 20C44.6243 20 20 44.6243 20 75C20 105.376 44.6243 130 75 130Z" fill="#60A5FA" fill-opacity="0.4"/>
+    </g>
+    <path d="M75 125C102.614 125 125 102.614 125 75C125 47.3858 102.614 25 75 25C47.3858 25 25 47.3858 25 75C25 102.614 47.3858 125 75 125Z" fill="url(#paint0_linear)"/>
+    <path d="M60 71C63.3137 71 66 68.3137 66 65C66 61.6863 63.3137 59 60 59C56.6863 59 54 61.6863 54 65C54 68.3137 56.6863 71 60 71Z" fill="#111827"/>
+    <path d="M90 71C93.3137 71 96 68.3137 96 65C96 61.6863 93.3137 59 90 59C86.6863 59 84 61.6863 84 65C84 68.3137 86.6863 71 90 71Z" fill="#111827"/>
+    <path d="M55 80H41C39.3431 80 38 81.3431 38 83C38 84.6569 39.3431 86 41 86H55C56.6569 86 58 84.6569 58 83C58 81.3431 56.6569 80 55 80Z" fill="#F472B6" fill-opacity="0.8"/>
+    <path d="M109 80H95C93.3431 80 92 81.3431 92 83C92 84.6569 93.3431 86 95 86H109C110.657 86 112 84.6569 112 83C112 81.3431 110.657 80 109 80Z" fill="#F472B6" fill-opacity="0.8"/>
+  </g>
+
+  <!-- 텍스트 -->
+  <text x="58" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="#111827">무비서</text>
+  <text x="58" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#6B7280">이동 시간 맞춤형 콘텐츠 추천 서비스</text>
+
+  <defs>
+    <filter id="filter0_f" x="-4" y="-4" width="158" height="158" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="12" result="effect1_foregroundBlur"/>
+    </filter>
+    <linearGradient id="paint0_linear" x1="20" y1="20" x2="130" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="0.5" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+</svg>

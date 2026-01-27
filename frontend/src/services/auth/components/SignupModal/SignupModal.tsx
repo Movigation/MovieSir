@@ -1,12 +1,15 @@
-import { X, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import CloseButton from "@/components/ui/CloseButton";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { SignupModalProps } from "@/services/auth/components/SignupModal/signupModal.types";
 import { useSignupForm } from "@/services/auth/hooks";
 
 export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     const navigate = useNavigate();
     const modalContentRef = useRef<HTMLDivElement>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
     // ✅ 모든 로직을 useSignupForm 훅에서 가져옴
     const {
@@ -46,6 +49,8 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
         setCode,
         handleSendCode,
         handleVerifyCode,
+        timeLeftFormatted,
+        isExpired,
 
         // 공통
         generalError,
@@ -120,17 +125,15 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                 ref={modalContentRef}
                 className="bg-white dark:bg-gray-800 w-full h-screen sm:h-[90vh] sm:w-[90%] sm:max-w-md sm:rounded-xl p-6 relative space-y-6 overflow-y-auto"
             >                {/* CLOSE */}
-                <button
-                    onClick={handleClose}
+                <CloseButton
+                    onClose={handleClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                >
-                    <X size={24} />
-                </button>
+                />
 
                 {/* HEADER */}
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        회원가입 🎬
+                        회원가입
                     </h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                         무비서와 함께 영화 추천을 시작하세요
@@ -397,18 +400,27 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 비밀번호 *
                             </label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => handlePasswordChange(e.target.value)}
-                                className={`w-full px-4 py-3 rounded-lg border ${passwordError
-                                    ? "border-red-500"
-                                    : password && isPasswordValid
-                                        ? "border-green-500"
-                                        : "border-gray-300 dark:border-gray-600"
-                                    } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
-                                placeholder="영문, 숫자 포함 8자 이상"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => handlePasswordChange(e.target.value)}
+                                    className={`w-full px-4 py-3 pr-10 rounded-lg border ${passwordError
+                                        ? "border-red-500"
+                                        : password && isPasswordValid
+                                            ? "border-green-500"
+                                            : "border-gray-300 dark:border-gray-600"
+                                        } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
+                                    placeholder="영문, 숫자 포함 8자 이상"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                             {passwordError && (
                                 <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                                     <AlertCircle size={14} />
@@ -428,18 +440,27 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 비밀번호 확인 *
                             </label>
-                            <input
-                                type="password"
-                                value={passwordConfirm}
-                                onChange={(e) => handlePasswordConfirmChange(e.target.value)}
-                                className={`w-full px-4 py-3 rounded-lg border ${!isPasswordMatch && passwordConfirm
-                                    ? "border-red-500"
-                                    : isPasswordMatch && passwordConfirm
-                                        ? "border-green-500"
-                                        : "border-gray-300 dark:border-gray-600"
-                                    } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
-                                placeholder="비밀번호를 다시 입력하세요"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPasswordConfirm ? "text" : "password"}
+                                    value={passwordConfirm}
+                                    onChange={(e) => handlePasswordConfirmChange(e.target.value)}
+                                    className={`w-full px-4 py-3 pr-10 rounded-lg border ${!isPasswordMatch && passwordConfirm
+                                        ? "border-red-500"
+                                        : isPasswordMatch && passwordConfirm
+                                            ? "border-green-500"
+                                            : "border-gray-300 dark:border-gray-600"
+                                        } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
+                                    placeholder="비밀번호를 다시 입력하세요"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                             {passwordConfirmError && (
                                 <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                                     <AlertCircle size={14} />
@@ -487,6 +508,10 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                                     <p className="text-blue-700 dark:text-blue-300 text-sm text-center">
                                         이메일로 6자리 인증번호가 전송되었습니다
                                     </p>
+                                    {/* 타이머 표시 */}
+                                    <p className={`text-center text-sm mt-1 font-mono ${isExpired ? 'text-red-500' : 'text-blue-600 dark:text-blue-400'}`}>
+                                        {isExpired ? '인증 시간이 만료되었습니다' : `남은 시간: ${timeLeftFormatted}`}
+                                    </p>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row gap-0 sm:gap-2">
@@ -507,13 +532,22 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                                     />
                                     <button
                                         onClick={handleVerifyCodeWrapper}
-                                        disabled={isLoading || code.length !== 6}
-                                        className={`px-6 py-3 rounded-b-lg sm:rounded-lg font-bold transition-colors ${isLoading || code.length !== 6
+                                        disabled={isLoading || code.length !== 6 || isExpired}
+                                        className={`px-6 py-3 rounded-b-lg sm:rounded-lg font-bold min-w-[100px] transition-colors ${isLoading || code.length !== 6 || isExpired
                                             ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                                             : "bg-blue-500 hover:bg-blue-600 text-white"
                                             }`}
                                     >
-                                        {isLoading ? "확인 중" : "확인"}
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Loader2 size={16} className="animate-spin" />
+                                                <span>{timeLeftFormatted}</span>
+                                            </div>
+                                        ) : isExpired ? (
+                                            "만료됨"
+                                        ) : (
+                                            `확인 ${timeLeftFormatted}`
+                                        )}
                                     </button>
                                 </div>
 

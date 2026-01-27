@@ -127,6 +127,7 @@ class MovieOttMap(Base):
         primary_key=True,
     )
     link_url = Column(String, nullable=True)
+    payment_type = Column(String(20), nullable=False, server_default="FLATRATE")
 
     movie = relationship("Movie", back_populates="ott_mappings")
     provider = relationship("OttProvider", back_populates="movie_mappings")

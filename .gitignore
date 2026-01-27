@@ -25,6 +25,7 @@ __pycache__/
 .venv/
 venv/
 env/
+requirements.txt
 
 # ------------------------------------------------------------
 # IDE
@@ -33,6 +34,8 @@ env/
 .idea/
 *.swp
 *.swo
+.python-version
+.tool-versions
 
 # ------------------------------------------------------------
 # OS
@@ -86,6 +89,14 @@ ai/training/sbert_data/index/*
 ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
+# 성능 비교 데이터
+ai/compare/cbf/inner_results/*.npz
+ai/compare/cbf/inner_results/movies_list.csv
+
+# DB
+*.sql
+*.rdb
+
 # ------------------------------------------------------------
 # Secrets & Environment (중요!)
 # ------------------------------------------------------------
@@ -104,6 +115,15 @@ ai/training/original_data/*
 tmp/
 temp/
 *.tmp
+.claude/
+.mcp.json
+ai/CHAT_SUMMARY.md
+ai/RECOMMENDATION_ALGORITHM.md
+
+# ------------------------------------------------------------
+# Prompts
+# ------------------------------------------------------------
+prompt/
 
 # Duplicate/Nested
 MovieSir/
@@ -120,4 +140,7 @@ backend/data/
 *.sql
 # 대용량 DB 덤프 파일은 제외 (GitHub 100MB 제한)
 database/init/movigation.sql
-secrets/
+# 마이그레이션 SQL은 예외
+!database/migrations/**/*.sql
+# 초기 스키마 파일은 예외 (로컬 개발용)
+!database/init/01_init_schemas.sql

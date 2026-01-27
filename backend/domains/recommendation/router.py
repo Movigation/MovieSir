@@ -38,13 +38,20 @@ def recommend_movies_v2(
 
     # Track A: 같은 장르일 때만 이전 기록 제외 (최근 20개 세션)
     recent_a = service.get_recent_recommended_ids_by_genre(db, user_id, req.genres, limit=20)
+    
     # Track B: 장르 상관없이 이전 기록 제외 (최근 20개 세션)
     recent_b = service.get_recent_recommended_ids_all(db, user_id, limit=20)
 
     excluded_a = list(set((req.excluded_ids or []) + recent_a))
     excluded_b = list(set((req.excluded_ids or []) + recent_b))
 
-    print(f"[Recommend] Track A 제외: {len(recent_a)}개, Track B 제외: {len(recent_b)}개")
+    print(f"[Recommend] User: {user_id[:8]}..., Genres: {req.genres}")
+    print(f"[Recommend] Track A 제외: DB={len(recent_a)}개, 요청={len(req.excluded_ids or [])}개, 최종={len(excluded_a)}개")
+    print(f"[Recommend] Track B 제외: DB={len(recent_b)}개, 요청={len(req.excluded_ids or [])}개, 최종={len(excluded_b)}개")
+    if len(excluded_a) > 0:
+        print(f"[Recommend] Track A excluded IDs (first 10): {excluded_a[:10]}")
+    if len(excluded_b) > 0:
+        print(f"[Recommend] Track B excluded IDs (first 10): {excluded_b[:10]}")
 
     # AI 추천 호출 (Track A, B 별도 제외 목록)
     result = ai_model.recommend(
@@ -57,15 +64,18 @@ def recommend_movies_v2(
         excluded_ids_b=excluded_b
     )
 
-    # 추천 결과 저장 (Track A, B 분리)
-    track_a_ids = [m['tmdb_id'] for m in result.get('track_a', {}).get('movies', [])]
-    track_b_ids = [m['tmdb_id'] for m in result.get('track_b', {}).get('movies', [])]
+    # 추천 결과 저장 (Track A, B 분리) - session_id 반환
+    track_a_ids = [m['movie_id'] for m in result.get('track_a', {}).get('movies', [])]
+    track_b_ids = [m['movie_id'] for m in result.get('track_b', {}).get('movies', [])]
 
+    session_id = None
     if track_a_ids or track_b_ids:
-        service.save_recommendation_session(
+        session_id = service.save_recommendation_session(
             db, user_id, req.genres, req.runtime_limit or 180, track_a_ids, track_b_ids
         )
 
+    # session_id를 응답에 추가
+    result['session_id'] = session_id
     return result
 
 
@@ -98,6 +108,14 @@ def recommend_single_movie(
     )
 
     if movie:
+        # 재추천 활동 로깅 (B2C 활동 피드용)
+        service.log_re_recommendation(
+            db=db,
+            user_id=user_id,
+            source_movie_id=req.source_movie_id,
+            result_movie_id=movie.get('movie_id'),
+            session_id=req.session_id
+        )
         return {
             "movie": movie,
             "success": True,
@@ -110,23 +128,8 @@ def recommend_single_movie(
             "message": "조건에 맞는 영화를 찾지 못했습니다"
         }
 
-
-# ==================== 기존 API (하위 호환) ====================
-
-@router.post("/api/recommend", response_model=schema.RecommendationResponse)
-def recommend_movies(
-    req: schema.RecommendationRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    영화 추천 (Legacy) - 하위 호환용
-    """
-    results = service.get_hybrid_recommendations(db, str(current_user.user_id), req, ai_model)
-    return {"results": results}
-
-
 # ==================== 공통 API ====================
+
 
 @router.post("/api/movies/{movie_id}/play")
 def click_ott(
@@ -136,7 +139,12 @@ def click_ott(
     current_user: User = Depends(get_current_user)
 ):
     """OTT 링크 클릭 로깅"""
-    service.log_click(db, str(current_user.user_id), movie_id, req.provider_id)
+    # 클릭 로깅 (실패해도 URL 반환은 계속)
+    try:
+        service.log_click(db, str(current_user.user_id), movie_id, req.provider_id)
+    except Exception as e:
+        print(f"[WARN] OTT 클릭 로깅 실패: {e}")
+        db.rollback()
 
     url_row = db.execute(
         text("SELECT link_url FROM movie_ott_map WHERE movie_id=:mid AND provider_id=:pid"),
@@ -148,27 +156,15 @@ def click_ott(
 
     return {"redirect_url": url_row[0]}
 
-
-@router.post("/api/movies/{movie_id}/watched")
-def mark_watched(
+@router.get("/api/movies/{movie_id}", response_model=schema.MovieDetailResponse)
+def get_movie_detail(
     movie_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
 ):
-    """영화 시청 완료 표시"""
-    service.mark_watched(db, str(current_user.user_id), movie_id)
-    return {"status": "success"}
-
-
-@router.get("/api/movies/{tmdb_id}", response_model=schema.MovieDetailResponse)
-def get_movie_detail(
-    tmdb_id: int,
-    db: Session = Depends(get_db),
-):
-    """영화 상세 정보 조회 (로그인 불필요) - tmdb_id로 조회"""
+    """영화 상세 정보 조회 (로그인 불필요) - movie_id로 조회"""
     from backend.domains.movie.models import Movie
 
-    movie = db.query(Movie).filter(Movie.tmdb_id == tmdb_id).first()
+    movie = db.query(Movie).filter(Movie.movie_id == movie_id).first()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
@@ -179,7 +175,8 @@ def get_movie_detail(
             SELECT
                 p.provider_id,
                 p.provider_name,
-                m.link_url
+                m.link_url,
+                m.payment_type
             FROM movie_ott_map m
             JOIN ott_providers p ON m.provider_id = p.provider_id
             WHERE m.movie_id = :mid
@@ -194,6 +191,7 @@ def get_movie_detail(
                 "provider_id": row.provider_id,
                 "provider_name": row.provider_name,
                 "url": row.link_url,
+                "payment_type": row.payment_type,
             }
             for row in ott_rows
         ],

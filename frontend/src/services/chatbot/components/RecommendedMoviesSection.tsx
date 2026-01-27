@@ -1,6 +1,3 @@
-// [용도] 맞춤 추천 영화 섹션 컴포넌트
-// [위치] ChatbotPanel에서 사용
-
 import { useState } from 'react';
 import { useMovieStore } from '@/store/useMovieStore';
 import MovieCard from './MovieCard';
@@ -19,14 +16,14 @@ export default function RecommendedMoviesSection() {
 
     return (
         <div className="w-full">
-            <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 sm:pl-40 lg:pl-[320px] flex items-center gap-2">
+            <h2 className="text-gray-800 dark:text-white font-bold text-lg mb-3 pl-4 flex items-center gap-2">
                 <span>{"취향 맞춤 추천"}</span>
                 {totalRuntime > 0 && (
                     <span className="text-sm font-medium text-blue-500 px-2 py-0.5 rounded-full">
                         총 {hours > 0 ? `${hours}시간 ` : ""}{minutes > 0 || hours === 0 ? `${minutes}분` : ""}
                     </span>
                 )}
-            </h3>
+            </h2>
             <RecommendedList />
         </div>
     );
@@ -37,10 +34,6 @@ const RecommendedList = () => {
     const { recommendedMovies, removeRecommendedMovie, setDetailMovieId } = useMovieStore();
     const [reRecommendingId, setReRecommendingId] = useState<number | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-
-
-
-
 
     // 재추천 핸들러
     const handleReRecommend = (movieId: number) => {
@@ -72,9 +65,8 @@ const RecommendedList = () => {
                     onCollapse={() => setExpandedCardId(null)}
                     onClick={() => {
                         if (window.innerWidth >= 1024 || expandedCardId === movie.id) {
-                            // 🎬 TMDB ID만 사용하여 상세 정보 조회 (ID 불일치 방지)
-                            const targetId = movie.tmdb_id ?? movie.id;
-                            setDetailMovieId(targetId);
+                            // 🎬 movie_id로 상세 정보 조회
+                            setDetailMovieId(movie.id);
                         }
                     }}
                     onReRecommend={() => handleReRecommend(movie.id)}

@@ -17,11 +17,13 @@ class RecommendationRequest(BaseModel):
 
 class ReRecommendRequest(BaseModel):
     """개별 영화 재추천 요청"""
+    source_movie_id: Optional[int] = None  # 교체할 원본 영화 ID (로깅용)
     target_runtime: int  # 교체할 영화의 런타임
     excluded_ids: List[int]  # 이미 추천된 영화 ID 리스트
     track: str = "a"  # "a" 또는 "b"
     genres: List[str] = []
     exclude_adult: bool = True
+    session_id: Optional[int] = None  # 추천 세션 ID (로깅용)
 
 
 class ClickLogRequest(BaseModel):
@@ -51,7 +53,8 @@ class MovieInfo(BaseModel):
 
 class RecommendedMovie(BaseModel):
     """추천된 영화 (AI 응답용)"""
-    tmdb_id: int
+    movie_id: int
+    tmdb_id: Optional[int] = None
     title: str
     runtime: int
     genres: List[str] = []
@@ -77,6 +80,7 @@ class RecommendationResponseV2(BaseModel):
     track_a: TrackResult
     track_b: TrackResult
     elapsed_time: Optional[float] = None
+    session_id: Optional[int] = None  # 추천 세션 ID (피드백용)
 
 
 class ReRecommendResponse(BaseModel):
@@ -99,6 +103,7 @@ class OttInfo(BaseModel):
     provider_id: int
     provider_name: str
     url: Optional[str] = None
+    payment_type: Optional[str] = "SUBSCRIPTION"
 
 
 class MovieDetailResponse(BaseModel):

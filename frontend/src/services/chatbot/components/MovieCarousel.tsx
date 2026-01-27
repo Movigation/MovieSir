@@ -7,9 +7,18 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface MovieCarouselProps {
     children: React.ReactNode;
     className?: string;
+    containerClassName?: string; // e.g., 'h-[450px]'
+    cardWidthClassName?: string; // e.g., 'w-[280px] sm:w-[320px]'
+    arrowClassName?: string; // 화살표 스타일 커스터마이징용
 }
 
-export default function MovieCarousel({ children, className = '' }: MovieCarouselProps) {
+export default function MovieCarousel({
+    children,
+    className = '',
+    containerClassName = 'h-[450px] sm:h-[450px] lg:h-[550px]',
+    cardWidthClassName = 'w-[280px] sm:w-[320px] lg:w-[380px]',
+    arrowClassName = '' // 기본값 빈 문자열
+}: MovieCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const startX = useRef(0);
@@ -107,16 +116,23 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
             </div>
             {/* 3D 캐러셀 컨테이너 */}
             <div
-                className="relative w-full h-[370px] sm:h-[400px] lg:h-[500px] perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto"
+                className={`relative w-full perspective-1000 overflow-hidden sm:max-w-[400px] lg:max-w-[900px] mx-auto ${containerClassName}`}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                style={{ perspective: '1000px', cursor: isDragging ? 'grabbing' : 'grab' }}
+                style={{
+                    perspective: '1000px',
+                    cursor: isDragging ? 'grabbing' : 'grab'
+                }}
             >
                 {/* 좌측 화살표 - 항상 표시 */}
                 <button
                     onClick={(e) => { e.stopPropagation(); goToPrev(); }}
-                    className="absolute left-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110 active:scale-95 group"
+                    className={`
+                        absolute left-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full 
+                        backdrop-blur-md border transition-all hover:scale-110 active:scale-95 group
+                        ${arrowClassName || 'bg-white/10 hover:bg-white/20 border-white/20 text-white'}
+                    `}
                     aria-label="이전 영화"
                 >
                     <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
@@ -125,7 +141,11 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                 {/* 우측 화살표 - 항상 표시 */}
                 <button
                     onClick={(e) => { e.stopPropagation(); goToNext(); }}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all hover:scale-110 active:scale-95 group"
+                    className={`
+                        absolute right-5 top-1/2 -translate-y-1/2 z-50 p-2 rounded-full 
+                        backdrop-blur-md border transition-all hover:scale-110 active:scale-95 group
+                        ${arrowClassName || 'bg-white/10 hover:bg-white/20 border-white/20 text-white'}
+                    `}
                     aria-label="다음 영화"
                 >
                     <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
@@ -139,11 +159,11 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                             <div
                                 key={index}
                                 className={`
-                                    absolute w-[280px] sm:w-[320px] lg:w-[380px] h-[100px] sm:h-[100px] lg:h-[100px]
+                                    absolute ${cardWidthClassName}
                                     transition-all duration-700 ease-out
                                     ${position === 'center' ? 'z-10 opacity-100' : ''}
-                                    ${position === 'left-1' ? 'z-5 opacity-100 grayscale-[80%] pointer-events-none' : ''}
-                                    ${position === 'right-1' ? 'z-5 opacity-100 grayscale-[80%] pointer-events-none' : ''}
+                                    ${position === 'left-1' ? 'z-5 opacity-100' : ''}
+                                    ${position === 'right-1' ? 'z-5 opacity-100' : ''}
                                     ${position === 'hidden' ? 'opacity-0 pointer-events-none' : ''}
                                 `}
                                 style={{
@@ -156,12 +176,17 @@ export default function MovieCarousel({ children, className = '' }: MovieCarouse
                                                     : 'translateX(0) scale(0.8)',
                                     cursor: position === 'center' ? 'default' : 'pointer'
                                 }}
-                                onClick={() => position !== 'center' && setCurrentIndex(index)}
+                                onClick={() => {
+                                    if (position !== 'center') {
+                                        setCurrentIndex(index);
+                                    }
+                                }}
                             >
                                 {React.cloneElement(child as React.ReactElement<any>, {
                                     isExpanded: position === 'center' ? (child as React.ReactElement<any>).props.isExpanded : false,
                                     onExpand: position === 'center' ? (child as React.ReactElement<any>).props.onExpand : () => { },
                                     onCollapse: position === 'center' ? (child as React.ReactElement<any>).props.onCollapse : () => { },
+                                    isPeeking: position !== 'center',
                                 })}
                             </div>
                         );

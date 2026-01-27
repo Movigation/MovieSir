@@ -82,9 +82,21 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     return results
 
 def log_click(db: Session, user_id: str, movie_id: int, provider_id: int):
-    new_log = MovieClick(user_id=user_id, movie_id=movie_id, provider_id=provider_id)
-    db.add(new_log)
-    db.commit()
+    """OTT 클릭을 user_movie_feedback 테이블에 저장 (provider_id 포함)"""
+    try:
+        # feedback_type에 provider_id를 포함시켜 저장 (예: 'ott_click:8')
+        feedback_type = f'ott_click:{provider_id}' if provider_id else 'ott_click'
+        new_feedback = MovieClick(
+            user_id=user_id,
+            movie_id=movie_id,
+            feedback_type=feedback_type,
+            session_id=None
+        )
+        db.add(new_feedback)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[WARN] OTT 클릭 로깅 실패: {e}")
 
 def mark_watched(db: Session, user_id: str, movie_id: int):
     stmt = text("""
@@ -107,7 +119,10 @@ def get_recent_recommended_ids_by_genre(
     장르가 같은 최근 N회 추천된 Track A 영화 ID 조회
     """
     if not genres:
+        print(f"[DEBUG Track A] No genres provided, returning empty list")
         return []
+
+    print(f"[DEBUG Track A] Genres: {genres}, User: {user_id[:8]}..., Limit: {limit}")
 
     # 장르가 일치하는 세션에서 track_a_ids 조회
     result = db.execute(
@@ -123,16 +138,20 @@ def get_recent_recommended_ids_by_genre(
         {"uid": user_id, "genres": genres, "lim": limit}
     ).fetchall()
 
+    print(f"[DEBUG Track A] Query returned {len(result)} sessions")
+
     all_ids = set()
     for row in result:
         if row[0]:
             try:
                 import json
                 ids = json.loads(row[0])
+                print(f"[DEBUG Track A] Found {len(ids)} IDs in session: {ids[:5]}..." if len(ids) > 5 else f"[DEBUG Track A] Found {len(ids)} IDs: {ids}")
                 all_ids.update(ids)
             except:
                 pass
 
+    print(f"[DEBUG Track A] Total unique IDs to exclude: {len(all_ids)}")
     return list(all_ids)
 
 
@@ -182,8 +201,8 @@ def save_recommendation_session(
     runtime_max: int,
     track_a_ids: List[int],
     track_b_ids: List[int]
-):
-    """추천 세션 저장 (Track A, B 분리 저장)"""
+) -> int:
+    """추천 세션 저장 (Track A, B 분리 저장) - session_id 반환"""
     import json
 
     feedback_details = {
@@ -191,11 +210,12 @@ def save_recommendation_session(
         "track_b_ids": track_b_ids
     }
 
-    db.execute(
+    result = db.execute(
         text("""
             INSERT INTO recommendation_sessions
             (user_id, req_genres, req_runtime_max, recommended_movie_ids, feedback_details, created_at)
             VALUES (:uid, :genres, :runtime, :movie_ids, :feedback, NOW())
+            RETURNING session_id
         """),
         {
             "uid": user_id,
@@ -203,6 +223,41 @@ def save_recommendation_session(
             "runtime": runtime_max,
             "movie_ids": track_a_ids + track_b_ids,
             "feedback": json.dumps(feedback_details)
+        }
+    )
+    session_id = result.fetchone()[0]
+    db.commit()
+    return session_id
+
+
+def log_re_recommendation(
+    db: Session,
+    user_id: str,
+    source_movie_id: Optional[int],
+    result_movie_id: Optional[int],
+    session_id: Optional[int] = None
+):
+    """
+    재추천 활동 로깅 (user_movie_feedback 테이블)
+    - result_movie_id: 새로 추천된 영화 (movie_id 필드에 저장)
+    - session_id: 추천 세션 ID (FK 제약조건 준수)
+
+    Note: source_movie_id는 FK 제약조건으로 인해 저장 불가,
+          session_id를 통해 원본 세션 추적 가능
+    """
+    if result_movie_id is None:
+        return  # 추천 실패 시 로깅 안함
+
+    db.execute(
+        text("""
+            INSERT INTO user_movie_feedback
+            (user_id, movie_id, session_id, feedback_type, created_at)
+            VALUES (:uid, :mid, :sid, 're_recommendation', NOW())
+        """),
+        {
+            "uid": user_id,
+            "mid": result_movie_id,  # 새로 추천된 영화 ID
+            "sid": session_id        # 실제 추천 세션 ID (FK 준수)
         }
     )
     db.commit()

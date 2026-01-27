@@ -2,7 +2,11 @@
 // [사용법] showModal이 true일 때 자동으로 표시
 
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "@/app/providers/AuthContext";
+import { useOnboardingStore } from "@/store/useOnboardingStore";
+import axiosInstance from "@/api/axiosInstance";
+import CloseButton from "@/components/ui/CloseButton";
 
 interface Props {
     visible: boolean;
@@ -12,6 +16,39 @@ interface Props {
 export default function OnboardingReminderModal({ visible, onClose }: Props) {
     const navigate = useNavigate();
     const { user } = useAuth(); // 사용자 정보 가져오기
+
+    // [추가] 모달이 뜰 때 영화 데이터 및 이미지 프리페칭
+    useEffect(() => {
+        if (!visible) return;
+
+        const prefetchMovies = async () => {
+            try {
+                // 이미 데이터가 있으면 중복 호출 방지
+                const storedMovies = useOnboardingStore.getState().movies;
+                if (storedMovies && storedMovies.length > 0) return;
+
+                const response = await axiosInstance.get("/onboarding/survey/movies");
+                const movies = response.data.movies || [];
+
+                // 1. 데이터 저장
+                useOnboardingStore.getState().setMovies(movies);
+
+                // 2. 이미지 미리 로드 (브라우저 캐시 활용)
+                movies.forEach((movie: any) => {
+                    if (movie.poster_path) {
+                        const img = new Image();
+                        img.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+                    }
+                });
+
+                console.log("리마인더 시점: 영화 데이터 및 이미지 프리페칭 완료");
+            } catch (err) {
+                console.warn("⚠️ 리마인더 프리페칭 실패:", err);
+            }
+        };
+
+        prefetchMovies();
+    }, [visible]);
 
     if (!visible) return null;
 
@@ -49,25 +86,11 @@ export default function OnboardingReminderModal({ visible, onClose }: Props) {
             {/* 모달 컨텐츠 */}
             <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 max-w-md w-full border border-gray-700 shadow-2xl">
                 {/* 닫기 버튼 */}
-                <button
-                    onClick={handleSkip}
+                <CloseButton
+                    onClose={handleSkip}
                     className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
                     aria-label="닫기"
-                >
-                    <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
+                />
                 {/* 제목 */}
                 <h2 className="text-xl md:text-[28px] font-bold text-white text-center mb-5">
                     아직 추천 정보가 부족해요!<br />

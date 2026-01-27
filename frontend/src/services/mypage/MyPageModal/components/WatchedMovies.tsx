@@ -6,6 +6,7 @@ import { ArrowLeft, Search } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthContext';
 import { getWatchHistory } from '@/api/movieApi';
 import type { WatchHistoryWithMovie } from '@/api/movieApi.type';
+import SettingItem from './SettingItem';
 
 type WatchedMoviesProps = {
     onBack: () => void;
@@ -86,28 +87,28 @@ export default function WatchedMovies({ onBack }: WatchedMoviesProps) {
                 ) : (
                     <div className="space-y-2">
                         {filteredMovies.map((item) => (
-                            <div
+                            <SettingItem
                                 key={item.id}
-                                className="p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+                                className="p-4"
                             >
                                 <div className="flex justify-between items-start">
-                                    <h3 className="text-white font-medium">{item.movie.title}</h3>
+                                    <h3 className="text-black dark:text-white font-medium">{item.movie.title}</h3>
                                     <div className="flex items-center gap-1">
                                         {[...Array(5)].map((_, i) => (
-                                            <span key={i} className={i < item.rating ? 'text-yellow-400' : 'text-gray-600'}>
+                                            <span key={i} className={i < item.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}>
                                                 ★
                                             </span>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 mt-1 text-sm text-gray-400">
+                                <div className="flex items-center gap-2 mt-1 text-sm text-gray-600 dark:text-gray-400">
                                     <span>{item.movie.genres.join(', ')}</span>
                                     <span>•</span>
                                     <span>{item.movie.year}</span>
                                     <span>•</span>
                                     <span>시청일: {new Date(item.watchedAt).toLocaleDateString('ko-KR')}</span>
                                 </div>
-                            </div>
+                            </SettingItem>
                         ))}
                     </div>
                 )}

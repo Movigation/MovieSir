@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
-// import { authAxiosInstance } from '@/api/axiosInstance'; 주석 해제 요망
+import { authAxiosInstance } from '@/api/axiosInstance';
+import SettingItem from './SettingItem';
 
 // OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
@@ -33,16 +34,15 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const loadUserOTT = async () => {
         setIsLoading(true);
         try {
-            // TODO: 백엔드 API 연동 시 주석 해제
-            // const response = await authAxiosInstance.get("/user/ott");
-            // setSelectedProviderIds(response.data.provider_ids);
-
-            // 임시 데이터: 개발용 (Netflix, Disney+, TVING 선택된 상태)
-            const mockSelectedProviders = [8, 337, 1883];
-            setSelectedProviderIds(mockSelectedProviders);
-            console.log('🎬 임시 OTT 데이터 로드:', mockSelectedProviders);
+            const response = await authAxiosInstance.get("/mypage/ott");
+            // 백엔드 응답: { current_ott_ids: number[] }
+            const providerIds = response.data.current_ott_ids || [];
+            setSelectedProviderIds(providerIds);
+            console.log('🎬 OTT 데이터 로드:', providerIds);
         } catch (error) {
             console.error('OTT 불러오기 실패:', error);
+            // 에러 시 빈 배열로 초기화
+            setSelectedProviderIds([]);
         } finally {
             setIsLoading(false);
         }
@@ -59,15 +59,12 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // TODO: 백엔드 API 연동 시 주석 해제
-            // await authAxiosInstance.post("/onboarding/ott", {
-            //     provider_ids: selectedProviderIds
-            // });
+            await authAxiosInstance.put("/mypage/ott", {
+                ott_ids: selectedProviderIds  // 백엔드 스키마: ott_ids
+            });
 
-            // 임시: 로컬 상태만 업데이트
-            console.log('💾 OTT 저장 (임시):', selectedProviderIds);
-
-            alert('OTT 선택이 저장되었습니다! (개발 모드)');
+            console.log('💾 OTT 저장 완료:', selectedProviderIds);
+            alert('OTT 선택이 저장되었습니다!');
             onBack();
         } catch (error: any) {
             console.error('OTT 저장 실패:', error);
@@ -117,9 +114,10 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                 ) : (
                     <div className="space-y-3">
                         {OTT_PLATFORMS.map((platform) => (
-                            <label
+                            <SettingItem
                                 key={platform.provider_id}
-                                className="flex items-center gap-4 p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors"
+                                as="label"
+                                className="flex items-center gap-4"
                             >
                                 <input
                                     type="checkbox"
@@ -130,15 +128,15 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                                 <div className="w-12 h-8 flex items-center justify-center">
                                     <img src={platform.logo} alt={platform.name} className={`${platform.logoSize} w-auto object-contain`} />
                                 </div>
-                                <span className="text-white font-medium">{platform.name}</span>
-                            </label>
+                                <span className="text-black dark:text-white font-medium">{platform.name}</span>
+                            </SettingItem>
                         ))}
                     </div>
                 )}
 
                 {selectedPlatforms.length > 0 && (
                     <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                        <h4 className="text-blue-400 font-medium mb-3">선택된 OTT ({selectedPlatforms.length}개)</h4>
+                        <h3 className="text-blue-400 font-medium mb-3">선택된 OTT ({selectedPlatforms.length}개)</h3>
                         <div className="flex flex-wrap gap-2">
                             {selectedPlatforms.map((platform) => (
                                 <span

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ChatbotPanelProps } from "@/services/chatbot/components/chatbot.types";
 import FilterChatBlock from '@/services/chatbot/FilterBlock/FilterChatBlock';
 import RecommendedMoviesSection from '@/services/chatbot/components/RecommendedMoviesSection';
@@ -46,10 +46,14 @@ export interface Message {
   position?: 'left' | 'center' | 'right';
 }
 
-export default function ChatbotPanel({ isOpen, onClose, onRecommended }: ChatbotPanelProps) {
+export default function ChatbotPanel({
+  isOpen,
+  onRecommended
+}: ChatbotPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasRecommended, setHasRecommended] = useState(false);  // 추천 완료 플래그
   const { loadRecommended, resetFilters } = useMovieStore();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // 챗봇이 열릴 때 초기 메시지 표시
   useEffect(() => {
@@ -107,11 +111,10 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
     ];
     setMessages(initialMessages);
 
-    // 맨 위로 스크롤
+    // 맨 위로 스크롤 (useRef 사용)
     setTimeout(() => {
-      const messagesContainer = document.querySelector('.overflow-y-auto');
-      if (messagesContainer) {
-        messagesContainer.scrollTo({
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({
           top: 0,
           behavior: 'smooth'
         });
@@ -186,6 +189,7 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
               <div className="flex justify-center mt-6">
                 <button
                   onClick={() => handleResetFilters()}
+                  aria-label="필터 초기화 및 다시 추천받기"
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   처음으로
@@ -214,11 +218,13 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
       <div
         className={`
           fixed
-          top-[70px] left-0 right-0 bottom-0
-          z-panel
+          top-0 sm:top-[70px] left-0 right-0 bottom-[64px]
+          z-chatbot-backdrop
+          transition-opacity duration-300
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
-        onClick={onClose}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       />
 
       {/* 챗봇 패널 */}
@@ -244,28 +250,36 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
           top-0 sm:top-[70px]
           left-0
           right-0
-          h-dvh sm:h-[calc(100vh-70px)]
+          h-[calc(100dvh-64px)] sm:h-[calc(100vh-70px)]
           bg-transparent
-          z-panel
+          z-chatbot-panel
           flex flex-col
-          transition-opacity duration-200
           max-w-screen-lg mx-auto
-          ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+          transition-all duration-200 ease-in-out
+          ${isOpen
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-8 pointer-events-none invisible'}
         `}
-        style={{ transition: 'opacity 0.2s ease-in-out' }}
+        role="dialog"
+        aria-label="영화 추천 챗봇 패널"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        {/* <div className="flex justify-between items-center p-1">
+        {/* Header - 시맨틱 구조를 위해 sr-only로 노출 */}
+        <div className="sr-only">
           <h2 className="text-sm font-bold text-gray-900 dark:text-blue-400 capitalize text-center flex-1">
-            무비서
+            무비서 추천 패널
           </h2>
-        </div> */}
+        </div>
 
         {/* Chat Messages */}
         {/* [반응형] 메시지 영역 - 기본 padding 사용 */}
         {/* [모바일] pb-24: 하단 네비게이션 바(헤더)가 버튼을 가리지 않도록 96px 패딩 추가 */}
         {/* [데스크톱] sm:pb-4: 상단 헤더이므로        {/* 메시지 컨테이너 */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent p-4 pb-24 sm:pb-4 space-y-4 overscroll-contain">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide bg-transparent p-4 pb-24 sm:pb-4 space-y-4 overscroll-contain"
+        >
           {messages.map((msg) => (
             // [메시지 컨테이너] 메시지 정렬 위치
             // [수정 가이드]
@@ -282,7 +296,7 @@ export default function ChatbotPanel({ isOpen, onClose, onRecommended }: Chatbot
                     rounded-[15px] p-3 border shadow-sm
                     w-full sm:w-auto
                     ${msg.type === 'bot'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700] sm:mr-[105px]'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-700 dark:border-gray-700 sm:mr-[105px]'
                       : 'bg-blue-100 dark:bg-blue-900/50 text-gray-900 dark:text-white border-gray-900 dark:border-blue-700 max-w-[75%] sm:max-w-[80%]'
                     }
                   `}
