@@ -179,12 +179,13 @@ def confirm_signup(
         db.commit()
         print(f"[INFO] Deleted soft-deleted user for re-registration: {payload.email}")
 
-    # 실제 유저 생성
+    # 실제 유저 생성 (이메일 인증 완료 상태로)
     user = User(
         email=data["email"],
         password_hash=data["password"],  # password_hash로 저장
         nickname=data["nickname"],  # nickname 추가
         onboarding_completed_at=None,  # 온보딩 미완료 (NULL)
+        is_email_verified=True,  # 이메일 인증 완료
     )
     db.add(user)
     db.commit()

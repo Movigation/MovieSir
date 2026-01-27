@@ -142,11 +142,13 @@ export interface RecommendResponseV2 {
 
 // [용도] 개별 영화 재추천 요청
 export interface ReRecommendRequest {
+  source_movie_id?: number;  // 교체 대상 영화 ID (로깅용)
   target_runtime: number;
   excluded_ids: number[];
   track: "a" | "b";
   genres?: string[];
   exclude_adult?: boolean;
+  session_id?: number;  // 추천 세션 ID (로깅용)
 }
 
 // [용도] 개별 영화 재추천 응답

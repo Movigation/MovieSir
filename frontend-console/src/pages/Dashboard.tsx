@@ -9,9 +9,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts'
 
 interface DashboardData {
@@ -23,31 +20,74 @@ interface DashboardData {
   chart_data: { date: string; count: number; success: number; error: number }[]
 }
 
-interface LogEntry {
-  id: string
+// 통합 피드 아이템 (백엔드에서 정렬된 채로 옴)
+interface UnifiedFeedItem {
+  kind: 'api' | 'b2c'
+  date: string
   time: string
-  method: string
-  endpoint: string
-  status: number
-  latency: number
+  // API 로그 전용
+  log_id?: string
+  method?: string
+  endpoint?: string
+  status?: number
+  latency?: number
+  // B2C 활동 전용
+  user_id?: string
+  user_nickname?: string
+  activity_type?: string
+  description?: string
+  movie_title?: string | null
+  session_id?: number | null
+}
+
+interface SessionMovie {
+  movie_id: number
+  title: string
+  poster_path: string | null
+  release_date: string | null
+  genres: string[]
+}
+
+interface SessionMoviesData {
+  session_id: number
+  user_nickname: string
+  req_genres: string[]
+  req_runtime_max: number | null
+  movies: SessionMovie[]
+  created_at: string
 }
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
-  const [logs, setLogs] = useState<LogEntry[]>([])
+  const [unifiedFeed, setUnifiedFeed] = useState<UnifiedFeedItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [sessionModal, setSessionModal] = useState<SessionMoviesData | null>(null)
+  const [loadingSession, setLoadingSession] = useState(false)
   const { token, company } = useAuthStore()
   const navigate = useNavigate()
+
+  // 세션 영화 목록 조회
+  const fetchSessionMovies = async (sessionId: number) => {
+    setLoadingSession(true)
+    try {
+      const { data } = await api.get(`/b2b/admin/sessions/${sessionId}/movies`)
+      setSessionModal(data)
+    } catch (err) {
+      console.error('Failed to fetch session movies:', err)
+    } finally {
+      setLoadingSession(false)
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashboardRes, logsRes] = await Promise.all([
+        const [dashboardRes, feedRes] = await Promise.all([
           api.get('/b2b/dashboard'),
-          api.get('/b2b/logs?limit=10'),
+          api.get('/b2b/live-feed?limit=20'),
         ])
         setData(dashboardRes.data)
-        setLogs(logsRes.data.logs)
+        setUnifiedFeed(feedRes.data.items)
       } catch (err) {
         console.error(err)
       } finally {
@@ -57,18 +97,18 @@ export default function Dashboard() {
     fetchData()
   }, [token])
 
-  // Live Logs 5초 폴링
+  // 통합 Live Feed 5초 폴링
   useEffect(() => {
-    const fetchLogs = async () => {
+    const fetchFeed = async () => {
       try {
-        const { data } = await api.get('/b2b/logs?limit=10')
-        setLogs(data.logs)
+        const { data } = await api.get('/b2b/live-feed?limit=20')
+        setUnifiedFeed(data.items)
       } catch (err) {
-        console.error('Failed to fetch logs:', err)
+        console.error('Failed to fetch live feed:', err)
       }
     }
 
-    const interval = setInterval(fetchLogs, 5000)
+    const interval = setInterval(fetchFeed, 5000)
     return () => clearInterval(interval)
   }, [token])
 
@@ -96,14 +136,7 @@ export default function Dashboard() {
   const totalError = data.chart_data.reduce((sum, d) => sum + d.error, 0)
   const totalCalls = totalSuccess + totalError
   const successPercent = totalCalls > 0 ? Math.round((totalSuccess / totalCalls) * 100) : 0
-  const errorPercent = totalCalls > 0 ? Math.round((totalError / totalCalls) * 100) : 0
-  const limitPercent = 100 - successPercent - errorPercent
 
-  const usageOverviewData = [
-    { name: '성공', value: successPercent, color: '#3b82f6' },
-    { name: '에러', value: errorPercent, color: '#ef4444' },
-    { name: '제한', value: limitPercent, color: '#f59e0b' },
-  ]
 
   return (
     <div className="p-4 lg:p-8">
@@ -232,7 +265,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Chart */}
-        <div className="lg:col-span-6 bg-[#16161d] rounded-xl p-4 lg:p-5 order-1 lg:order-2">
+        <div className="lg:col-span-9 bg-[#16161d] rounded-xl p-4 lg:p-5 order-1 lg:order-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-white">API Calls</h2>
             <div className="flex gap-4 text-xs">
@@ -272,52 +305,16 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Usage Overview Donut */}
-        <div className="lg:col-span-3 bg-[#16161d] rounded-xl p-4 lg:p-5 order-3">
-          <h2 className="text-sm font-medium text-white mb-4">Usage Overview</h2>
-          <div className="h-36 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={usageOverviewData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={60}
-                  paddingAngle={3}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  <Cell fill="rgba(59, 130, 246, 0.7)" />
-                  <Cell fill="rgba(239, 68, 68, 0.7)" />
-                  <Cell fill="rgba(245, 158, 11, 0.7)" />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-2 mt-2">
-            {usageOverviewData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-gray-400">{item.name}</span>
-                </div>
-                <span className="font-medium text-white">{item.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Bottom Section: Table + Recent */}
+      {/* Bottom Section: Summary + Live Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
         {/* API Usage Summary */}
-        <div className="lg:col-span-8 bg-[#16161d] rounded-xl p-4 lg:p-5">
+        <div className="lg:col-span-5 bg-[#16161d] rounded-xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-white">API 사용 요약</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-white/5 rounded-lg">
               <p className="text-2xl font-bold text-blue-400">{data.today}</p>
               <p className="text-xs text-gray-500 mt-1">오늘 호출</p>
@@ -351,31 +348,174 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Recent Logs */}
-        <div className="lg:col-span-4 bg-[#16161d] rounded-xl p-4 lg:p-5">
+        {/* Unified Live Feed */}
+        <div className="lg:col-span-7 bg-[#16161d] rounded-xl p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-medium text-white">Live Logs</h2>
+              <h2 className="text-sm font-medium text-white">Live Feed</h2>
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              {company?.is_admin && (
+                <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">+B2C</span>
+              )}
             </div>
-            <button onClick={() => navigate('/logs')} className="text-xs text-blue-400 hover:text-blue-300">View all</button>
+            <div className="flex items-center gap-2">
+              {company?.is_admin && (
+                <button onClick={() => navigate('/users')} className="text-xs text-cyan-400 hover:text-cyan-300">유저 관리</button>
+              )}
+              <button onClick={() => navigate('/logs')} className="text-xs text-blue-400 hover:text-blue-300">전체 로그</button>
+            </div>
           </div>
-          <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
-            {logs.map((log) => (
-              <div key={log.id} className="flex items-center gap-1.5 lg:gap-2 text-[10px] lg:text-xs py-1.5 border-b border-white/5 last:border-0">
-                <span className="text-gray-500 w-12 lg:w-14 flex-shrink-0">{log.time}</span>
-                <span className={`w-10 lg:w-12 px-1 lg:px-1.5 py-0.5 rounded text-center font-medium flex-shrink-0 ${
-                  log.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                }`}>{log.method}</span>
-                <span className="flex-1 text-gray-300 font-mono truncate min-w-0">{log.endpoint}</span>
-                <span className={`w-7 lg:w-8 text-right flex-shrink-0 ${
-                  log.status === 200 ? 'text-green-400' : log.status === 429 ? 'text-yellow-400' : 'text-red-400'
-                }`}>{log.status}</span>
+          <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+            {/* 통합 Live Feed (백엔드에서 정렬됨) */}
+            {unifiedFeed.length === 0 ? (
+              <div className="text-center text-gray-500 text-sm py-8">
+                아직 활동이 없습니다
               </div>
-            ))}
+            ) : (
+              unifiedFeed.map((item, index) => {
+                if (item.kind === 'api') {
+                  return (
+                    <div key={`api-${item.log_id}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          item.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
+                        }`}>{item.method}</span>
+                        <span className="text-xs text-gray-300 font-mono truncate">{item.endpoint}</span>
+                        <span className={`text-[10px] font-medium ${
+                          item.status === 200 ? 'text-green-400' : item.status === 429 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>{item.status}</span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">{item.time}</span>
+                    </div>
+                  )
+                } else {
+                  // B2C 활동 타입에 따른 API 엔드포인트 매핑
+                  const endpointMap: Record<string, string> = {
+                    'recommendation': '/v1/recommend',
+                    're_recommendation': '/v1/recommend_single',
+                    'ott_click': '/ott-click',
+                    'satisfaction_positive': '/feedback',
+                    'satisfaction_negative': '/feedback',
+                  }
+                  const endpoint = endpointMap[item.activity_type || ''] || '/api'
+
+                  // 추천 타입이고 session_id가 있으면 클릭 가능
+                  const isClickable = item.activity_type === 'recommendation' && item.session_id
+
+                  return (
+                    <div key={`b2c-${item.user_id}-${item.time}-${index}`} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <span className="text-xs font-medium text-cyan-400 flex-shrink-0">{item.user_nickname}</span>
+                        {isClickable ? (
+                          <button
+                            onClick={() => fetchSessionMovies(item.session_id!)}
+                            className="text-[10px] text-yellow-400 hover:text-yellow-300 truncate underline underline-offset-2 cursor-pointer"
+                          >
+                            {item.movie_title || item.description}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 truncate">
+                            {item.movie_title || item.description}
+                          </span>
+                        )}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-green-500/20 text-green-400 flex-shrink-0">POST</span>
+                        <span className="text-xs text-gray-300 font-mono truncate">{endpoint}</span>
+                        <span className="text-[10px] font-medium text-green-400 flex-shrink-0">200</span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 flex-shrink-0">{item.time}</span>
+                    </div>
+                  )
+                }
+              })
+            )}
           </div>
         </div>
       </div>
+
+      {/* Session Movies Modal */}
+      {(sessionModal || loadingSession) && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a24] rounded-xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            {loadingSession ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400" />
+              </div>
+            ) : sessionModal && (
+              <>
+                {/* Header */}
+                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {sessionModal.user_nickname}님의 추천 결과
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {sessionModal.req_genres.length > 0 ? sessionModal.req_genres.join(', ') : '전체 장르'}
+                      {sessionModal.req_runtime_max && ` / ${sessionModal.req_runtime_max}분 이내`}
+                      <span className="mx-2">•</span>
+                      {new Date(sessionModal.created_at).toLocaleString('ko-KR')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSessionModal(null)}
+                    className="text-gray-400 hover:text-white p-1"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Movie Grid */}
+                <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    {sessionModal.movies.map((movie, idx) => (
+                      <div key={movie.movie_id} className="group">
+                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-white/5">
+                          {movie.poster_path ? (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                              alt={movie.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-500">
+                              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="absolute top-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                            #{idx + 1}
+                          </div>
+                        </div>
+                        <p className="mt-1.5 text-xs text-white truncate">{movie.title}</p>
+                        {movie.release_date && (
+                          <p className="text-[10px] text-gray-500">{movie.release_date.slice(0, 4)}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {sessionModal.movies.length === 0 && (
+                    <div className="text-center text-gray-500 py-10">
+                      추천된 영화가 없습니다
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

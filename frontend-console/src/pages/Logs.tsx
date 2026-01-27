@@ -89,7 +89,7 @@ export default function Logs() {
     }
   }, [logs.length, startDate, endDate])
 
-  // 초기 로드 및 날짜 필터 변경 시
+  // 초기 로드
   useEffect(() => {
     fetchLogs(true)
   }, [token, startDate, endDate])
@@ -164,7 +164,7 @@ export default function Logs() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg lg:text-xl font-semibold text-white">Logs</h1>
+            <h1 className="text-lg lg:text-xl font-semibold text-white">API Logs</h1>
             {!startDate && !endDate && (
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             )}

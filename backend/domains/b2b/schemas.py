@@ -52,6 +52,7 @@ class CompanyResponse(BaseModel):
     email: str
     plan: str
     oauth_provider: Optional[str] = None
+    is_admin: bool = False
     created_at: Optional[datetime] = None
 
     class Config:
@@ -160,3 +161,141 @@ class SuccessResponse(BaseModel):
     """표준 성공 응답"""
     success: bool = True
     message: str
+
+
+# ==================== B2C Admin ====================
+
+class OttSubscriptionResponse(BaseModel):
+    """OTT 구독 정보"""
+    provider_name: str
+    logo_path: Optional[str] = None
+
+
+class B2CUserResponse(BaseModel):
+    """B2C 사용자 정보 응답"""
+    user_id: str
+    email: str
+    nickname: str
+    role: str
+    is_email_verified: bool
+    onboarding_completed: bool
+    created_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class B2CUserDetailResponse(BaseModel):
+    """B2C 사용자 상세 정보 응답"""
+    user_id: str
+    email: str
+    nickname: str
+    role: str
+    is_email_verified: bool
+    onboarding_completed: bool
+    created_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    ott_subscriptions: List[OttSubscriptionResponse] = []
+    recommendation_count: int = 0
+    last_recommendation_at: Optional[datetime] = None
+
+
+class B2CUsersListResponse(BaseModel):
+    """B2C 사용자 목록 응답"""
+    users: List[B2CUserResponse]
+    total: int
+    page: int
+    page_size: int
+    has_more: bool
+
+
+class B2CStatsResponse(BaseModel):
+    """B2C 통계 응답"""
+    total_users: int
+    active_users: int
+    deleted_users: int
+    verified_users: int
+    onboarded_users: int
+    today_signups: int
+    weekly_signups: int
+    monthly_signups: int
+
+
+class B2CUserActivity(BaseModel):
+    """B2C 유저 활동 항목"""
+    type: str  # 'recommendation', 'ott_click', 'satisfaction_positive', 'satisfaction_negative'
+    description: str
+    movie_title: Optional[str] = None
+    movie_poster: Optional[str] = None
+    created_at: datetime
+
+
+class B2CUserActivitiesResponse(BaseModel):
+    """B2C 유저 활동 목록 응답"""
+    activities: List[B2CUserActivity]
+    total: int
+
+
+class B2CLiveActivity(BaseModel):
+    """B2C 실시간 활동 (전체 유저)"""
+    user_id: str
+    user_nickname: str
+    type: str
+    description: str
+    movie_title: Optional[str] = None
+    session_id: Optional[int] = None  # recommendation 타입일 때 세션 ID
+    created_at: datetime
+
+
+class B2CLiveActivitiesResponse(BaseModel):
+    """B2C 실시간 활동 피드 응답"""
+    activities: List[B2CLiveActivity]
+
+
+class SessionMovieInfo(BaseModel):
+    """세션 추천 영화 정보"""
+    movie_id: int
+    title: str
+    poster_path: Optional[str] = None
+    release_date: Optional[str] = None
+    genres: List[str] = []
+
+
+class SessionMoviesResponse(BaseModel):
+    """세션 영화 목록 응답"""
+    session_id: int
+    user_nickname: str
+    req_genres: List[str] = []
+    req_runtime_max: Optional[int] = None
+    movies: List[SessionMovieInfo]
+    created_at: datetime
+
+
+# ==================== Unified Live Feed ====================
+
+class UnifiedFeedItem(BaseModel):
+    """통합 실시간 피드 아이템"""
+    kind: str  # 'api' or 'b2c'
+    # 공통 시간 필드 (KST 기준)
+    date: str  # YYYY-MM-DD
+    time: str  # HH:MM:SS
+    timestamp: datetime  # 정렬용 원본 타임스탬프
+    # API 로그 전용 필드
+    log_id: Optional[str] = None
+    method: Optional[str] = None
+    endpoint: Optional[str] = None
+    status: Optional[int] = None
+    latency: Optional[int] = None
+    # B2C 활동 전용 필드
+    user_id: Optional[str] = None
+    user_nickname: Optional[str] = None
+    activity_type: Optional[str] = None
+    description: Optional[str] = None
+    movie_title: Optional[str] = None
+    session_id: Optional[int] = None
+
+
+class UnifiedLiveFeedResponse(BaseModel):
+    """통합 실시간 피드 응답"""
+    items: List[UnifiedFeedItem]

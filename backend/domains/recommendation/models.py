@@ -17,16 +17,17 @@ class MovieLog(Base):
 class UserMovieFeedback(Base):
     """
     사용자 영화 피드백 통합 테이블
-    - OTT 클릭: feedback_type='ott_click'
+    - OTT 클릭: feedback_type='ott_click:{provider_id}' (예: 'ott_click:8')
     - 만족도 조사: feedback_type='satisfaction_positive' or 'satisfaction_negative'
+    - 재추천: feedback_type='re_recommendation'
     """
     __tablename__ = "user_movie_feedback"
-    
+
     id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
     user_id = Column(UUID(as_uuid=True), nullable=False)
     movie_id = Column(Integer, nullable=False)
     session_id = Column(BigInteger, nullable=True)  # 추천 세션 ID (만족도 조사에서 사용)
-    feedback_type = Column(String(20), nullable=False)  # 'ott_click', 'satisfaction_positive', 'satisfaction_negative'
+    feedback_type = Column(String(30), nullable=False)  # 'ott_click:8', 'satisfaction_positive', 'satisfaction_negative', 're_recommendation'
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 

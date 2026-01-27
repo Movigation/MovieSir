@@ -22,6 +22,7 @@ class Company(Base):
     password_hash = Column(String(255))
     plan_type = Column(String(20), default="BASIC")  # BASIC, PRO, ENTERPRISE
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)  # 슈퍼 어드민 여부
     oauth_provider = Column(String(20))  # google, github (소셜 로그인 사용자)
     created_at = Column(DateTime, default=datetime.utcnow)
 

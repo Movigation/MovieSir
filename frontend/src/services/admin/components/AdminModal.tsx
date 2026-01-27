@@ -1,7 +1,7 @@
 // [용도] 어드민 모달 래퍼 - 페이지 컴포넌트를 모달로 표시
 // [사용법] <AdminModal title="제목" onClose={closeHandler}><Content /></AdminModal>
 
-import { X } from "lucide-react";
+import CloseButton from "@/components/ui/CloseButton";
 
 interface AdminModalProps {
     title: string;
@@ -39,12 +39,10 @@ export default function AdminModal({
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         {title}
                     </h2>
-                    <button
-                        onClick={onClose}
+                    <CloseButton
+                        onClose={onClose}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                    >
-                        <X size={24} />
-                    </button>
+                    />
                 </div>
 
                 {/* 컨텐츠 */}

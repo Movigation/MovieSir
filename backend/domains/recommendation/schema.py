@@ -17,11 +17,13 @@ class RecommendationRequest(BaseModel):
 
 class ReRecommendRequest(BaseModel):
     """개별 영화 재추천 요청"""
+    source_movie_id: Optional[int] = None  # 교체할 원본 영화 ID (로깅용)
     target_runtime: int  # 교체할 영화의 런타임
     excluded_ids: List[int]  # 이미 추천된 영화 ID 리스트
     track: str = "a"  # "a" 또는 "b"
     genres: List[str] = []
     exclude_adult: bool = True
+    session_id: Optional[int] = None  # 추천 세션 ID (로깅용)
 
 
 class ClickLogRequest(BaseModel):

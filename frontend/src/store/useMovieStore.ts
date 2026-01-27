@@ -239,11 +239,13 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
     try {
       const response = await postReRecommendSingle({
+        source_movie_id: movieId,  // 교체 대상 영화 ID (로깅용)
         target_runtime: targetRuntime,
         excluded_ids: newExcludedIds,
         track: trackType,
         genres: state.filters.genres,
-        exclude_adult: state.filters.exclude_adult
+        exclude_adult: state.filters.exclude_adult,
+        session_id: state.sessionId ?? undefined,  // 추천 세션 ID (로깅용)
       });
 
       if (response.success && response.movie) {

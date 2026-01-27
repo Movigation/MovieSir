@@ -571,13 +571,11 @@ export default function Landing() {
                 이동 시간 맞춤형 콘텐츠 추천 서비스
               </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-6xl font-black leading-[1.1] mb-6">
+              <h1 className="text-5xl md:text-6xl lg:text-6xl font-black space-y-2 mb-6">
                 <span className="block text-gray-900">시간만</span>
                 <span className="block text-gray-900">알려주세요</span>
-                <span className="block mt-2 text-accent-600">
-                  영화는 <br />
-                  제가 골라드릴게요
-                </span>
+                <span className="block mt-5 text-accent-600">영화는</span>
+                <span className="block text-accent-600">제가 골라드릴게요</span>
               </h1>
 
               <p className="max-w-xl mx-auto mb-10 text-lg leading-relaxed text-gray-600 md:text-xl lg:mx-0">

@@ -8,6 +8,7 @@ interface Company {
   plan: string
   oauth_provider?: string  // google, github (소셜 로그인 사용자)
   created_at?: string      // 가입일
+  is_admin?: boolean       // 슈퍼 어드민 여부 (B2C 유저 관리 권한)
 }
 
 interface AuthState {

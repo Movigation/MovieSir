@@ -2,6 +2,7 @@ import { useState } from "react";
 import { type OTTPlatform } from "@/api/movieApi.type";
 import { getOttLogoWithFallback } from "@/utils/ottLogoMapper";
 import { useMovieStore } from "@/store/useMovieStore";
+import { logOttClick } from "@/api/movieApi";
 
 interface DetailOTTSectionProps {
   movieId: number;
@@ -100,7 +101,16 @@ export default function DetailOTTSection({
                 key={ott.ott_id}
                 ott={ott}
                 onClick={() => {
-                  // 클릭 정보 저장 (최대 20개 제한)
+                  // 1. 백엔드 API 호출 (로그인 사용자만, Live Feed용)
+                  if (userId) {
+                    // ott_id 형식: "8_SUBSCRIPTION_0" -> provider_id = 8
+                    const providerId = parseInt(ott.ott_id.split("_")[0], 10);
+                    if (!isNaN(providerId)) {
+                      logOttClick(movieId, providerId);
+                    }
+                  }
+
+                  // 2. 클릭 정보 localStorage 저장 (최대 20개 제한) - 피드백 팝업용
                   const logKey = userId
                     ? `movie_click_logs_${userId}`
                     : "movie_click_logs";

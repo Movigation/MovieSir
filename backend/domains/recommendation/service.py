@@ -82,15 +82,21 @@ def get_hybrid_recommendations(db: Session, user_id: str, req: schema.Recommenda
     return results
 
 def log_click(db: Session, user_id: str, movie_id: int, provider_id: int):
-    """OTT 클릭을 user_movie_feedback 테이블에 저장 (provider_id는 저장하지 않음)"""
-    new_feedback = MovieClick(
-        user_id=user_id,
-        movie_id=movie_id,
-        feedback_type='ott_click',
-        session_id=None
-    )
-    db.add(new_feedback)
-    db.commit()
+    """OTT 클릭을 user_movie_feedback 테이블에 저장 (provider_id 포함)"""
+    try:
+        # feedback_type에 provider_id를 포함시켜 저장 (예: 'ott_click:8')
+        feedback_type = f'ott_click:{provider_id}' if provider_id else 'ott_click'
+        new_feedback = MovieClick(
+            user_id=user_id,
+            movie_id=movie_id,
+            feedback_type=feedback_type,
+            session_id=None
+        )
+        db.add(new_feedback)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[WARN] OTT 클릭 로깅 실패: {e}")
 
 def mark_watched(db: Session, user_id: str, movie_id: int):
     stmt = text("""
@@ -222,3 +228,36 @@ def save_recommendation_session(
     session_id = result.fetchone()[0]
     db.commit()
     return session_id
+
+
+def log_re_recommendation(
+    db: Session,
+    user_id: str,
+    source_movie_id: Optional[int],
+    result_movie_id: Optional[int],
+    session_id: Optional[int] = None
+):
+    """
+    재추천 활동 로깅 (user_movie_feedback 테이블)
+    - result_movie_id: 새로 추천된 영화 (movie_id 필드에 저장)
+    - session_id: 추천 세션 ID (FK 제약조건 준수)
+
+    Note: source_movie_id는 FK 제약조건으로 인해 저장 불가,
+          session_id를 통해 원본 세션 추적 가능
+    """
+    if result_movie_id is None:
+        return  # 추천 실패 시 로깅 안함
+
+    db.execute(
+        text("""
+            INSERT INTO user_movie_feedback
+            (user_id, movie_id, session_id, feedback_type, created_at)
+            VALUES (:uid, :mid, :sid, 're_recommendation', NOW())
+        """),
+        {
+            "uid": user_id,
+            "mid": result_movie_id,  # 새로 추천된 영화 ID
+            "sid": session_id        # 실제 추천 세션 ID (FK 준수)
+        }
+    )
+    db.commit()
