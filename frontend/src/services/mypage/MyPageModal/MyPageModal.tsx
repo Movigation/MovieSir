@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import CloseButton from '@/components/ui/CloseButton';
 import type { MyPageModalProps, MyPageView } from '@/services/mypage/MyPageModal/myPage.types';
 import UserProfile from '@/services/mypage/MyPageModal/components/UserProfile';
 import MenuList from '@/services/mypage/MyPageModal/components/MenuList';
@@ -75,13 +76,11 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                     {currentView === 'main' && (
                         <>
                             {/* 닫기 버튼 */}
-                            <button
-                                onClick={onClose}
+                            <CloseButton
+                                onClose={onClose}
                                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors z-deco"
                                 aria-label="닫기"
-                            >
-                                <X size={24} />
-                            </button>
+                            />
 
                             {/* 제목 */}
                             <div className="p-4 text-center border-b border-gray-100 dark:border-gray-700">
@@ -131,13 +130,11 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                         {currentView === 'main' && (
                             <>
                                 {/* 닫기 버튼 */}
-                                <button
-                                    onClick={onClose}
+                                <CloseButton
+                                    onClose={onClose}
                                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors z-deco"
                                     aria-label="닫기"
-                                >
-                                    <X size={24} />
-                                </button>
+                                />
 
                                 {/* 제목 */}
                                 <div className="p-4 text-center border-b border-gray-100 dark:border-gray-700">

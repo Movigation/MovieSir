@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/app/providers/AuthContext";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import axiosInstance from "@/api/axiosInstance";
+import CloseButton from "@/components/ui/CloseButton";
 
 interface Props {
     visible: boolean;
@@ -85,25 +86,11 @@ export default function OnboardingReminderModal({ visible, onClose }: Props) {
             {/* 모달 컨텐츠 */}
             <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 max-w-md w-full border border-gray-700 shadow-2xl">
                 {/* 닫기 버튼 */}
-                <button
-                    onClick={handleSkip}
+                <CloseButton
+                    onClose={handleSkip}
                     className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
                     aria-label="닫기"
-                >
-                    <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
+                />
                 {/* 제목 */}
                 <h2 className="text-xl md:text-[28px] font-bold text-white text-center mb-5">
                     아직 추천 정보가 부족해요!<br />
