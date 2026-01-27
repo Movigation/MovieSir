@@ -1,11 +1,13 @@
 # AI Service API v2 - GPU Server
+# Hybrid Recommender: SBERT + ALS
+# Last updated: 2026-01-21
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Any, Dict
 import os
 import numpy as np
 
-from inference.db_conn_movie_reco_v2 import HybridRecommenderV2
+from inference.recommendation_model import HybridRecommender
 
 
 def convert_numpy_types(obj: Any) -> Any:
@@ -23,7 +25,7 @@ def convert_numpy_types(obj: Any) -> Any:
     return obj
 
 
-app = FastAPI(title="MovieSir AI Service v2")
+app = FastAPI(title="MovieSir AI Service")
 
 # 모델 로드 (서버 시작 시 한 번만)
 recommender = None
@@ -48,12 +50,12 @@ async def load_model():
 
     for attempt in range(1, max_retries + 1):
         try:
-            recommender = HybridRecommenderV2(
+            recommender = HybridRecommender(
                 db_config=db_config,
-                lightgcn_model_path="training/lightgcn_model/best_model.pt",
-                lightgcn_data_path="training/lightgcn_data"
+                als_model_path="training/als_data",
+                als_data_path="training/als_data"
             )
-            print("✅ AI Model v2 loaded successfully")
+            print("✅ AI Model loaded successfully (SBERT + ALS)")
             return
         except Exception as e:
             if attempt < max_retries:
@@ -68,7 +70,7 @@ async def load_model():
 
 @app.get("/")
 def health():
-    return {"message": "ok", "service": "ai", "version": "v2"}
+    return {"message": "ok", "service": "ai", "version": "final", "model": "SBERT+ALS"}
 
 
 @app.get("/health")
@@ -76,7 +78,8 @@ def health_check():
     return {
         "status": "healthy",
         "model_loaded": recommender is not None,
-        "version": "v2"
+        "version": "final",
+        "model": "SBERT+ALS"
     }
 
 
@@ -90,6 +93,7 @@ class RecommendRequest(BaseModel):
     allow_adult: bool = False
     excluded_ids_a: Optional[List[int]] = None  # Track A 제외 (같은 장르 이전 추천)
     excluded_ids_b: Optional[List[int]] = None  # Track B 제외 (전체 이전 추천)
+    negative_movie_ids: Optional[List[int]] = None  # 부정 피드백 영화 (유사도 페널티)
 
 
 class RecommendSingleRequest(BaseModel):
@@ -100,10 +104,12 @@ class RecommendSingleRequest(BaseModel):
     preferred_genres: Optional[List[str]] = None
     preferred_otts: Optional[List[str]] = None
     allow_adult: bool = False
+    negative_movie_ids: Optional[List[int]] = None
 
 
 class MovieInfo(BaseModel):
-    tmdb_id: int
+    movie_id: int
+    tmdb_id: Optional[int] = None
     title: str
     runtime: int
     genres: List[str] = []
@@ -132,10 +138,10 @@ class RecommendResponse(BaseModel):
 @app.post("/recommend", response_model=RecommendResponse)
 def recommend(request: RecommendRequest):
     """
-    영화 추천 - 시간 맞춤 조합 반환
+    영화 추천 - 시간 맞춤 조합 반환 (SBERT + ALS)
 
-    - Track A: 장르 + OTT 필터, SBERT 0.7 + LightGCN 0.3
-    - Track B: 장르 확장, SBERT 0.4 + LightGCN 0.6
+    - Track A: 장르 + OTT 필터, SBERT 0.7 + ALS 0.3 (선호 장르 맞춤)
+    - Track B: 장르 확장, SBERT 0.4 + ALS 0.6 (장르 확장 추천)
     - 총 런타임: 입력 시간의 90%~100%
     """
     if recommender is None:
@@ -149,7 +155,8 @@ def recommend(request: RecommendRequest):
             preferred_otts=request.preferred_otts,
             allow_adult=request.allow_adult,
             excluded_ids_a=request.excluded_ids_a or [],
-            excluded_ids_b=request.excluded_ids_b or []
+            excluded_ids_b=request.excluded_ids_b or [],
+            negative_movie_ids=request.negative_movie_ids or []
         )
 
         # numpy 타입 변환
@@ -193,7 +200,8 @@ def recommend_single(request: RecommendSingleRequest):
             track=request.track,
             preferred_genres=request.preferred_genres,
             preferred_otts=request.preferred_otts,
-            allow_adult=request.allow_adult
+            allow_adult=request.allow_adult,
+            negative_movie_ids=request.negative_movie_ids or []
         )
 
         if result:

@@ -25,9 +25,10 @@ export const login = async (data: LoginRequest, rememberMe: boolean = true): Pro
         const response = await authAxiosInstance.post("/auth/login", {
             email: data.email,
             password: data.password,
+            remember_me: rememberMe,
         }, {
             skipErrorRedirect: true,
-            skipAuth: true,  // 👈 로그인 실패 시 자동 로그아웃 방지
+            skipAuth: true,
         } as any);
 
         // 🍪 토큰은 쿠키로 전달됨 (HttpOnly)
@@ -195,14 +196,23 @@ export const getCurrentUser = async () => {
 };
 
 // ------------------------------
-// 🗑️ 회원 탈퇴 (백엔드 API 필요 시 연결)
+// 🗑️ 회원 탈퇴
 // ------------------------------
-export const deleteUser = async (userId: string): Promise<void> => {
+export const deleteUser = async (password: string): Promise<void> => {
     try {
-        await axiosInstance.delete(`/users/${userId}`);
-        logout();
-    } catch (error) {
-        throw new Error("회원 탈퇴 중 오류가 발생했습니다");
+        await authAxiosInstance.delete(`/mypage/account`, {
+            data: { password },
+            skipAuth: true,  // 👈 비밀번호 오류 401을 세션 만료로 오해하지 않도록
+            skipErrorRedirect: true,
+        } as any);
+        await logout();
+    } catch (error: any) {
+        // 백엔드 에러 메시지 추출
+        const detail = error.response?.data?.detail;
+        if (detail) {
+            throw new Error(detail);
+        }
+        throw new Error("회원 탈퇴 중 오류가 발생했습니다. 비밀번호를 다시 확인해주세요.");
     }
 };
 

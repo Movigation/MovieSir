@@ -50,6 +50,20 @@ export default {
             transform: 'translateY(0) scale(1)',
           },
         },
+        slideUpInner: {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(30px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        bounceHorizontal: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(10px)' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.5s ease-in-out',
@@ -57,6 +71,8 @@ export default {
         'panel-appear': 'panelAppear 0.2s ease-out',
         'slide-down': 'slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
         'slide-up': 'slideUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'slide-up-inner': 'slideUpInner 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+        'bounce-horizontal': 'bounceHorizontal 1s ease-in-out infinite',
       },
       zIndex: {
         'base': '0',
@@ -64,9 +80,14 @@ export default {
         'panel': '20',
         'floating': '30',
         'nav': '40',
-        'modal': '50',
-        'toast': '60',
-        'max': '9999',
+        'nav-high': '9970',
+        'chatbot-backdrop': '9980',
+        'chatbot-panel': '9990',
+        'chatbot-btn': '9995',
+        'modal': '90000',
+        'toast': '90010',
+        'tutorial': '90020',
+        'max': '99999',
       },
     },
   },

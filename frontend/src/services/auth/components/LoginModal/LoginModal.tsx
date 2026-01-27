@@ -3,7 +3,8 @@
 // [주의사항] ESC 키로 닫힐, X 버튼으로만 닫기 가능힘
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import CloseButton from '@/components/ui/CloseButton';
 import type { LoginModalProps, LoginFormData, LoginFormErrors } from '@/services/auth/components/LoginModal/loginModal.types';
 import { validateEmail, validatePassword } from '@/services/auth/components/LoginModal/loginModal.utils';
 import SignupModal from '@/services/auth/components/SignupModal/SignupModal';
@@ -29,6 +30,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [loginError, setLoginError] = useState('');
     const [rememberMe, setRememberMe] = useState(true); // 기본값: 로그인 상태 유지
+    const [showPassword, setShowPassword] = useState(false);
 
     // ESC 키로 모달 닫기
     useEffect(() => {
@@ -133,12 +135,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <div className="bg-white dark:bg-gray-800 w-full h-screen sm:h-auto sm:w-[90%] md:w-full sm:max-w-md sm:max-h-[90vh] sm:rounded-xl shadow-2xl relative overflow-y-auto">
 
                 {/* 닫기 버튼 */}
-                <button
-                    onClick={onClose}
+                <CloseButton
+                    onClose={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                >
-                    <X size={24} />
-                </button>
+                />
 
                 {/* 헤더 */}
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -195,26 +195,35 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         <label htmlFor="password" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                             비밀번호
                         </label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            value={formData.password}
-                            disabled={isLoading}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`w-full px-4 py-2 rounded-lg border transition-colors
-                                bg-white dark:bg-gray-700 
-                                text-gray-900 dark:text-white
-                                placeholder-gray-400 dark:placeholder-gray-500
-                                focus:outline-none focus:ring-2 focus:ring-blue-500
-                                disabled:opacity-50 disabled:cursor-not-allowed
-                                ${touched.password && errors.password
-                                    ? 'border-red-500'
-                                    : 'border-gray-300 dark:border-gray-600'
-                                }`}
-                            placeholder="••••••••"
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                value={formData.password}
+                                disabled={isLoading}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`w-full px-4 py-2 pr-10 rounded-lg border transition-colors
+                                    bg-white dark:bg-gray-700
+                                    text-gray-900 dark:text-white
+                                    placeholder-gray-400 dark:placeholder-gray-500
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                                    disabled:opacity-50 disabled:cursor-not-allowed
+                                    ${touched.password && errors.password
+                                        ? 'border-red-500'
+                                        : 'border-gray-300 dark:border-gray-600'
+                                    }`}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                         {touched.password && errors.password && (
                             <p className="mt-1 text-sm text-red-500">{errors.password}</p>
                         )}

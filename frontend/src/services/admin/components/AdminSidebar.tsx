@@ -95,9 +95,9 @@ export default function AdminSidebar() {
                 {/* 헤더 */}
                 <div className={`p-6 border-b border-gray-200 dark:border-gray-700 flex items-center ${isExpanded ? 'justify-between' : 'justify-center lg:justify-between'}`}>
                     <div className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 lg:opacity-100'}`}>
-                        <h1 className={`text-2xl font-bold text-gray-900 dark:text-white ${isExpanded ? 'block' : 'hidden lg:block'}`}>
+                        <h2 className={`text-2xl font-bold text-gray-900 dark:text-white ${isExpanded ? 'block' : 'hidden lg:block'}`}>
                             MovieSir
-                        </h1>
+                        </h2>
                         <p className={`text-sm text-gray-500 dark:text-gray-400 mt-1 ${isExpanded ? 'block' : 'hidden lg:block'}`}>
                             Admin Dashboard
                         </p>

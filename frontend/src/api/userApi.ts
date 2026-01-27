@@ -1,7 +1,7 @@
 // [용도] API 요청 함수 정의
 // [사용법] import { getUsers } from "@/api/userApi";
 
-import axiosInstance from "@/api/axiosInstance";
+import axiosInstance, { authAxiosInstance } from "@/api/axiosInstance";
 import type { User } from "@/api/userApi.type";
 
 // 전체 유저 가져오기 (GET)
@@ -27,6 +27,11 @@ export const updateUser = (id: User['id'], data: User['data']) => {
 // 유저 일부 수정하기 (PATCH)
 export const patchUser = (id: User['id'], data: User['data']) => {
     return axiosInstance.patch(`/users/${id}`, data);
+};
+
+// 닉네임 변경하기 (PUT /mypage/nickname)
+export const updateNickname = (nickname: string) => {
+    return authAxiosInstance.put("/mypage/nickname", { nickname });
 };
 
 // 유저 삭제하기 (DELETE)

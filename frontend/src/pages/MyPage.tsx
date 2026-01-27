@@ -27,14 +27,12 @@ export default function MyPage() {
     // 모바일: 전체 화면 (헤더 위로 가득 채움)
     if (isMobile) {
         return (
-            <div className="min-h-screen pb-20 bg-gray-900">
-                <MyPageModal
-                    isOpen={true}
-                    onClose={handleClose}
-                    userName={user?.nickname || 'User'}
-                    fullScreen={true}
-                />
-            </div>
+            <MyPageModal
+                isOpen={true}
+                onClose={handleClose}
+                userName={user?.nickname || 'User'}
+                fullScreen={true}
+            />
         );
     }
 

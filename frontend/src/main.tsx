@@ -1,3 +1,4 @@
+// deploy trigger: 2026-01-13
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'

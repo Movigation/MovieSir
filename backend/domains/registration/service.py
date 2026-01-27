@@ -44,16 +44,22 @@ def request_signup(
     db: Session, payload: SignupRequest
 ) -> SignupRequestResponse:  # 이메일 중복 체크, 인증코드 생성 후 발송까지
 
-    # 이미 가입된 이메일인지 체크
-    email_exists = db.query(User).filter(User.email == payload.email).first()
+    # 이미 가입된 이메일인지 체크 (탈퇴한 유저 제외)
+    email_exists = db.query(User).filter(
+        User.email == payload.email,
+        User.deleted_at.is_(None)
+    ).first()
     if email_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="이미 가입된 이메일입니다.",
         )
 
-    # 닉네임 중복 체크 추가
-    nickname_exists = db.query(User).filter(User.nickname == payload.nickname).first()
+    # 닉네임 중복 체크 추가 (탈퇴한 유저 제외)
+    nickname_exists = db.query(User).filter(
+        User.nickname == payload.nickname,
+        User.deleted_at.is_(None)
+    ).first()
     if nickname_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -78,7 +84,7 @@ def request_signup(
     )
     redis.expire(key, SIGNUP_CODE_TTL)
 
-    # 메일 발송 (SMTP 환경변수 없으면 콘솔에만 출력)
+    # 메일 발송 (RESEND_API_KEY 환경변수 없으면 콘솔에만 출력)
     send_signup_code_email(payload.email, code)
 
     return SignupRequestResponse(email=payload.email, expires_in=SIGNUP_CODE_TTL)
@@ -149,20 +155,37 @@ def confirm_signup(
             detail="인증 코드가 올바르지 않습니다.",
         )
 
-    # 중복 가입 방지 (이 타이밍에도 다시 체크)
-    exists = db.query(User).filter(User.email == payload.email).first()
+    # 중복 가입 방지 (이 타이밍에도 다시 체크, 탈퇴한 유저 제외)
+    exists = db.query(User).filter(
+        User.email == payload.email,
+        User.deleted_at.is_(None)
+    ).first()
     if exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="이미 가입된 이메일입니다.",
         )
 
-    # 실제 유저 생성
+    # 탈퇴한 유저가 재가입하는 경우: 기존 레코드 삭제
+    deleted_user = db.query(User).filter(
+        User.email == payload.email,
+        User.deleted_at.isnot(None)
+    ).first()
+    if deleted_user:
+        # 연관 데이터도 함께 삭제 (CASCADE가 설정되어 있지 않은 경우 대비)
+        db.execute(delete(UserOnboardingAnswer).where(UserOnboardingAnswer.user_id == deleted_user.user_id))
+        db.execute(delete(UserOttMap).where(UserOttMap.user_id == deleted_user.user_id))
+        db.delete(deleted_user)
+        db.commit()
+        print(f"[INFO] Deleted soft-deleted user for re-registration: {payload.email}")
+
+    # 실제 유저 생성 (이메일 인증 완료 상태로)
     user = User(
         email=data["email"],
         password_hash=data["password"],  # password_hash로 저장
         nickname=data["nickname"],  # nickname 추가
         onboarding_completed_at=None,  # 온보딩 미완료 (NULL)
+        is_email_verified=True,  # 이메일 인증 완료
     )
     db.add(user)
     db.commit()

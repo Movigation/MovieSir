@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="무비서" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- SEO -->
+    <link rel="canonical" href="https://moviesir.cloud/" />
+    <title>시간만 알려주세요, 영화는 제가 고를게요</title>
+    <meta name="description" content="영화 고르느라 시간 낭비하지 마세요. 무비서가 당신의 이동 시간에 딱 맞는 영화를 추천해드립니다." />
+    <meta name="keywords" content="영화 추천, AI, API, 무비서, MovieSir, 영화 API, OTT" />
+    <meta name="author" content="Movigation" />
+    <meta name="robots" content="index, follow" />
+    <meta name="naver-site-verification" content="7b70ea9309d40310f6a451397466c8573ef2fcd6" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="시간만 알려주세요, 영화는 제가 고를게요" />
+    <meta property="og:description" content="영화 고르느라 시간 낭비하지 마세요. 무비서가 당신의 이동 시간에 딱 맞는 영화를 추천해드립니다." />
+    <meta property="og:url" content="https://moviesir.cloud" />
+    <meta property="og:site_name" content="무비서" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="시간만 알려주세요, 영화는 제가 고를게요" />
+    <meta name="twitter:description" content="영화 고르느라 시간 낭비하지 마세요. 무비서가 당신의 이동 시간에 딱 맞는 영화를 추천해드립니다." />
+
+    <!-- Browser Compatibility -->
+    <meta name="renderer" content="webkit" />
+    <meta name="force-rendering" content="webkit" />
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="MobileOptimized" content="width" />
+
+    <!-- Structured Data (JSON-LD) for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "무비서",
+      "alternateName": ["MovieSir", "무비서 API"],
+      "url": "https://moviesir.cloud",
+      "description": "영화 고르느라 시간 낭비하지 마세요. 무비서가 당신의 이동 시간에 딱 맞는 영화를 추천해드립니다.",
+      "inLanguage": "ko-KR"
+    }
+    </script>
+
+    <!-- Google Fonts - Jua -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+
+    <!-- Preconnect for faster API calls -->
+    <link rel="preconnect" href="https://api.moviesir.cloud" />
+    <link rel="dns-prefetch" href="https://api.moviesir.cloud" />
+    <link rel="preconnect" href="https://console.moviesir.cloud" />
+    <link rel="dns-prefetch" href="https://console.moviesir.cloud" />
+  </head>
+
+  <body>
+    <!-- Fallback for unsupported browsers -->
+    <noscript>
+      <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+        <h1>JavaScript가 필요합니다</h1>
+        <p>이 서비스를 이용하려면 JavaScript를 활성화하거나 최신 브라우저를 사용해주세요.</p>
+        <p>권장 브라우저: Chrome, Firefox, Safari, Edge</p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if (
+        "serviceWorker" in navigator &&
+        window.location.pathname.startsWith("/console")
+      ) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
+            .then((registration) => {
+              console.log("SW registered:", registration.scope);
+            })
+            .catch((error) => {
+              console.log("SW registration failed:", error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

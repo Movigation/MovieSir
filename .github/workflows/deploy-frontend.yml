@@ -1,0 +1,148 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - 'frontend/**'
+      - 'frontend-console/**'
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'frontend/**'
+      - 'frontend-console/**'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    name: TypeCheck & Build
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install & Build Frontend (Demo)
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
+
+      - name: Install & Build Frontend Console (B2B)
+        run: |
+          cd frontend-console
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: ci
+    name: Deploy to Server
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Frontend (Demo)
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
+
+      - name: Build Frontend Console (B2B)
+        run: |
+          cd frontend-console
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: https://api.moviesir.cloud
+
+      - name: Deploy Demo App via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 52222
+          source: "frontend/dist/*"
+          target: "/tmp/frontend-build"
+          strip_components: 2
+
+      - name: Deploy Console App via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 52222
+          source: "frontend-console/dist/*"
+          target: "/tmp/console-build"
+          strip_components: 2
+
+      - name: Move to Nginx Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.APP_HOST }}
+          username: ${{ secrets.APP_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 52222
+          script: |
+            set -e
+
+            echo "📌 최신 코드 가져오기"
+            cd ~/MovieSir
+            git fetch --all
+            git reset --hard origin/${{ github.ref_name }}
+
+            echo "📌 Demo App 배포 (/var/www/demo)"
+            sudo rm -rf /var/www/demo/*
+            sudo cp -r /tmp/frontend-build/* /var/www/demo/
+            sudo chown -R www-data:www-data /var/www/demo/
+            rm -rf /tmp/frontend-build
+
+            echo "📌 Console App 배포 (/var/www/console)"
+            sudo mkdir -p /var/www/console
+            sudo rm -rf /var/www/console/*
+            sudo cp -r /tmp/console-build/* /var/www/console/
+            sudo chown -R www-data:www-data /var/www/console/
+
+            echo "📌 Landing 페이지 배포 (/var/www/landing)"
+            sudo mkdir -p /var/www/landing
+            sudo rm -rf /var/www/landing/*
+            sudo cp -r /tmp/console-build/* /var/www/landing/
+            sudo chown -R www-data:www-data /var/www/landing/
+
+            echo "📌 API 문서 페이지 배포 (/var/www/api)"
+            sudo mkdir -p /var/www/api
+            sudo rm -rf /var/www/api/*
+            sudo cp -r /tmp/console-build/* /var/www/api/
+            sudo chown -R www-data:www-data /var/www/api/
+            rm -rf /tmp/console-build
+
+            echo "📌 Nginx 설정 업데이트"
+            sudo cp ~/MovieSir/nginx/moviesir.conf /etc/nginx/sites-enabled/moviesir
+            sudo nginx -t && sudo systemctl reload nginx
+
+            echo "📌 배포된 파일:"
+            echo "Demo: $(ls /var/www/demo/assets/ | grep -E 'index-.*\.js$' | head -1)"
+            echo "Console: $(ls /var/www/console/assets/ | grep -E 'index-.*\.js$' | head -1)"
+            echo "Landing: $(ls /var/www/landing/assets/ | grep -E 'index-.*\.js$' | head -1)"
+
+            echo "✅ 프론트엔드 배포 완료"
