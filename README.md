@@ -137,9 +137,22 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 > 본 애플리케이션의 UI/UX 디자인 및 프론트엔드/백엔드 구현은 **Movigation 팀**이 직접 설계하고 개발하였습니다.
 
-|                    탑승권 화면                     |                      장르 선택                      |                   영화 추천 결과                    |
-| :------------------------------------------------: | :-------------------------------------------------: | :-------------------------------------------------: |
-| <img src="./docs/air-demo_main.png" width="180" /> | <img src="./docs/air-demo_main2.png" width="180" /> | <img src="./docs/air-demo_main3.png" width="180" /> |
+<table>
+  <tr>
+    <td width="33%" align="center" valign="bottom">
+      <img src="./docs/air-demo_main.png" alt="탑승권 화면" width="100%"/>
+      <br/><sub><b>탑승권 화면</b></sub>
+    </td>
+    <td width="33%" align="center" valign="bottom">
+      <img src="./docs/air-demo_main2.png" alt="장르 선택" width="100%"/>
+      <br/><sub><b>장르 선택</b></sub>
+    </td>
+    <td width="33%" align="center" valign="bottom">
+      <img src="./docs/air-demo_main3.png" alt="영화 추천 결과" width="100%"/>
+      <br/><sub><b>영화 추천 결과</b></sub>
+    </td>
+  </tr>
+</table>
 
 <br/>
 
@@ -194,10 +207,10 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
 
 ### 인프라 구성
 
-| 서버           | 스펙                     | 구성                    | 역할                         |
-| -------------- | ------------------------ | ----------------------- | ---------------------------- |
-| **App Server** | t1i.xlarge (4vCPU, 16GB) | Nginx + FastAPI + Redis | 웹 서버, API 처리, 세션 관리 |
-| **GPU Server** | gn1i.xlarge (Tesla T4)   | PostgreSQL + AI Service | 데이터베이스, 추천 엔진      |
+| 서버           | 스펙                     | 구성                    | 포트                         | 역할                         |
+| -------------- | ------------------------ | ----------------------- | ---------------------------- | ---------------------------- |
+| **App Server** | t1i.xlarge (4vCPU, 16GB) | Nginx + FastAPI + Redis | 80, 443, 52222               | 웹 서버, API 처리, 세션 관리 |
+| **GPU Server** | gn1i.xlarge (Tesla T4)   | PostgreSQL + AI Service | 22, 5432, 8001               | 데이터베이스, 추천 엔진      |
 
 <br/>
 
@@ -215,9 +228,9 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
 
 | 항목           | 설정                                               |
 | -------------- | -------------------------------------------------- |
-| **SSH 접근**   | App Server를 Bastion Host로 사용, 비표준 포트 적용 |
+| **SSH 접근**   | App Server를 Bastion Host로 사용, 비표준 포트(52222) 적용으로 브루트포스 방지 |
 | **GPU Server** | Private Subnet 배치, Public IP 미부여              |
-| **보안그룹**   | 서비스별 최소 포트만 허용 (443, 8000, 8001)        |
+| **보안그룹**   | 서비스별 최소 포트만 허용 (80, 443, 52222 / 22, 5432, 8001) |
 | **CI/CD**      | GitHub Actions + SSH 키 기반 자동 배포             |
 
 **클라우드**: Kakao Cloud VPC 환경에서 운영
