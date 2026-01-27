@@ -1,4 +1,5 @@
-import { X, CheckCircle2, XCircle, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import CloseButton from "@/components/ui/CloseButton";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { SignupModalProps } from "@/services/auth/components/SignupModal/signupModal.types";
@@ -124,12 +125,10 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                 ref={modalContentRef}
                 className="bg-white dark:bg-gray-800 w-full h-screen sm:h-[90vh] sm:w-[90%] sm:max-w-md sm:rounded-xl p-6 relative space-y-6 overflow-y-auto"
             >                {/* CLOSE */}
-                <button
-                    onClick={handleClose}
+                <CloseButton
+                    onClose={handleClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                >
-                    <X size={24} />
-                </button>
+                />
 
                 {/* HEADER */}
                 <div>

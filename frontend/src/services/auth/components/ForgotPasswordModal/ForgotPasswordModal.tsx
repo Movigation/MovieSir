@@ -2,7 +2,7 @@
 // [사용법] <ForgotPasswordModal isOpen={isOpen} onClose={handleClose} />
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import CloseButton from '@/components/ui/CloseButton';
 
 interface ForgotPasswordModalProps {
     isOpen: boolean;
@@ -25,9 +25,10 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
     return (
         <div className="fixed inset-0 bg-black/50 z-modal flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div className="bg-white dark:bg-gray-800 w-[90%] max-w-md rounded-xl shadow-2xl relative p-6">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                    <X size={24} />
-                </button>
+                <CloseButton
+                    onClose={onClose}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                />
 
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">비밀번호 찾기</h2>
 

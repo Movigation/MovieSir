@@ -3,7 +3,8 @@
 // [주의사항] ESC 키로 닫힐, X 버튼으로만 닫기 가능힘
 
 import { useState, useEffect } from 'react';
-import { X, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import CloseButton from '@/components/ui/CloseButton';
 import type { LoginModalProps, LoginFormData, LoginFormErrors } from '@/services/auth/components/LoginModal/loginModal.types';
 import { validateEmail, validatePassword } from '@/services/auth/components/LoginModal/loginModal.utils';
 import SignupModal from '@/services/auth/components/SignupModal/SignupModal';
@@ -134,12 +135,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <div className="bg-white dark:bg-gray-800 w-full h-screen sm:h-auto sm:w-[90%] md:w-full sm:max-w-md sm:max-h-[90vh] sm:rounded-xl shadow-2xl relative overflow-y-auto">
 
                 {/* 닫기 버튼 */}
-                <button
-                    onClick={onClose}
+                <CloseButton
+                    onClose={onClose}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                >
-                    <X size={24} />
-                </button>
+                />
 
                 {/* 헤더 */}
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
