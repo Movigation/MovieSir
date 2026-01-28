@@ -170,18 +170,17 @@ AI 추천 엔진의 응답 속도를 3회 반복 측정한 결과, **모든 구�
 
 ## 🏁 ERD
 
-<table>
-  <tr>
-    <td width="50%" align="center" valign="bottom">
-      <img src="./docs/B2C_ERD.png" alt="B2C ERD" width="100%"/>
-      <br/><sub><b>B2C 스키마</b> — 사용자, 추천, 피드백</sub>
-    </td>
-    <td width="50%" align="center" valign="bottom">
-      <img src="./docs/B2B_ERD.png" alt="B2B ERD" width="100%"/>
-      <br/><sub><b>B2B 스키마</b> — 기업, API 키, 사용량</sub>
-    </td>
-  </tr>
-</table>
+<div align="center">
+  <img src="./docs/B2C_ERD.png" alt="B2C ERD" width="100%"/>
+  <br/><sub><b>B2C 스키마</b> — 사용자, 추천, 피드백</sub>
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="./docs/B2B_ERD.png" alt="B2B ERD" width="100%"/>
+  <br/><sub><b>B2B 스키마</b> — 기업, API 키, 사용량</sub>
+</div>
 
 <br/>
 
