@@ -82,6 +82,76 @@
 
 <br/>
 
+### AI 모델 선정 과정
+
+콘텐츠 기반 필터링 모델 중 **TF-IDF, Word2Vec, SBERT** 3개를 비교하여, 영화의 의미론적 유사성을 가장 잘 포착하는 모델을 선정했습니다.
+
+- 각 모델로 임베딩한 고차원 벡터 값을 **2차원으로 축소(t-SNE)** 하여 장르별 색깔에 맞게 좌표에 점으로 표시
+- **같은 색깔의 점들끼리 모여 있음** → 비슷한 의미의 영화끼리 모여 있음 (군집화가 잘 됨)
+- **다른 색깔의 점들끼리 떨어져 있음** → 비슷하지 않은 영화는 떨어져 있음 (분리도가 높음)
+- SBERT가 영화의 의미론적 유사성을 **가장 잘 포착**
+
+<div align="center">
+  <img src="./docs/tsne_comparison.png" alt="TF-IDF vs Word2Vec vs SBERT 비교" width="100%"/>
+  <sub><b>TF-IDF vs Word2Vec vs SBERT — t-SNE 시각화 비교</b></sub>
+</div>
+
+<br/>
+
+SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비교하여 최종 모델을 선정했습니다.
+
+- 영화 추천 서비스이기 때문에 **추천 품질과 순위가 중요**
+- 처리 시간은 좀 걸리지만 추천 품질과 순위의 성능이 좋은 **e5-large 모델을 선택**
+
+<div align="center">
+  <img src="./docs/sbert_comparison_results_k10.png" alt="SBERT 모델 성능 비교" width="100%"/>
+  <sub><b>SBERT 모델 성능 비교 (K=10)</b></sub>
+</div>
+
+<br/>
+
+---
+
+## 🔷 시스템 아키텍처
+
+<div align="center">
+  <img src="./docs/moviesir_infra.png" alt="MovieSir Infrastructure" width="100%"/>
+</div>
+
+<br/>
+
+### 인프라 구성
+
+| 서버           | 스펙                     | 구성                    | 포트           | 역할                         |
+| -------------- | ------------------------ | ----------------------- | -------------- | ---------------------------- |
+| **App Server** | t1i.xlarge (4vCPU, 16GB) | Nginx + FastAPI + Redis | 80, 443, 52222 | 웹 서버, API 처리, 세션 관리 |
+| **GPU Server** | gn1i.xlarge (Tesla T4)   | PostgreSQL + AI Service | 22, 5432, 8001 | 데이터베이스, 추천 엔진      |
+
+<br/>
+
+### 네트워크 구성
+
+| 구분               | 대역         | 용도                   |
+| ------------------ | ------------ | ---------------------- |
+| **VPC**            | 10.0.0.0/16  | 전체 네트워크          |
+| **Public Subnet**  | 10.0.0.0/20  | App Server (외부 접근) |
+| **Private Subnet** | 10.0.32.0/20 | GPU Server (내부 전용) |
+
+<br/>
+
+### 보안 구성
+
+| 항목           | 설정                                                                          |
+| -------------- | ----------------------------------------------------------------------------- |
+| **SSH 접근**   | App Server를 Bastion Host로 사용, 비표준 포트(52222) 적용으로 브루트포스 방지 |
+| **GPU Server** | Private Subnet 배치, Public IP 미부여                                         |
+| **보안그룹**   | 서비스별 최소 포트만 허용 (80, 443, 52222 / 22, 5432, 8001)                   |
+| **CI/CD**      | GitHub Actions + SSH 키 기반 자동 배포                                        |
+
+**클라우드**: Kakao Cloud VPC 환경에서 운영
+
+<br/>
+
 ---
 
 ## 🔷 [무비서 B2B API](https://api.moviesir.cloud)
@@ -138,10 +208,9 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 ### "개인 서비스(B2C)를 넘어 항공사 솔루션(B2B)으로"
 
-> **크로스 클라우드 호환성 검증** — GCP(Cloud Run)에서 KakaoCloud VPC의 무비서 API를 호출
-
 항공사 기내 영화 추천 데모앱 [**Air-Demo**](https://github.com/Movigation/Air-Demo)가 무비서 B2B API를 실제로 연동하여, <br />비행 시간에 맞는 최적의 영화 조합을 추천합니다.
 
+> **크로스 클라우드 호환성 검증** ➡️ GCP(Cloud Run)에서 KakaoCloud VPC의 무비서 API를 호출<br />
 > 본 애플리케이션의 UI/UX 디자인 및 프론트엔드/백엔드 구현은 **Movigation 팀**이 직접 설계하고 개발하였습니다.
 
 <table>
@@ -199,48 +268,6 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
     </td>
   </tr>
 </table>
-
-<br/>
-
----
-
-## 🔷 시스템 아키텍처
-
-<div align="center">
-  <img src="./docs/moviesir_infra.png" alt="MovieSir Infrastructure" width="100%"/>
-</div>
-
-<br/>
-
-### 인프라 구성
-
-| 서버           | 스펙                     | 구성                    | 포트           | 역할                         |
-| -------------- | ------------------------ | ----------------------- | -------------- | ---------------------------- |
-| **App Server** | t1i.xlarge (4vCPU, 16GB) | Nginx + FastAPI + Redis | 80, 443, 52222 | 웹 서버, API 처리, 세션 관리 |
-| **GPU Server** | gn1i.xlarge (Tesla T4)   | PostgreSQL + AI Service | 22, 5432, 8001 | 데이터베이스, 추천 엔진      |
-
-<br/>
-
-### 네트워크 구성
-
-| 구분               | 대역         | 용도                   |
-| ------------------ | ------------ | ---------------------- |
-| **VPC**            | 10.0.0.0/16  | 전체 네트워크          |
-| **Public Subnet**  | 10.0.0.0/20  | App Server (외부 접근) |
-| **Private Subnet** | 10.0.32.0/20 | GPU Server (내부 전용) |
-
-<br/>
-
-### 보안 구성
-
-| 항목           | 설정                                                                          |
-| -------------- | ----------------------------------------------------------------------------- |
-| **SSH 접근**   | App Server를 Bastion Host로 사용, 비표준 포트(52222) 적용으로 브루트포스 방지 |
-| **GPU Server** | Private Subnet 배치, Public IP 미부여                                         |
-| **보안그룹**   | 서비스별 최소 포트만 허용 (80, 443, 52222 / 22, 5432, 8001)                   |
-| **CI/CD**      | GitHub Actions + SSH 키 기반 자동 배포                                        |
-
-**클라우드**: Kakao Cloud VPC 환경에서 운영
 
 <br/>
 
