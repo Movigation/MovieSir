@@ -70,6 +70,9 @@ coverage/
 *.h5
 !ai/models/.gitkeep
 
+# AI 데이터
+ai/training/*
+
 # lightgcn 데이터
 ai/training/lightgcn_data/*
 !ai/training/lightgcn_data/.gitkeep
@@ -90,8 +93,11 @@ ai/training/original_data/*
 !ai/training/original_data/.gitkeep
 
 # 성능 비교 데이터
-ai/compare/cbf/inner_results/*.npz
-ai/compare/cbf/inner_results/movies_list.csv
+ai/compare/cbf/inner_results/*
+!ai/compare/cbf/inner_results/.gitkeep
+ai/compare/cbf/outer_results/*
+!ai/compare/cbf/outer_results/.gitkeep
+
 
 # DB
 *.sql
@@ -117,8 +123,6 @@ temp/
 *.tmp
 .claude/
 .mcp.json
-ai/CHAT_SUMMARY.md
-ai/RECOMMENDATION_ALGORITHM.md
 
 # ------------------------------------------------------------
 # Prompts
