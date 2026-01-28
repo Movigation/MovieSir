@@ -233,9 +233,10 @@ AI 추천 엔진의 응답 속도를 3회 반복 측정한 결과, **모든 구�
 
 <br/>
 
-### "출발부터 도착까지, 낭비 없는 완벽한 이동 경험을 제공합니다."
+> **출발부터 도착까지, 낭비 없는 완벽한 이동 경험을 제공합니다.**
 
-항공사, OTT 플랫폼 등 기업 고객을 위한 AI 영화 추천 API입니다.
+항공사, OTT 플랫폼 등 기업 고객을 위한 AI 영화 추천 API입니다.<br/>
+`X-API-Key` 헤더 인증 방식으로, 요금제(FREE · BASIC · PRO · ENTERPRISE)에 따라 호출 한도가 적용됩니다.
 
 ### API 엔드포인트
 
@@ -243,10 +244,6 @@ AI 추천 엔진의 응답 속도를 3회 반복 측정한 결과, **모든 구�
 | ------ | ---------------------- | ---------------- |
 | POST   | `/v1/recommend`        | 영화 조합 추천   |
 | POST   | `/v1/recommend_single` | 개별 영화 재추천 |
-
-**인증 방식**: `X-API-Key` 헤더
-
-<br/>
 
 ### 사용 예시
 
@@ -265,7 +262,7 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
     </td>
     <td width="50%" align="center" valign="bottom">
       <img src="./docs/api_docs_screenshot.png" alt="MovieSir API Docs" width="100%"/>
-      <br/><sub><b>API 문서</b></sub>
+      <br/><sub><b>API 문서 (Swagger)</b></sub>
     </td>
   </tr>
 </table>
