@@ -152,6 +152,39 @@ SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비
 
 <br/>
 
+## ⏱️ API 레이턴시 측정
+
+AI 추천 엔진의 응답 속도를 3회 반복 측정한 결과, **모든 구간에서 목표(1초 이내)를 달성**했습니다.
+
+| 측정 구간             | 평균 응답 | 설명                              |
+| --------------------- | --------- | --------------------------------- |
+| **AI Service Direct** | ~200ms    | GPU Server 내부 AI 엔진 직접 호출 |
+| **B2B External API**  | ~360ms    | Nginx → FastAPI → AI 전체 경로    |
+
+<div align="center">
+  <img src="./docs/latency_measurement.png" alt="API Latency Test" width="80%"/>
+  <br/><sub><b>App Server에서 측정한 API 레이턴시 (3회 평균)</b></sub>
+</div>
+
+<br/>
+
+## 🏁 ERD
+
+<table>
+  <tr>
+    <td width="50%" align="center" valign="bottom">
+      <img src="./docs/B2C_ERD.png" alt="B2C ERD" width="100%"/>
+      <br/><sub><b>B2C 스키마</b> — 사용자, 추천, 피드백</sub>
+    </td>
+    <td width="50%" align="center" valign="bottom">
+      <img src="./docs/B2B_ERD.png" alt="B2B ERD" width="100%"/>
+      <br/><sub><b>B2B 스키마</b> — 기업, API 키, 사용량</sub>
+    </td>
+  </tr>
+</table>
+
+<br/>
+
 ---
 
 ## 🔷 [무비서 B2B API](https://api.moviesir.cloud)
