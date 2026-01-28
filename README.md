@@ -84,6 +84,8 @@
 
 ## 🤓 AI 모델 선정 과정
 
+### 콘텐츠 기반 필터링 (CBF)
+
 콘텐츠 기반 필터링 모델 중 **TF-IDF, Word2Vec, SBERT** 3개를 비교하여, <br />영화의 의미론적 유사성을 가장 잘 포착하는 모델을 선정했습니다.
 
 - 각 모델로 임베딩한 고차원 벡터 값을 **2차원으로 축소(t-SNE)** 하여 장르별 색깔에 맞게 좌표에 점으로 표시
@@ -94,6 +96,13 @@
 <div align="center">
   <img src="./docs/tsne_comparison.png" alt="TF-IDF vs Word2Vec vs SBERT 비교" width="100%"/>
   <sub><b>TF-IDF vs Word2Vec vs SBERT — t-SNE 시각화 비교</b></sub>
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="./docs/cbf_performance.svg" alt="CBF 모델 성능 비교" width="80%"/>
+  <br/><sub><b>TF-IDF vs Word2Vec vs SBERT — 성능 비교</b></sub>
 </div>
 
 <br/>
@@ -110,12 +119,30 @@ SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비
 
 <br/>
 
+### 협업 필터링 (CF)
+
+협업 필터링 모델 중 **ALS, LightGCN, NCF (NeuMF)** 3개를 비교하여 최적 모델을 선정했습니다.
+
+<div align="center">
+  <img src="./docs/cf_performance_1.svg" alt="CF 모델 성능 비교 1" width="80%"/>
+  <br/><sub><b>ALS vs LightGCN vs NCF — 성능 비교 (1)</b></sub>
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="./docs/cf_performance_2.svg" alt="CF 모델 성능 비교 2" width="80%"/>
+  <br/><sub><b>ALS vs LightGCN vs NCF — 성능 비교 (2)</b></sub>
+</div>
+
+<br/>
+
 ---
 
 ## 💻 시스템 아키텍처
 
 <div align="center">
-  <img src="./docs/moviesir_infra.png" alt="MovieSir Infrastructure" width="100%"/>
+  <img src="./docs/moviesir_infra_arch.png" alt="MovieSir Infrastructure" width="100%"/>
 </div>
 
 <br/>
