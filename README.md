@@ -80,11 +80,11 @@
 | **Track A** |  맞춤 추천  | SBERT 70% + ALS 30% | 선호 장르 기반 개인화 추천 |
 | **Track B** | 다양성 추천 | SBERT 40% + ALS 60% | 새로운 장르 탐색 유도      |
 
-<br/>
+---
 
-### AI 모델 선정 과정
+## 🤓 AI 모델 선정 과정
 
-콘텐츠 기반 필터링 모델 중 **TF-IDF, Word2Vec, SBERT** 3개를 비교하여, 영화의 의미론적 유사성을 가장 잘 포착하는 모델을 선정했습니다.
+콘텐츠 기반 필터링 모델 중 **TF-IDF, Word2Vec, SBERT** 3개를 비교하여, <br />영화의 의미론적 유사성을 가장 잘 포착하는 모델을 선정했습니다.
 
 - 각 모델로 임베딩한 고차원 벡터 값을 **2차원으로 축소(t-SNE)** 하여 장르별 색깔에 맞게 좌표에 점으로 표시
 - **같은 색깔의 점들끼리 모여 있음** → 비슷한 의미의 영화끼리 모여 있음 (군집화가 잘 됨)
@@ -112,7 +112,7 @@ SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비
 
 ---
 
-## 🔷 시스템 아키텍처
+## 💻 시스템 아키텍처
 
 <div align="center">
   <img src="./docs/moviesir_infra.png" alt="MovieSir Infrastructure" width="100%"/>
@@ -162,10 +162,7 @@ SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비
 
 <br/>
 
-> **개인 서비스(B2C)를 넘어 항공사 솔루션(B2B)으로**
-
-출발부터 도착까지, 낭비 없는 완벽한 이동 경험을 제공합니다.<br />
-항공사, OTT 플랫폼 등 기업 고객을 위한 AI 영화 추천 API입니다.
+### 출발부터 도착까지, 낭비 없는 완벽한 이동 경험을 제공합니다.<br /> 항공사, OTT 플랫폼 등 기업 고객을 위한 AI 영화 추천 API입니다.
 
 ### API 엔드포인트
 
@@ -411,7 +408,7 @@ MovieSir/
 
 <div align="center">
 
-## 🛠️ 기술 스택
+## 🛠️ 기술 스택 🛠️
 
 [![React](https://img.shields.io/badge/react-18.x-61DAFB?style=flat&logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.x-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -428,7 +425,7 @@ MovieSir/
 
 <br/>
 
-## 🤓 만든 사람들
+## 🧑🏻‍💻 만든 사람들 👩🏻‍💻
 
 <table>
   <tr>
