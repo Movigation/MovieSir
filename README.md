@@ -1,7 +1,10 @@
 <div align="center">
 <img src="./docs/moviesir_header.png" alt="MovieSir Header" width="100%" />
 
-[무비서 소개](https://moviesir.cloud) | [무비서 B2C](https://demo.moviesir.cloud) | [무비서 B2B API](https://api.moviesir.cloud) | [무비서 Console](https://console.moviesir.cloud)
+[![Landing](https://img.shields.io/badge/무비서_소개-LIVE-3B82F6?style=for-the-badge)](https://moviesir.cloud)
+[![B2C](https://img.shields.io/badge/무비서_B2C-DEMO-10B981?style=for-the-badge)](https://demo.moviesir.cloud)
+[![API](https://img.shields.io/badge/무비서_API-B2B-F59E0B?style=for-the-badge)](https://api.moviesir.cloud)
+[![Console](https://img.shields.io/badge/무비서_CONSOLE-DASHBOARD-8B5CF6?style=for-the-badge)](https://console.moviesir.cloud)
 
 </div>
 
@@ -81,7 +84,7 @@
 
 ---
 
-## 🔷 무비서 B2B API
+## 🔷 [무비서 B2B API](https://api.moviesir.cloud)
 
 <div align="center">
   <img src="./docs/moviesir_api_header.png" alt="MovieSir API" width="100%"/>
@@ -131,7 +134,9 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 ---
 
-## ✈️ API 연동 사례: Air-Demo
+## ✈️ 무비서 B2B API 연동 사례: [Air-Demo](https://github.com/Movigation/Air-Demo)
+
+### "개인 서비스(B2C)를 넘어 항공사 솔루션(B2B)으로"
 
 > **크로스 클라우드 호환성 검증** — GCP(Cloud Run)에서 KakaoCloud VPC의 무비서 API를 호출
 
@@ -160,7 +165,7 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 ---
 
-## 🔷 무비서 Console
+## 🔷 [무비서 Console](https://console.moviesir.cloud)
 
 <div align="center">
   <img src="./docs/moviesir_console_header.png" alt="MovieSir Console" width="100%"/>
@@ -353,6 +358,7 @@ MovieSir/
 │   │   ├── user/                # 사용자 관리
 │   │   └── movie/               # 영화 데이터
 │   ├── core/                    # DB, Rate Limit 설정
+│   ├── tests/                   # pytest 테스트 (B2B API 등)
 │   └── requirements.txt
 │
 ├── ai/                          # SBERT + ALS 추천 엔진
