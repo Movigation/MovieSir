@@ -187,6 +187,8 @@ SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비
 
 **클라우드**: Kakao Cloud VPC 환경에서 운영
 
+> 📂 Nginx, Cron, 운영 스크립트 등 자세한 서버 설정은 [`infra/`](./infra/) 폴더를 참고하세요.
+
 <br/>
 
 ## ⏱️ API 레이턴시 측정
