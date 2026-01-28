@@ -1,5 +1,11 @@
 # MovieSir 배포/모니터링 구조
 
+<div align="center">
+  <img src="../docs/moviesir_infra_arch.png" alt="MovieSir Infrastructure" width="100%"/>
+</div>
+
+<br/>
+
 ## 1. 인프라 개요
 
 | 항목 | 내용 |
