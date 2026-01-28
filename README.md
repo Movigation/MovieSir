@@ -7,7 +7,7 @@
 
 ---
 
-## 프로젝트 소개
+## 📌 프로젝트 소개
 
 ### 배경
 
@@ -59,7 +59,7 @@
 
 ---
 
-## 주요 기능
+## ⚙️ 주요 기능
 
 | 기능                   | 설명                                                        |
 | ---------------------- | ----------------------------------------------------------- |
@@ -81,7 +81,7 @@
 
 ---
 
-## 무비서 B2B API
+## 🔷 무비서 B2B API
 
 <div align="center">
   <img src="./docs/moviesir_api_header.png" alt="MovieSir API" width="100%"/>
@@ -129,7 +129,9 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 <br/>
 
-### API 연동 사례: Air-Demo
+---
+
+## ✈️ API 연동 사례: Air-Demo
 
 > **크로스 클라우드 호환성 검증** — GCP(Cloud Run)에서 KakaoCloud VPC의 무비서 API를 호출
 
@@ -158,7 +160,7 @@ curl -X POST "https://api.moviesir.cloud/v1/recommend" \
 
 ---
 
-## 무비서 Console
+## 🔷 무비서 Console
 
 <div align="center">
   <img src="./docs/moviesir_console_header.png" alt="MovieSir Console" width="100%"/>
@@ -197,7 +199,7 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
 
 ---
 
-## 시스템 아키텍처
+## 🔷 시스템 아키텍처
 
 <div align="center">
   <img src="./docs/moviesir_infra.png" alt="MovieSir Infrastructure" width="100%"/>
@@ -207,10 +209,10 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
 
 ### 인프라 구성
 
-| 서버           | 스펙                     | 구성                    | 포트                         | 역할                         |
-| -------------- | ------------------------ | ----------------------- | ---------------------------- | ---------------------------- |
-| **App Server** | t1i.xlarge (4vCPU, 16GB) | Nginx + FastAPI + Redis | 80, 443, 52222               | 웹 서버, API 처리, 세션 관리 |
-| **GPU Server** | gn1i.xlarge (Tesla T4)   | PostgreSQL + AI Service | 22, 5432, 8001               | 데이터베이스, 추천 엔진      |
+| 서버           | 스펙                     | 구성                    | 포트           | 역할                         |
+| -------------- | ------------------------ | ----------------------- | -------------- | ---------------------------- |
+| **App Server** | t1i.xlarge (4vCPU, 16GB) | Nginx + FastAPI + Redis | 80, 443, 52222 | 웹 서버, API 처리, 세션 관리 |
+| **GPU Server** | gn1i.xlarge (Tesla T4)   | PostgreSQL + AI Service | 22, 5432, 8001 | 데이터베이스, 추천 엔진      |
 
 <br/>
 
@@ -226,12 +228,12 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
 
 ### 보안 구성
 
-| 항목           | 설정                                               |
-| -------------- | -------------------------------------------------- |
+| 항목           | 설정                                                                          |
+| -------------- | ----------------------------------------------------------------------------- |
 | **SSH 접근**   | App Server를 Bastion Host로 사용, 비표준 포트(52222) 적용으로 브루트포스 방지 |
-| **GPU Server** | Private Subnet 배치, Public IP 미부여              |
-| **보안그룹**   | 서비스별 최소 포트만 허용 (80, 443, 52222 / 22, 5432, 8001) |
-| **CI/CD**      | GitHub Actions + SSH 키 기반 자동 배포             |
+| **GPU Server** | Private Subnet 배치, Public IP 미부여                                         |
+| **보안그룹**   | 서비스별 최소 포트만 허용 (80, 443, 52222 / 22, 5432, 8001)                   |
+| **CI/CD**      | GitHub Actions + SSH 키 기반 자동 배포                                        |
 
 **클라우드**: Kakao Cloud VPC 환경에서 운영
 
@@ -239,7 +241,7 @@ API 키 관리 및 사용량 모니터링 대시보드입니다.<br/>
 
 ---
 
-## 시작하기
+## ✅ 시작하기
 
 ### 사전 요구사항
 
@@ -320,7 +322,7 @@ cd ai && pip install -r requirements.txt && uvicorn api:app --reload --port 8001
 
 ---
 
-## 프로젝트 구조
+## 📂 프로젝트 구조
 
 ```
 MovieSir/
@@ -376,7 +378,7 @@ MovieSir/
 
 <div align="center">
 
-## 기술 스택
+## 🛠️ 기술 스택
 
 [![React](https://img.shields.io/badge/react-18.x-61DAFB?style=flat&logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.x-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -393,7 +395,7 @@ MovieSir/
 
 <br/>
 
-## 만든 사람들
+## 🤓 만든 사람들
 
 <table>
   <tr>
