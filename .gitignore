@@ -98,6 +98,8 @@ ai/compare/cbf/inner_results/*
 ai/compare/cbf/outer_results/*
 !ai/compare/cbf/outer_results/.gitkeep
 
+# production
+ai/compare/production/production_evaluation_results.json
 
 # DB
 *.sql
