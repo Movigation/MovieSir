@@ -152,7 +152,7 @@ SBERT 모델 중 **e5-small, e5-large, MiniLM, bge-m3, ko-sroberta** 5개를 비
 ## 💻 시스템 아키텍처
 
 <div align="center">
-  <img src="./docs/moviesir_infra_arch.png" alt="MovieSir Infrastructure" width="100%"/>
+  <img src="./docs/moviesir_infra_arch1.png" alt="MovieSir Infrastructure" width="100%"/>
 </div>
 
 <br/>
