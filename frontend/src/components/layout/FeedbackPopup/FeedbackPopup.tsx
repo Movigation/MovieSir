@@ -35,56 +35,6 @@ export default function FeedbackPopup() {
     const ROTATION_STRENGTH = 0.15; // 스와이프 시 카드가 회전하는 강도
 
     useEffect(() => {
-        /**
-         * [테스트용 전용 로직] 
-         * 브라우저 콘솔에서 'f1'을 입력하거나 showFeedbackTest()를 실행하면 강제로 팝업을 띄웁니다.
-         */
-        const showTest = () => {
-            try {
-                // 1. 로컬 스토리지에서 마지막으로 추천받았던 결과가 있는지 확인
-                const storageKey = `last_recommendations_${userId}`;
-                const storageData = JSON.parse(localStorage.getItem(storageKey) || 'null');
-
-                let testMovie = null;
-
-                if (storageData && (storageData.trackA?.length > 0 || storageData.trackB?.length > 0)) {
-                    // 마지막 추천 기록이 있다면 그 중 첫 번째 영화를 테스트 대상으로 설정
-                    testMovie = storageData.trackA?.[0] || storageData.trackB?.[0];
-                    const sessionId = storageData.sessionId || 0;
-
-                    setTargetMovie({
-                        movieId: testMovie.id,
-                        title: testMovie.title,
-                        posterUrl: testMovie.poster || "https://image.tmdb.org/t/p/w500/edv5uSjLOnFEzd7xI7tAef09zbC.jpg",
-                        sessionId: sessionId
-                    });
-                } else {
-                    // 추천 기록이 전혀 없는 신규 유저 등을 위한 샘플(폴백) 데이터
-                    setTargetMovie({
-                        movieId: 0,
-                        title: "인셉션 (샘플)",
-                        posterUrl: "https://image.tmdb.org/t/p/w500/edv5uSjLOnFEzd7xI7tAef09zbC.jpg",
-                        sessionId: 0
-                    });
-                }
-
-                setTimeout(() => setIsVisible(true), 100);
-                return testMovie
-                    ? `✅ 저장된 마지막 추천 영화 [${testMovie.title}]로 테스트 팝업을 띄웠습니다.`
-                    : "⚠️ 저장된 추천 기록이 없어 샘플 데이터로 팝업을 띄웠습니다.";
-            } catch (error) {
-                console.error("테스트 데이터 로드 실패:", error);
-                return "❌ 테스트 로직 실행 중 오류가 발생했습니다.";
-            }
-        };
-
-        // 전역 window 객체에 테스트 함수 등록
-        (window as any).showFeedbackTest = showTest;
-        Object.defineProperty(window, 'f1', {
-            get: showTest,
-            configurable: true
-        });
-
         // --- 실서비스용 피드백 대상 자동 감지 로직 ---
         // 로그인 상태가 아니면 실행하지 않음
         const user = localStorage.getItem("user") || sessionStorage.getItem("user");
@@ -186,19 +136,14 @@ export default function FeedbackPopup() {
 
                     // 3. 마지막으로 응답한 세션 ID 저장 (추천 로직 최적화용)
                     localStorage.setItem(`last_responded_session_time_${userId}`, targetMovie.sessionId.toString());
-
-                    console.log(`🎬 [User ${userId}] 피드백 전송 완료: [${targetMovie.title}] - ${type}`);
                 } catch (error) {
                     console.error("피드백 서버 전송 실패:", error);
                 }
             } else {
                 // 명시적 건너뛰기('X' 클릭): 해당 세션 ID를 '스킵'으로 기록하여
                 // 다음 추천 목록(새 세션)이 생기기 전까지 더 이상 묻지 않음
-                console.log(`⏳ 피드백 건너뛰기: [${targetMovie.title}] 세션(${targetMovie.sessionId}) 전체 스킵`);
                 localStorage.setItem(`last_skipped_session_id_${userId}`, targetMovie.sessionId.toString());
             }
-        } else {
-            console.log(`🧪 테스트 모드 피드백: ${type}`);
         }
 
         setIsVisible(false); // 팝업 닫기 애니메이션 시작

@@ -83,7 +83,6 @@ export default function ChatbotPanel({
         setMessages([]);
         setHasRecommended(false);
         resetFilters();  // 필터 상태도 초기화 (시간, 장르 선택 초기화)
-        console.log('🔄 챗봇 닫힘 - 상태 초기화 완료');
       }, 200); // transition duration과 동일
 
       return () => clearTimeout(timer);
@@ -92,7 +91,6 @@ export default function ChatbotPanel({
 
   // 필터 다시 설정 함수
   const handleResetFilters = () => {
-    console.log('🔄 필터 다시 설정');
     setHasRecommended(false);
     resetFilters();
 
@@ -123,11 +121,8 @@ export default function ChatbotPanel({
   };
 
   const handleApplyFilters = () => {
-    console.log('=== handleApplyFilters 호출 ===');
-
     // 중복 추천 방지
     if (hasRecommended) {
-      console.log('⚠️ 이미 추천받았습니다.');
       return;
     }
 
@@ -165,7 +160,8 @@ export default function ChatbotPanel({
 
     // 3. 추천 API 호출
     loadRecommended().then(() => {
-      console.log('✅ 추천 완료');
+      // 타이머 정리 (혹시 아직 실행 안 됐으면 취소)
+      clearTimeout(timer1);
 
       // 타이머 정리 (혹시 아직 실행 안 됐으면 취소)
       clearTimeout(timer1);
@@ -230,8 +226,7 @@ export default function ChatbotPanel({
         ]);
       }, 800);
 
-    }).catch((error) => {
-      console.error('❌ 추천 실패:', error);
+    }).catch((_error) => {
       clearTimeout(timer1);
       setMessages(prev => [
         ...prev.filter(m => !m.id.startsWith('loading-')),

@@ -56,7 +56,6 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
     // 로그아웃 핸들러
     const handleLogout = async () => {
         if (window.confirm('로그아웃 하시겠습니까?')) {
-            console.log('🚪 마이페이지: 로그아웃 실행');
             onClose(); // 우선 모달 닫기
             await logout(); // 실제 로그아웃 처리 (전역 상태 및 스토리지 정리)
         }

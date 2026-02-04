@@ -41,10 +41,7 @@ export default function OTTSelectionPage() {
         // OTT 선택 페이지로 진입했다는 것은 '전체 플로우'를 의미하므로 리마인더 전용 플래그는 제거
         sessionStorage.removeItem('onboarding_from_reminder');
 
-        console.log('🎬 온보딩 플로우 시작 (Full Flow)');
-
         if (location.state?.resetOnEntry) {
-            console.log("🔄 온보딩 재요청 감지: 데이터 초기화");
             reset();
             navigate(location.pathname, {
                 replace: true,
@@ -75,9 +72,8 @@ export default function OTTSelectionPage() {
                     }
                 });
 
-                console.log("🚀 영화 데이터 및 이미지 프리페칭 완료");
             } catch (err) {
-                console.warn("⚠️ 프리페칭 실패 (이후 페이지에서 자동 재시도):", err);
+                // 프리페칭 실패 시 경고만 남기고, 다음 페이지에서 데이터 로드 로직이 다시 시도할 것임
             }
         };
 

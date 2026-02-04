@@ -53,11 +53,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // 로그아웃
     const logout = useCallback(async () => {
-        console.log('🚪 로그아웃 시작...');
         try {
             // 백엔드 API 호출 (refresh_token 무효화)
             await authApi.logout();
-            console.log('✅ 백엔드 로그아웃 완료');
         } catch (error) {
             console.error('⚠️ 백엔드 로그아웃 실패 (로컬 정리는 진행):', error);
         } finally {
@@ -72,8 +70,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             sessionStorage.removeItem('loginTime');
             sessionStorage.removeItem('onboarding_from_reminder');
             sessionStorage.removeItem('onboarding_in_progress');
-
-            console.log('✅ 로컬 상태 및 스토어 정리 완료');
         }
     }, [resetMovieStore, resetOnboardingStore]);
 
@@ -94,8 +90,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     useEffect(() => {
         const handleAuthLogout = (event: any) => {
             const reason = (event as CustomEvent).detail?.reason;
-            console.log(`🔔 auth:logout 이벤트 받음 (이유: ${reason}) - AuthContext에서 로그아웃 처리`);
-
             if (reason === 'expired') {
                 showToast('세션이 만료되었습니다. 다시 로그인해 주세요.', 10000, {
                     label: '다시 로그인',
@@ -123,14 +117,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const rawId = user.id || (user as any).user_id;
             if (rawId) {
                 const currentId = isNaN(Number(rawId)) ? rawId : Number(rawId);
-                console.log('👤 [AuthSync] MovieStore userId 동기화:', { rawId, currentId, type: typeof currentId });
                 setMovieStoreUserId(currentId as any);
             } else {
                 console.warn('⚠️ [AuthSync] user 객체에 id가 없음:', user);
             }
         } else {
             // 로그아웃 시 userId를 null로 설정
-            console.log('🔒 [AuthSync] 로그아웃: MovieStore userId를 null로 설정');
             setMovieStoreUserId(null);
         }
     }, [user, setMovieStoreUserId]);
@@ -147,19 +139,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const elapsed = Date.now() - loginTime;
             const remaining = 3600000 - elapsed; // 1시간 - 경과 시간
 
-            console.log(`⏰ 세션 체크: ${Math.floor(remaining / 1000)}초 남음`);
 
             if (remaining <= 0) {
-                console.log('⏰ 세션 만료 - 즉시 로그아웃');
                 showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 10000, {
                     label: '다시 로그인',
                     onClick: () => window.dispatchEvent(new CustomEvent('auth:open-login'))
                 }, true);
                 logout();
             } else {
-                console.log(`⏰ 타이머 재설정: ${Math.floor(remaining / 1000)}초 후 로그아웃`);
                 timerId = setTimeout(() => {
-                    console.log('⏰ 1시간 경과 - 자동 로그아웃 실행');
                     showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 10000, {
                         label: '다시 로그인',
                         onClick: () => window.dispatchEvent(new CustomEvent('auth:open-login'))
@@ -186,10 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const loginTime = Date.now();
                 sessionStorage.setItem('loginTime', loginTime.toString());
 
-                console.log('⏰ 자동로그인 미체크: 1시간 후 자동 로그아웃 타이머 시작');
                 setTimeout(() => {
-                    console.log('⏰ 1시간 경과 - 자동 로그아웃 실행');
-
                     // 팝업 표시
                     showToast('세션 시간이 만료되어 자동으로 로그아웃되었습니다.', 10000, {
                         label: '다시 로그인',
@@ -241,7 +226,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const savedUser = await authApi.getCurrentUser();
             if (savedUser) {
                 setUser(savedUser);
-                console.log('localStorage에서 사용자 정보 로드 완료:', savedUser);
             }
         } catch (error) {
             console.error('사용자 정보 로드 실패:', error);
