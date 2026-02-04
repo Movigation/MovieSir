@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+
+// 모달 상태 타입
+interface ModalState {
+  isOpen: boolean
+  type: 'confirm' | 'danger' | 'info'
+  title: string
+  message: string
+  onConfirm: () => void
+}
 
 interface ApiKey {
   id: string
@@ -20,8 +30,17 @@ export default function ApiKeys() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null)
   const [editingKeyName, setEditingKeyName] = useState('')
+  const [modal, setModal] = useState<ModalState>({
+    isOpen: false,
+    type: 'confirm',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  })
   const { token, company } = useAuthStore()
   const navigate = useNavigate()
+
+  const closeModal = () => setModal(prev => ({ ...prev, isOpen: false }))
 
   // 원본 키인지 확인 (마스킹되지 않은 키)
   const isRawKey = (key: string) => key.startsWith('sk-moviesir-') && !key.includes('*')
@@ -63,37 +82,58 @@ export default function ApiKeys() {
     }
   }
 
-  const deactivateKey = async (id: string) => {
-    if (!confirm('이 API 키를 비활성화하시겠습니까?')) return
-
-    try {
-      await api.patch(`/b2b/api-keys/${id}/deactivate`)
-      loadKeys()
-    } catch (err) {
-      console.error(err)
-    }
+  const deactivateKey = (id: string) => {
+    setModal({
+      isOpen: true,
+      type: 'confirm',
+      title: 'API 키 비활성화',
+      message: '이 API 키를 비활성화하시겠습니까?',
+      onConfirm: async () => {
+        try {
+          await api.patch(`/b2b/api-keys/${id}/deactivate`)
+          loadKeys()
+        } catch (err) {
+          // 에러 처리
+        }
+        closeModal()
+      },
+    })
   }
 
-  const deleteKey = async (id: string) => {
-    if (!confirm('이 API 키를 완전히 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return
-
-    try {
-      await api.delete(`/b2b/api-keys/${id}`)
-      loadKeys()
-    } catch (err) {
-      console.error(err)
-    }
+  const deleteKey = (id: string) => {
+    setModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'API 키 삭제',
+      message: '이 API 키를 완전히 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/b2b/api-keys/${id}`)
+          loadKeys()
+        } catch (err) {
+          // 에러 처리
+        }
+        closeModal()
+      },
+    })
   }
 
-  const activateKey = async (id: string) => {
-    if (!confirm('이 API 키를 다시 활성화하시겠습니까?')) return
-
-    try {
-      await api.patch(`/b2b/api-keys/${id}/activate`)
-      loadKeys()
-    } catch (err) {
-      console.error(err)
-    }
+  const activateKey = (id: string) => {
+    setModal({
+      isOpen: true,
+      type: 'confirm',
+      title: 'API 키 활성화',
+      message: '이 API 키를 다시 활성화하시겠습니까?',
+      onConfirm: async () => {
+        try {
+          await api.patch(`/b2b/api-keys/${id}/activate`)
+          loadKeys()
+        } catch (err) {
+          // 에러 처리
+        }
+        closeModal()
+      },
+    })
   }
 
   const startEditKey = (key: ApiKey) => {
@@ -344,6 +384,16 @@ export default function ApiKeys() {
           &nbsp;&nbsp;-d '&#123;"genres": ["액션"], "limit": 10&#125;'
         </code>
       </div>
+
+      {/* 커스텀 모달 */}
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={closeModal}
+      />
     </div>
   )
 }

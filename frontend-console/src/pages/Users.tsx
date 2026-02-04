@@ -2,6 +2,16 @@ import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavigate } from 'react-router-dom'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+
+// 모달 상태 타입
+interface ModalState {
+  isOpen: boolean
+  type: 'confirm' | 'alert' | 'danger' | 'info'
+  title: string
+  message: string
+  onConfirm: () => void
+}
 
 interface B2CUser {
   user_id: string
@@ -83,7 +93,16 @@ export default function Users() {
   const [activities, setActivities] = useState<UserActivity[]>([])
   const [activitiesLoading, setActivitiesLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'info' | 'activities'>('info')
+  const [modal, setModal] = useState<ModalState>({
+    isOpen: false,
+    type: 'confirm',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  })
   const pageSize = 20
+
+  const closeModal = () => setModal(prev => ({ ...prev, isOpen: false }))
 
   // 어드민 권한 체크
   useEffect(() => {
@@ -176,41 +195,67 @@ export default function Users() {
   }
 
   // 유저 비활성화
-  const handleDeactivate = async (userId: string) => {
-    if (!confirm('정말 이 유저를 비활성화하시겠습니까?')) return
-    try {
-      setActionLoading(userId)
-      await api.patch(`/b2b/admin/b2c-users/${userId}/deactivate`)
-      fetchUsers()
-      fetchStats()
-      if (selectedUser?.user_id === userId) {
-        fetchUserDetail(userId)
-      }
-    } catch (err) {
-      console.error('Failed to deactivate user:', err)
-      alert('유저 비활성화에 실패했습니다.')
-    } finally {
-      setActionLoading(null)
-    }
+  const handleDeactivate = (userId: string) => {
+    setModal({
+      isOpen: true,
+      type: 'danger',
+      title: '유저 비활성화',
+      message: '정말 이 유저를 비활성화하시겠습니까?',
+      onConfirm: async () => {
+        closeModal()
+        try {
+          setActionLoading(userId)
+          await api.patch(`/b2b/admin/b2c-users/${userId}/deactivate`)
+          fetchUsers()
+          fetchStats()
+          if (selectedUser?.user_id === userId) {
+            fetchUserDetail(userId)
+          }
+        } catch (err) {
+          setModal({
+            isOpen: true,
+            type: 'alert',
+            title: '오류',
+            message: '유저 비활성화에 실패했습니다.',
+            onConfirm: closeModal,
+          })
+        } finally {
+          setActionLoading(null)
+        }
+      },
+    })
   }
 
   // 유저 활성화
-  const handleActivate = async (userId: string) => {
-    if (!confirm('이 유저를 다시 활성화하시겠습니까?')) return
-    try {
-      setActionLoading(userId)
-      await api.patch(`/b2b/admin/b2c-users/${userId}/activate`)
-      fetchUsers()
-      fetchStats()
-      if (selectedUser?.user_id === userId) {
-        fetchUserDetail(userId)
-      }
-    } catch (err) {
-      console.error('Failed to activate user:', err)
-      alert('유저 활성화에 실패했습니다.')
-    } finally {
-      setActionLoading(null)
-    }
+  const handleActivate = (userId: string) => {
+    setModal({
+      isOpen: true,
+      type: 'confirm',
+      title: '유저 활성화',
+      message: '이 유저를 다시 활성화하시겠습니까?',
+      onConfirm: async () => {
+        closeModal()
+        try {
+          setActionLoading(userId)
+          await api.patch(`/b2b/admin/b2c-users/${userId}/activate`)
+          fetchUsers()
+          fetchStats()
+          if (selectedUser?.user_id === userId) {
+            fetchUserDetail(userId)
+          }
+        } catch (err) {
+          setModal({
+            isOpen: true,
+            type: 'alert',
+            title: '오류',
+            message: '유저 활성화에 실패했습니다.',
+            onConfirm: closeModal,
+          })
+        } finally {
+          setActionLoading(null)
+        }
+      },
+    })
   }
 
   // 날짜 포맷
@@ -712,6 +757,16 @@ export default function Users() {
           </div>
         </div>
       )}
+
+      {/* 커스텀 모달 */}
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={closeModal}
+      />
     </div>
   )
 }
