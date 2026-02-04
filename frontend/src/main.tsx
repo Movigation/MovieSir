@@ -6,16 +6,16 @@ import App from '@/App.tsx'
 
 // 🎬 Console Branding
 console.log(
-  '%c ',
-  'background: url(/moviesir_header.png) no-repeat center; background-size: contain; padding: 60px 200px;'
-);
-console.log(
-  '%c무비서 - AI 영화 추천 서비스',
-  'color: #3b82f6; font-size: 18px; font-weight: bold;'
+  '%c 🎬 MOVIESIR ',
+  'background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; font-size: 24px; font-weight: bold; padding: 10px 20px; border-radius: 8px;'
 );
 console.log(
   '%c시간만 알려주세요, 영화는 제가 고를게요.',
-  'color: #9ca3af; font-size: 12px;'
+  'color: #3b82f6; font-size: 14px; font-weight: bold; margin-top: 5px;'
+);
+console.log(
+  '%cAI 영화 추천 서비스 | https://moviesir.cloud',
+  'color: #6b7280; font-size: 11px;'
 );
 
 createRoot(document.getElementById('root')!).render(
