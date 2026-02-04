@@ -90,7 +90,6 @@ export default function MainPage() {
 
         // 1. 튜토리얼 종료 로직: 챗봇이 열리면 어떤 상황에서도 튜토리얼 완료 처리
         if (isTutorialActive && isChatbotOpen) {
-            console.log('🎓 튜토리얼 완료 처리');
             localStorage.setItem(tutorialKey, 'true');
             setIsTutorialActive(false);
             return;
@@ -104,7 +103,6 @@ export default function MainPage() {
         }
 
         if (!isTutorialCompleted && !isChatbotOpen && !isTutorialActive) {
-            console.log('🚀 튜토리얼 시작');
             setIsTutorialActive(true);
             setTutorialStep(0);
         }
@@ -113,7 +111,6 @@ export default function MainPage() {
     // 로그아웃 시 챗봇 자동 닫기
     useEffect(() => {
         if (!isAuthenticated && isChatbotOpen) {
-            console.log('🔒 로그아웃 감지 - 챗봇 패널 닫기');
             setIsChatbotOpen(false);
         }
     }, [isAuthenticated, isChatbotOpen]);

@@ -89,8 +89,6 @@ export function useSignupForm() {
             const errorMsg = err.response?.data?.detail || err.message || '인증번호 발송 중 오류가 발생했습니다';
             setGeneralError(errorMsg);
 
-            console.error('회원가입 요청 에러:', err);
-            console.log('에러 메시지:', errorMsg);
 
             // 이메일/닉네임 중복 에러인 경우 상태 업데이트
             if (errorMsg.includes('이메일') || errorMsg.includes('email')) {
@@ -115,32 +113,20 @@ export function useSignupForm() {
 
     // 인증 코드 확인 (+ 회원가입 완료)
     const handleVerifyCode = useCallback(async () => {
-        console.log('🔍 [useSignupForm] handleVerifyCode 시작');
-
         const result = await codeValidation.verifyCode(
             emailValidation.email,
             codeValidation.code
         );
 
-        console.log('🔍 [useSignupForm] verifyCode 결과:', result);
-
         if (!result.success) {
-            console.log('❌ [useSignupForm] 인증 실패:', result.error);
             setGeneralError(result.error || '');
         } else {
-            console.log('✅ [useSignupForm] 인증 성공!');
             setGeneralError('');
 
             // 회원가입 완료!
             if (result.completed) {
-                console.log('✅ [useSignupForm] 회원가입 완료! AuthContext 업데이트 시작');
-
                 // AuthContext 업데이트
                 await loadUserFromStorage();
-
-                console.log('✅ [useSignupForm] AuthContext 업데이트 완료');
-                console.log('✅ [useSignupForm] codeVerified 상태:', codeValidation.codeVerified);
-
                 // 온보딩 페이지로 이동은 SignupModal에서 처리
             }
         }

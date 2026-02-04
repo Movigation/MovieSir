@@ -41,10 +41,7 @@ export default function OTTSelectionPage() {
         // OTT 선택 페이지로 진입했다는 것은 '전체 플로우'를 의미하므로 리마인더 전용 플래그는 제거
         sessionStorage.removeItem('onboarding_from_reminder');
 
-        console.log('🎬 온보딩 플로우 시작 (Full Flow)');
-
         if (location.state?.resetOnEntry) {
-            console.log("🔄 온보딩 재요청 감지: 데이터 초기화");
             reset();
             navigate(location.pathname, {
                 replace: true,
@@ -74,10 +71,8 @@ export default function OTTSelectionPage() {
                         img.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
                     }
                 });
-
-                console.log("🚀 영화 데이터 및 이미지 프리페칭 완료");
-            } catch (err) {
-                console.warn("⚠️ 프리페칭 실패 (이후 페이지에서 자동 재시도):", err);
+            } catch {
+                // 프리페칭 실패 (이후 페이지에서 자동 재시도)
             }
         };
 
@@ -97,7 +92,6 @@ export default function OTTSelectionPage() {
             // 저장 성공 후 다음 단계로 이동
             navigate("/onboarding/movies");
         } catch (err: any) {
-            console.error('OTT 선택 저장 실패:', err);
             setError(err.response?.data?.message || 'OTT 선택 저장에 실패했습니다.');
         } finally {
             setIsLoading(false);
