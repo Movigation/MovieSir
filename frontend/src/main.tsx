@@ -7,7 +7,7 @@ import App from '@/App.tsx'
 // 🎬 Console Branding
 console.log(
   '%c ',
-  'background: url(https://moviesir.cloud/moviesir_header.png) no-repeat center; background-size: contain; padding: 60px 200px;'
+  'background: url(/moviesir_header.png) no-repeat center; background-size: contain; padding: 60px 200px;'
 );
 console.log(
   '%c무비서 - AI 영화 추천 서비스',
