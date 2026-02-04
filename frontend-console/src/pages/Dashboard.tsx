@@ -462,7 +462,15 @@ export default function Dashboard() {
                       {sessionModal.req_genres.length > 0 ? sessionModal.req_genres.join(', ') : '전체 장르'}
                       {sessionModal.req_runtime_max && ` / ${sessionModal.req_runtime_max}분 이내`}
                       <span className="mx-2">•</span>
-                      {new Date(sessionModal.created_at).toLocaleString('ko-KR')}
+                      {new Date(sessionModal.created_at).toLocaleString('ko-KR', {
+                        timeZone: 'Asia/Seoul',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
                     </p>
                   </div>
                   <button
