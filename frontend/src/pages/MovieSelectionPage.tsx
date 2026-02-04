@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingStore } from "@/store/useOnboardingStore";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import type { OnboardingMovie } from "@/api/onboardingApi.type";
 import { skipOnboarding } from "@/api/onboardingApi";
 import axiosInstance from "@/api/axiosInstance";
@@ -20,9 +21,10 @@ export default function MovieSelectionPage() {
 
     const [movies, setMovies] = useState<OnboardingMovie[]>(storedMovies || []);
     const [isLoading, setIsLoading] = useState(!storedMovies || storedMovies.length === 0);
-    const [isSubmitting, setIsSubmitting] = useState(false); // 제출 중 상태
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
-    const [isSkipModalOpen, setIsSkipModalOpen] = useState(false); // 건너뛰기 확인 모달
+    const [isSkipModalOpen, setIsSkipModalOpen] = useState(false);
+    const [alertModal, setAlertModal] = useState<{ message: string } | null>(null);
 
     // 리마인더에서 진입했는지 확인 (건너뛰기 버튼 숨김 처리)
     const isFromReminder = sessionStorage.getItem('onboarding_from_reminder') === 'true';
@@ -33,7 +35,6 @@ export default function MovieSelectionPage() {
         if (storedMovies && storedMovies.length > 0) {
             setMovies(storedMovies);
             setIsLoading(false);
-            console.log("✅ localStorage에서 영화 로딩:", storedMovies);
             return;
         }
 
@@ -48,10 +49,8 @@ export default function MovieSelectionPage() {
                 // 응답 데이터에서 movies 배열 추출
                 const moviesData = response.data.movies || [];
                 setMovies(moviesData);
-                setGlobalMovies(moviesData); // 스토어에 저장
-                console.log("✅ API에서 영화 로딩 성공:", moviesData);
-            } catch (err: any) {
-                console.error("⚠️ 영화 로딩 에러 (백엔드 연결 실패, 임시 데이터 사용):", err);
+                setGlobalMovies(moviesData);
+            } catch {
 
                 // 🔧 임시 데이터: 백엔드 연결 실패 시 사용
                 const mockMovies: OnboardingMovie[] = [
@@ -91,7 +90,7 @@ export default function MovieSelectionPage() {
 
     const handleNext = async () => {
         if (movie_ids.length === 0) {
-            alert("최소 1개 이상의 영화를 선택해주세요.");
+            setAlertModal({ message: "최소 1개 이상의 영화를 선택해주세요." });
             return;
         }
 
@@ -99,22 +98,15 @@ export default function MovieSelectionPage() {
         setError("");
 
         try {
-            // POST /onboarding/survey API 호출
             await axiosInstance.post("/onboarding/survey", {
                 movie_ids: movie_ids
             });
 
-            console.log("✅ 취향 영화 저장 성공:", movie_ids);
-
-            // 성공 시 다음 페이지로 이동
             navigate("/onboarding/complete");
         } catch (err: any) {
-            console.error("❌ 취향 영화 저장 실패:", err);
-
-            // 에러 메시지 표시
             const errorMessage = err.response?.data?.detail || "영화 저장에 실패했습니다. 다시 시도해주세요.";
             setError(errorMessage);
-            alert(errorMessage);
+            setAlertModal({ message: errorMessage });
         } finally {
             setIsSubmitting(false);
         }
@@ -135,16 +127,9 @@ export default function MovieSelectionPage() {
             // 1. 영화 선택 데이터 초기화 (건너뛰기이므로)
             clearMovieSelection();
 
-            // 2. POST /onboarding/skip API 호출
             await skipOnboarding();
-            console.log("✅ 온보딩 스킵 완료");
-
-            // 3. 완료 페이지로 이동
             navigate("/onboarding/complete");
-        } catch (err: any) {
-            console.error("❌ 온보딩 스킵 실패:", err);
-
-            // 스킵이므로 실패해도 완료 페이지로 이동
+        } catch {
             navigate("/onboarding/complete");
         } finally {
             setIsSubmitting(false);
@@ -359,6 +344,15 @@ export default function MovieSelectionPage() {
                     </div>
                 </div>
             )}
+
+            {/* 알림 모달 */}
+            <ConfirmModal
+                isOpen={!!alertModal}
+                type="info"
+                title="알림"
+                message={alertModal?.message || ''}
+                onConfirm={() => setAlertModal(null)}
+            />
         </div>
     );
 }

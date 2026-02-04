@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { authAxiosInstance } from '@/api/axiosInstance';
 import SettingItem from './SettingItem';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 // OTT 플랫폼 정의 (백엔드 DB와 일치) - public 폴더 URL 사용
 const OTT_PLATFORMS = [
@@ -25,6 +26,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
     const [selectedProviderIds, setSelectedProviderIds] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [modalState, setModalState] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
     // 사용자의 현재 OTT 선택 불러오기
     useEffect(() => {
@@ -38,10 +40,7 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
             // 백엔드 응답: { current_ott_ids: number[] }
             const providerIds = response.data.current_ott_ids || [];
             setSelectedProviderIds(providerIds);
-            console.log('🎬 OTT 데이터 로드:', providerIds);
-        } catch (error) {
-            console.error('OTT 불러오기 실패:', error);
-            // 에러 시 빈 배열로 초기화
+        } catch {
             setSelectedProviderIds([]);
         } finally {
             setIsLoading(false);
@@ -60,18 +59,24 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
         setIsSaving(true);
         try {
             await authAxiosInstance.put("/mypage/ott", {
-                ott_ids: selectedProviderIds  // 백엔드 스키마: ott_ids
+                ott_ids: selectedProviderIds
             });
 
-            console.log('💾 OTT 저장 완료:', selectedProviderIds);
-            alert('OTT 선택이 저장되었습니다!');
-            onBack();
+            setModalState({ type: 'success', message: 'OTT 선택이 저장되었습니다!' });
         } catch (error: any) {
-            console.error('OTT 저장 실패:', error);
             const errorMsg = error?.response?.data?.detail || 'OTT 저장에 실패했습니다.';
-            alert(errorMsg);
+            setModalState({ type: 'error', message: errorMsg });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleModalClose = () => {
+        if (modalState?.type === 'success') {
+            setModalState(null);
+            onBack();
+        } else {
+            setModalState(null);
         }
     };
 
@@ -151,6 +156,15 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                     </div>
                 )}
             </div>
+
+            {/* 결과 모달 */}
+            <ConfirmModal
+                isOpen={!!modalState}
+                type={modalState?.type === 'success' ? 'alert' : 'info'}
+                title={modalState?.type === 'success' ? '저장 완료' : '오류'}
+                message={modalState?.message || ''}
+                onConfirm={handleModalClose}
+            />
         </div>
     );
 }

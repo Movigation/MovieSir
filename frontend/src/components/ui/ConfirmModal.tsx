@@ -75,7 +75,7 @@ export default function ConfirmModal({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+            className="fixed inset-0 z-max flex items-center justify-center p-4"
             onClick={onCancel || onConfirm}
         >
             {/* 배경 오버레이 */}

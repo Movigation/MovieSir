@@ -7,6 +7,7 @@ import { useAuth } from '@/app/providers/AuthContext';
 import { deleteUser } from '@/api/authApi';
 import * as userApi from '@/api/userApi';
 import SettingItem from './SettingItem';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 type UserSettingsProps = {
     onBack: () => void;
@@ -21,6 +22,7 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
     const [deletePassword, setDeletePassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [deleteError, setDeleteError] = useState('');
+    const [modalState, setModalState] = useState<{ type: 'success' | 'error'; message: string; action?: () => void } | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -36,15 +38,12 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
             const response = await userApi.updateNickname(tempName);
             const newNickname = response.data.nickname;
 
-            // 1. AuthContext 상태 업데이트 (로컬 스토리지 포함)
             updateUser({ nickname: newNickname });
-
             setIsEditing(false);
-            alert('닉네임이 변경되었습니다');
+            setModalState({ type: 'success', message: '닉네임이 변경되었습니다' });
         } catch (error: any) {
-            console.error('닉네임 변경 실패:', error);
             const msg = error.response?.data?.detail || '닉네임 변경에 실패했습니다';
-            alert(msg);
+            setModalState({ type: 'error', message: msg });
         } finally {
             setIsLoading(false);
         }
@@ -57,25 +56,30 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
             setIsLoading(true);
             setDeleteError('');
 
-            // 1. 서버에 탈퇴 요청
             await deleteUser(deletePassword);
 
-            // 2. 알림 표시
-            alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
-
-            // 3. 로그아웃 처리 (로컬 상태 및 토큰 정리)
-            await logout();
-
-            // 4. 메인 페이지로 강제 이동 및 페이지 새로고침 (클린업 완료를 위해)
-            window.location.href = '/';
-
+            setShowDeleteModal(false);
+            setModalState({
+                type: 'success',
+                message: '회원 탈퇴가 완료되었습니다.\n그동안 이용해주셔서 감사합니다.',
+                action: async () => {
+                    await logout();
+                    window.location.href = '/';
+                }
+            });
         } catch (error: any) {
-            console.error('회원 탈퇴 실패:', error);
-            const errorMsg = error.response?.data?.detail || error.message || '회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.';
+            const errorMsg = error.response?.data?.detail || error.message || '회원 탈퇴에 실패했습니다.\n비밀번호를 확인해주세요.';
             setDeleteError(errorMsg);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleModalClose = () => {
+        if (modalState?.action) {
+            modalState.action();
+        }
+        setModalState(null);
     };
 
     return (
@@ -224,6 +228,15 @@ export default function UserSettings({ onBack }: UserSettingsProps) {
                     </div>
                 </div>
             )}
+
+            {/* 결과 모달 */}
+            <ConfirmModal
+                isOpen={!!modalState}
+                type={modalState?.type === 'success' ? 'alert' : 'info'}
+                title={modalState?.type === 'success' ? '완료' : '오류'}
+                message={modalState?.message || ''}
+                onConfirm={handleModalClose}
+            />
         </div>
     );
 }
