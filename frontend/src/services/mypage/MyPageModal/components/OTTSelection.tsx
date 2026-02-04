@@ -38,7 +38,6 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
             // 백엔드 응답: { current_ott_ids: number[] }
             const providerIds = response.data.current_ott_ids || [];
             setSelectedProviderIds(providerIds);
-            console.log('🎬 OTT 데이터 로드:', providerIds);
         } catch (error) {
             console.error('OTT 불러오기 실패:', error);
             // 에러 시 빈 배열로 초기화
@@ -63,7 +62,6 @@ export default function OTTSelection({ onBack }: OTTSelectionProps) {
                 ott_ids: selectedProviderIds  // 백엔드 스키마: ott_ids
             });
 
-            console.log('💾 OTT 저장 완료:', selectedProviderIds);
             alert('OTT 선택이 저장되었습니다!');
             onBack();
         } catch (error: any) {

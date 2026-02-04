@@ -81,15 +81,12 @@ export function isValidUrl(url: string): boolean {
 /**
  * 프로덕션 환경에서 민감 정보 로깅 방지
  */
-export function secureLog(message: string, data?: any): void {
-    if (process.env.NODE_ENV === 'development') {
-        console.log(message, data);
-    } else {
-        // 프로덕션에서는 에러만 로깅 (민감 정보 제외)
-        if (message.toLowerCase().includes('error')) {
-            console.error(message);  // data는 로깅하지 않음
-        }
-    }
+/**
+ * 프로덕션 환경에서 민감 정보 로깅 방지
+ */
+export function secureLog(_message: string, _data?: any): void {
+    // 최종 발표를 위해 모든 로그를 비활성화합니다.
+    // 기존 코드와의 호환성을 위해 함수 형태를 유지합니다.
 }
 
 /**

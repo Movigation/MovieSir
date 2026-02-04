@@ -8,7 +8,6 @@ export default function OnboardingProtectedRoute() {
     const isOnboardingInProgress = sessionStorage.getItem('onboarding_in_progress') === 'true';
 
     if (!isOnboardingInProgress) {
-        console.log('❌ 온보딩 플로우 미진행 - 메인 페이지로 리다이렉트');
         return <Navigate to="/" replace />;
     }
 

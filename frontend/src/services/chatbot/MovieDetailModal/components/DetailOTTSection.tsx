@@ -75,11 +75,10 @@ export default function DetailOTTSection({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`relative px-4 py-2.5 text-[14px] sm:text-[15px] transition-all ${
-              activeTab === tab.id
-                ? "font-bold text-gray-900 dark:text-white"
-                : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            }`}
+            className={`relative px-4 py-2.5 text-[14px] sm:text-[15px] transition-all ${activeTab === tab.id
+              ? "font-bold text-gray-900 dark:text-white"
+              : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              }`}
           >
             {tab.label}
             <span className="ml-1 text-[11px] sm:text-xs opacity-60">

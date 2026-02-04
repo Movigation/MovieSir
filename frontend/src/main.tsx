@@ -15,11 +15,12 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker registered:', registration.scope);
+      .then(() => {
+        // Service Worker registered successfully, but no need to use the 'registration' object
+        // console.log('Service Worker registered:', registration.scope); // Removed to fix unused variable
       })
-      .catch((error) => {
-        console.log('Service Worker registration failed:', error);
+      .catch(() => {
+        // console.log('Service Worker registration failed:', error); // Removed
       });
   });
 }

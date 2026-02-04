@@ -83,7 +83,6 @@ export default function ChatbotPanel({
         setMessages([]);
         setHasRecommended(false);
         resetFilters();  // 필터 상태도 초기화 (시간, 장르 선택 초기화)
-        console.log('🔄 챗봇 닫힘 - 상태 초기화 완료');
       }, 200); // transition duration과 동일
 
       return () => clearTimeout(timer);
@@ -92,7 +91,6 @@ export default function ChatbotPanel({
 
   // 필터 다시 설정 함수
   const handleResetFilters = () => {
-    console.log('🔄 필터 다시 설정');
     setHasRecommended(false);
     resetFilters();
 
@@ -123,18 +121,15 @@ export default function ChatbotPanel({
   };
 
   const handleApplyFilters = () => {
-    console.log('=== handleApplyFilters 호출 ===');
-
     // 중복 추천 방지
     if (hasRecommended) {
-      console.log('⚠️ 이미 추천받았습니다.');
       return;
     }
 
     // 추천 완료 플래그 설정
     setHasRecommended(true);
 
-    // 1. 필터 블록 제거 + 로딩 메시지 추가
+    // 1. 필터 블록 제거 + 로딩 메시지 추가 (첫 번째)
     setMessages([
       {
         id: 'welcome',
@@ -144,63 +139,95 @@ export default function ChatbotPanel({
       {
         id: `loading-${Date.now()}`,
         type: 'bot',
-        content: '영화를 찾고 있습니다...'
+        content: '선택하신 조건을 분석하고 있어요...'
       }
     ]);
 
-    // 2. 추천 API 호출
+    // 2. 프로그레시브 메시지 타이머 설정
+    const timer1 = setTimeout(() => {
+      setMessages(prev => {
+        // 이미 결과가 나왔거나 에러가 났다면 업데이트 하지 않음
+        if (prev.some(m => m.id.startsWith('result-') || m.id.startsWith('error-'))) return prev;
+
+        // 로딩 메시지 업데이트
+        return prev.map(msg =>
+          msg.id.startsWith('loading-')
+            ? { ...msg, content: '영화 데이터베이스를 탐색 중입니다...' }
+            : msg
+        );
+      });
+    }, 1500); // 1.5초 후 메시지 변경
+
+    // 3. 추천 API 호출
     loadRecommended().then(() => {
-      console.log('✅ 추천 완료');
+      // 타이머 정리 (혹시 아직 실행 안 됐으면 취소)
+      clearTimeout(timer1);
 
-      // 부모 컴포넌트에 추천 완료 알림 (2단계 위치 이동)
-      onRecommended?.(true);
+      // 타이머 정리 (혹시 아직 실행 안 됐으면 취소)
+      clearTimeout(timer1);
 
-      // 초기 메시지(welcome)와 로딩 메시지 모두 제거 후 추천 결과만 표시
-      setMessages([
-        {
-          id: `result-${Date.now()}`,
-          type: 'bot',
-          content: (
-            <div className="w-full mx-auto space-y-6 overflow-visible">
-              {/* 추천 완료 메시지 */}
-              <div className="text-center mb-4">
-                <p className="text-lg font-semibold">추천이 완료되었습니다!</p>
-                <p className="text-sm mt-1">마음에 드는 영화를 선택해보세요</p>
-              </div>
+      // "딱 맞는 영화를 발견했습니다!" 메시지를 잠깐 보여주고 결과를 띄울지, 
+      // 아니면 바로 결과를 띄울지 선택 가능. 
+      // 여기서는 자연스러운 흐름을 위해 "발견했습니다!" 메시지로 잠시 변경 후 결과 표시
+      setMessages(prev => prev.map(msg =>
+        msg.id.startsWith('loading-')
+          ? { ...msg, content: '딱 맞는 영화를 발견했습니다!' }
+          : msg
+      ));
 
-              {/* 필터 요약 */}
-              <FilterSummary />
+      // 약간의 딜레이(0.8초) 후 최종 결과 표시 (발견했다는 메시지를 읽을 시간 주기)
+      setTimeout(() => {
+        // 부모 컴포넌트에 추천 완료 알림
+        onRecommended?.(true);
 
-              {/* 맞춤 추천 섹션 */}
-              <div className="flex flex-col items-center w-full">
-                <div className="w-full">
-                  <RecommendedMoviesSection />
+        // 초기 메시지(welcome)와 로딩 메시지 모두 제거 후 추천 결과만 표시
+        setMessages([
+          {
+            id: `result-${Date.now()}`,
+            type: 'bot',
+            content: (
+              <div className="w-full mx-auto space-y-6 overflow-visible">
+                {/* 추천 완료 메시지 */}
+                <div className="text-center mb-4">
+                  <p className="text-lg font-semibold">추천이 완료되었습니다!</p>
+                  <p className="text-sm mt-1">마음에 드는 영화를 선택해보세요</p>
+                </div>
+
+                {/* 필터 요약 */}
+                <FilterSummary />
+
+                {/* 맞춤 추천 섹션 */}
+                <div className="flex flex-col items-center w-full">
+                  <div className="w-full">
+                    <RecommendedMoviesSection />
+                  </div>
+                </div>
+
+                {/* 인기 영화 섹션 */}
+                <div className="flex flex-col items-center w-full">
+                  <div className="w-full">
+                    <PopularMoviesSection />
+                  </div>
+                </div>
+
+                {/* 다시 추천받기 버튼 */}
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => handleResetFilters()}
+                    aria-label="필터 초기화 및 다시 추천받기"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  >
+                    처음으로
+                  </button>
                 </div>
               </div>
+            )
+          }
+        ]);
+      }, 800);
 
-              {/* 인기 영화 섹션 */}
-              <div className="flex flex-col items-center w-full">
-                <div className="w-full">
-                  <PopularMoviesSection />
-                </div>
-              </div>
-
-              {/* 다시 추천받기 버튼 */}
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={() => handleResetFilters()}
-                  aria-label="필터 초기화 및 다시 추천받기"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
-                >
-                  처음으로
-                </button>
-              </div>
-            </div>
-          )
-        }
-      ]);
-    }).catch((error) => {
-      console.error('❌ 추천 실패:', error);
+    }).catch((_error) => {
+      clearTimeout(timer1);
       setMessages(prev => [
         ...prev.filter(m => !m.id.startsWith('loading-')),
         {

@@ -40,10 +40,8 @@ export default function OnboardingReminderModal({ visible, onClose }: Props) {
                         img.src = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
                     }
                 });
-
-                console.log("리마인더 시점: 영화 데이터 및 이미지 프리페칭 완료");
             } catch (err) {
-                console.warn("⚠️ 리마인더 프리페칭 실패:", err);
+                // 실패 시 경고만 표시하고 모달 기능에는 영향 없음
             }
         };
 
@@ -58,10 +56,8 @@ export default function OnboardingReminderModal({ visible, onClose }: Props) {
         // sessionStorage에 플래그 설정
         sessionStorage.setItem('onboarding_from_reminder', 'true');
         sessionStorage.setItem('onboarding_in_progress', 'true');
-        console.log("🎬 온보딩 플로우 시작 (리마인더)");
 
         // 항상 장르 스와이프 페이지로 이동
-        console.log("재조사 시작 - 장르 선호도 페이지로 이동");
         navigate("/onboarding/movies");
     };
 
