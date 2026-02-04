@@ -83,7 +83,6 @@ const saveLastRecommendations = (trackA: Movie[], trackB: Movie[], filters: Filt
     };
     const key = `last_recommendations_${userId}`;
     localStorage.setItem(key, JSON.stringify(data));
-    console.log(`💾 [Storage] [User ${userId}] 추천 결과 저장 완료 (Key: ${key}, Session: ${sessionId}, Data Diet Applied)`);
   } catch (e) {
     console.error('❌ [Storage] localStorage 저장 실패:', e);
   }
@@ -170,7 +169,6 @@ export const useMovieStore = create<MovieState>((set, get) => ({
       if (userId) {
         const clickLogsKey = `movie_click_logs_${userId}`;
         localStorage.removeItem(clickLogsKey);
-        console.log(`🗑️ [Storage] 기존 클릭 로그 초기화 완료 (새 세션: ${sessionId})`);
       }
 
       set({
@@ -195,7 +193,6 @@ export const useMovieStore = create<MovieState>((set, get) => ({
       // 상세 정보 프리페치 (성인 여부 업데이트 등)
       get().prefetchMovieDetails([...trackAMovies, ...trackBMovies]);
 
-      console.log("✅ [Store] 추천 로드 및 저장 프로세스 완료");
     } catch (err: any) {
       console.error("❌ 추천 로드 실패:", err);
       set({
@@ -212,8 +209,6 @@ export const useMovieStore = create<MovieState>((set, get) => ({
     const movieKey = isTrackA ? 'trackAMovies' : 'trackBMovies';
     const runtimeKey = isTrackA ? 'trackATotalRuntime' : 'trackBTotalRuntime';
     const legacyKey = isTrackA ? 'recommendedMovies' : 'popularMovies';
-
-    console.log(`🔄 [Track ${trackType.toUpperCase()}] 재추천 시작 (ID: ${movieId})`);
 
     const currentMovies = [...state[movieKey]];
     const movieIndex = currentMovies.findIndex(m => m.id === movieId);
@@ -271,9 +266,7 @@ export const useMovieStore = create<MovieState>((set, get) => ({
         // 프리페칭 실행 (성인 정보 등 수집)
         get().prefetchMovieDetails([newMovie]);
 
-        console.log(`✅ [Track ${trackType.toUpperCase()}] 재추천 성공: ${newMovie.title}`);
       } else {
-        console.warn("⚠️ 재추천 결과가 없습니다.");
         // 기존 영화로 복구
         set({
           [movieKey]: currentMovies,
@@ -332,8 +325,6 @@ export const useMovieStore = create<MovieState>((set, get) => ({
 
   prefetchMovieDetails: async (movies) => {
     if (!movies.length) return;
-
-    console.log(`📡 [Pre-fetch] ${movies.length}개의 영화 상세 정보 로드 시작...`);
 
     movies.forEach(async (movie) => {
       try {

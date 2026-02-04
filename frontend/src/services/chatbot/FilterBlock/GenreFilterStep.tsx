@@ -15,13 +15,7 @@ export default function GenreFilterStep({ onBack, onRecommend }: GenreFilterStep
     const { filters, toggleGenre, toggleExcludeAdult } = useMovieStore();
     const hasGenresSelected = filters.genres.length > 0;
 
-    console.log('=== GenreFilterStep 렌더링 ===');
-    console.log('filters:', filters);
-    console.log('hasGenresSelected:', hasGenresSelected);
-
     const handleRecommend = () => {
-        console.log('영화 추천받기 버튼 클릭!');
-        console.log('선택된 장르:', filters.genres);
         onRecommend();
     };
 

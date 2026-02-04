@@ -111,7 +111,6 @@ export const postRecommendationsV2 = async (filters: {
   genres: string[]; // 장르 이름 배열
   exclude_adult?: boolean;
 }): Promise<RecommendResponseV2> => {
-  console.log("🚀 [V4 API] postRecommendationsV2 호출!", filters);
 
   try {
     // 시간 변환: "02:30" -> 150분
@@ -127,15 +126,8 @@ export const postRecommendationsV2 = async (filters: {
       }
     );
 
-    console.log("[V2 API] 추천 결과:", {
-      track_a: response.data.track_a.movies.length + "편",
-      track_b: response.data.track_b.movies.length + "편",
-      elapsed_time: response.data.elapsed_time,
-    });
-
     return response.data;
   } catch (error: any) {
-    console.error("V2 영화 추천 API 호출 중 오류:", error);
     throw error;
   }
 };
@@ -147,14 +139,13 @@ export const postReRecommendSingle = async (request: ReRecommendRequest): Promis
     const response = await axiosInstance.post<ReRecommendResponse>("/api/v2/recommend/single", request);
 
     if (response.data.success && response.data.movie) {
-      console.log('[V2 API] 재추천 성공:', response.data.movie.title);
+      // console.log('[V2 API] 재추천 성공:', response.data.movie.title); // Removed
     } else {
-      console.log('[V2 API] 재추천 결과 없음:', response.data.message);
+      // console.log('[V2 API] 재추천 결과 없음:', response.data.message); // Removed
     }
 
     return response.data;
   } catch (error: any) {
-    console.error("V2 재추천 API 호출 중 오류:", error);
     throw error;
   }
 };
