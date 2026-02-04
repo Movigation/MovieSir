@@ -61,11 +61,6 @@ export default function MovieDetailModal() {
         loadDetail();
     }, [detailMovieId]);
 
-    // 스테이터스 토글 핸들러 (준비 중)
-    // const handleToggleLike = () => console.log('Like toggle');
-    // const handleToggleBookmark = () => console.log('Bookmark toggle');
-    // const handleToggleWatched = () => console.log('Watched toggle');
-
     return (
         <Modal isOpen={!!detailMovieId} onClose={handleClose}>
             {/* 1. 로딩 상태 */}

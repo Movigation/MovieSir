@@ -48,7 +48,6 @@ export default function OnboardingCompletePage() {
                     userData.onboarding_completed = response.data.onboarding_completed;
                     const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
                     storage.setItem("user", JSON.stringify(userData));
-                    console.log("✅ 로컬 온보딩 완료 상태 저장 완료:", userData);
 
                     // AuthContext 등에 동기화 알림
                     window.dispatchEvent(new Event('storage'));
@@ -60,7 +59,6 @@ export default function OnboardingCompletePage() {
             // 3. sessionStorage 플래그 정리
             sessionStorage.removeItem('onboarding_from_reminder');
             sessionStorage.removeItem('onboarding_in_progress');
-            console.log('🎬 온보딩 플로우 완료');
 
             // 4. 온보딩 스토어 초기화
             reset();
@@ -69,7 +67,7 @@ export default function OnboardingCompletePage() {
             navigate("/", { replace: true });
 
         } catch (err: any) {
-            console.error("온보딩 완료 처리 중 오류:", err);
+            // console.error("온보딩 완료 처리 중 오류:", err);
             setError(err.response?.data?.message || "온보딩 완료 중 오류가 발생했습니다");
         } finally {
             setIsSubmitting(false);
@@ -194,16 +192,14 @@ export default function OnboardingCompletePage() {
                                             storage.setItem("user", JSON.stringify(userData));
                                             window.dispatchEvent(new Event('storage'));
                                         } catch (e) {
-                                            console.error("user 데이터 업데이트 실패:", e);
+                                            // console.error("user 데이터 업데이트 실패:", e);
                                         }
                                     }
-
-                                    console.log("✅ 온보딩 초기화 완료. OTT 선택으로 이동.");
 
                                     // 3. OTT 선택 페이지로 리셋 플래그와 함께 이동
                                     navigate("/onboarding/ott", { state: { resetOnEntry: true } });
                                 } catch (e) {
-                                    console.error("초기화 실패:", e);
+                                    // console.error("초기화 실패:", e);
                                     navigate("/onboarding/ott", { state: { resetOnEntry: true } });
                                 }
                             }}

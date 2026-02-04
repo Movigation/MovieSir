@@ -18,7 +18,6 @@ export default function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordM
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // TODO: 실제 API 연동
-        console.log('Reset password for:', email);
         setIsSubmitted(true);
     };
 

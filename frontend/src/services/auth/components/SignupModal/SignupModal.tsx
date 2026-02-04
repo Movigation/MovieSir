@@ -69,10 +69,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
 
     // ✅ 회원가입 완료 감지: codeVerified가 true가 되면 자동으로 온보딩 페이지로 이동
     useEffect(() => {
-        console.log('🔍 [SignupModal] useEffect 실행 - codeVerified:', codeVerified, 'isOpen:', isOpen);
-
         if (codeVerified && isOpen) {
-            console.log('✅ [SignupModal] 회원가입 완료! 온보딩 페이지로 자동 이동');
             handleClose();
             // OTT 선택부터 시작
             navigate("/onboarding/ott");
@@ -81,14 +78,10 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
 
     // 인증 확인 핸들러
     const handleVerifyCodeWrapper = async () => {
-        console.log('🔍 [SignupModal] handleVerifyCodeWrapper 시작');
-
         // handleVerifyCode는 내부적으로 signup/confirm API를 호출하여 
         // 인증 코드 확인 + 회원가입 완료 + 토큰 저장을 수행
         // 성공 시 codeVerified가 true로 설정되고, useEffect가 자동으로 온보딩 페이지로 이동
         await handleVerifyCode();
-
-        console.log('🔍 [SignupModal] handleVerifyCodeWrapper 완료 - codeVerified:', codeVerified);
     };
 
     // 모달 열림 시 배경 스크롤 방지
@@ -169,58 +162,6 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 이메일 *
                             </label>
-
-                            {/* ============================================ */}
-                            {/* 방식 1: 단순 타이핑 방식 (이전 방식) */}
-                            {/* 사용하려면 아래 주석을 해제하고, "방식 2" 부분을 주석 처리하세요 */}
-                            {/* ============================================ */}
-                            {/* 
-                            <div className="relative">
-                                <input
-                                    value={email}
-                                    onChange={(e) => handleEmailIdChange(e.target.value.split('@')[0])}
-                                    onBlur={(e) => {
-                                        const fullEmail = e.target.value;
-                                        if (fullEmail.includes('@')) {
-                                            const [id, domain] = fullEmail.split('@');
-                                            handleEmailIdChange(id);
-                                            if (domain) {
-                                                const commonDomains = ['gmail.com', 'naver.com', 'daum.net', 'kakao.com', 'hanmail.net', 'nate.com', 'hotmail.com', 'outlook.com', 'yahoo.com'];
-                                                if (commonDomains.includes(domain)) {
-                                                    handleEmailDomainChange(domain);
-                                                } else {
-                                                    handleEmailDomainChange('direct');
-                                                    handleCustomDomainChange(domain);
-                                                }
-                                            }
-                                        }
-                                    }}
-                                    placeholder="example@gmail.com"
-                                    className={`w-full px-4 py-3 pr-12 rounded-lg border ${
-                                        emailStatus === 'invalid' || emailStatus === 'duplicate'
-                                            ? "border-red-500"
-                                            : emailStatus === 'checking'
-                                                ? "border-blue-400"
-                                                : emailStatus === 'valid'
-                                                    ? "border-green-500"
-                                                    : "border-gray-300 dark:border-gray-600"
-                                    } bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors`}
-                                    disabled={codeVerified}
-                                />
-                                
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    {emailStatus === 'checking' && (
-                                        <Loader2 className="animate-spin text-blue-500" size={20} />
-                                    )}
-                                    {emailStatus === 'valid' && (
-                                        <CheckCircle2 className="text-green-500" size={20} />
-                                    )}
-                                    {(emailStatus === 'invalid' || emailStatus === 'duplicate') && (
-                                        <XCircle className="text-red-500" size={20} />
-                                    )}
-                                </div>
-                            </div>
-                            */}
 
                             {/* ============================================ */}
                             {/* 방식 2: 아이디 + 도메인 분리 방식 (현재 방식) */}

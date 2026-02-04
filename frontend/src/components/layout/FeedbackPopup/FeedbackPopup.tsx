@@ -136,19 +136,14 @@ export default function FeedbackPopup() {
 
                     // 3. 마지막으로 응답한 세션 ID 저장 (추천 로직 최적화용)
                     localStorage.setItem(`last_responded_session_time_${userId}`, targetMovie.sessionId.toString());
-
-                    console.log(`🎬 [User ${userId}] 피드백 전송 완료: [${targetMovie.title}] - ${type}`);
                 } catch (error) {
                     console.error("피드백 서버 전송 실패:", error);
                 }
             } else {
                 // 명시적 건너뛰기('X' 클릭): 해당 세션 ID를 '스킵'으로 기록하여
                 // 다음 추천 목록(새 세션)이 생기기 전까지 더 이상 묻지 않음
-                console.log(`⏳ 피드백 건너뛰기: [${targetMovie.title}] 세션(${targetMovie.sessionId}) 전체 스킵`);
                 localStorage.setItem(`last_skipped_session_id_${userId}`, targetMovie.sessionId.toString());
             }
-        } else {
-            console.log(`🧪 테스트 모드 피드백: ${type}`);
         }
 
         setIsVisible(false); // 팝업 닫기 애니메이션 시작

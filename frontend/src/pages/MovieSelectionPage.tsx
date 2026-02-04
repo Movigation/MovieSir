@@ -33,7 +33,6 @@ export default function MovieSelectionPage() {
         if (storedMovies && storedMovies.length > 0) {
             setMovies(storedMovies);
             setIsLoading(false);
-            console.log("✅ localStorage에서 영화 로딩:", storedMovies);
             return;
         }
 
@@ -49,10 +48,7 @@ export default function MovieSelectionPage() {
                 const moviesData = response.data.movies || [];
                 setMovies(moviesData);
                 setGlobalMovies(moviesData); // 스토어에 저장
-                console.log("✅ API에서 영화 로딩 성공:", moviesData);
             } catch (err: any) {
-                console.error("⚠️ 영화 로딩 에러 (백엔드 연결 실패, 임시 데이터 사용):", err);
-
                 // 🔧 임시 데이터: 백엔드 연결 실패 시 사용
                 const mockMovies: OnboardingMovie[] = [
                     { movie_id: 157336, mood_tag: "액션", title: "인터스텔라", poster_path: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
@@ -104,13 +100,9 @@ export default function MovieSelectionPage() {
                 movie_ids: movie_ids
             });
 
-            console.log("✅ 취향 영화 저장 성공:", movie_ids);
-
             // 성공 시 다음 페이지로 이동
             navigate("/onboarding/complete");
         } catch (err: any) {
-            console.error("❌ 취향 영화 저장 실패:", err);
-
             // 에러 메시지 표시
             const errorMessage = err.response?.data?.detail || "영화 저장에 실패했습니다. 다시 시도해주세요.";
             setError(errorMessage);
@@ -137,13 +129,10 @@ export default function MovieSelectionPage() {
 
             // 2. POST /onboarding/skip API 호출
             await skipOnboarding();
-            console.log("✅ 온보딩 스킵 완료");
 
             // 3. 완료 페이지로 이동
             navigate("/onboarding/complete");
         } catch (err: any) {
-            console.error("❌ 온보딩 스킵 실패:", err);
-
             // 스킵이므로 실패해도 완료 페이지로 이동
             navigate("/onboarding/complete");
         } finally {
