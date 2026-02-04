@@ -4,7 +4,7 @@
 //   알림 모달: <ConfirmModal isOpen={show} title="완료" message="저장되었습니다." onConfirm={fn} type="alert" />
 
 import { createPortal } from 'react-dom';
-import { LogOut, CheckCircle, AlertTriangle, Info, Trash2 } from 'lucide-react';
+import { LogOut, CheckCircle, Info, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTheme } from '@/app/providers/ThemeContext';
 
