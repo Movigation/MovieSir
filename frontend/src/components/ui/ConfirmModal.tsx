@@ -4,6 +4,7 @@
 //   알림 모달: <ConfirmModal isOpen={show} title="완료" message="저장되었습니다." onConfirm={fn} type="alert" />
 
 import { createPortal } from 'react-dom';
+import { useEffect, useCallback } from 'react';
 import { LogOut, CheckCircle, Info, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTheme } from '@/app/providers/ThemeContext';
@@ -63,6 +64,27 @@ export default function ConfirmModal({
     const { isDark } = useTheme();
     const config = typeConfig[type];
     const Icon = CustomIcon || config.icon;
+
+    // ESC 키로 모달 닫기
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            // alert 타입은 onConfirm, 그 외는 onCancel (없으면 onConfirm)
+            if (type === 'alert' || !onCancel) {
+                onConfirm();
+            } else {
+                onCancel();
+            }
+        }
+    }, [type, onCancel, onConfirm]);
+
+    useEffect(() => {
+        if (isOpen) {
+            document.addEventListener('keydown', handleKeyDown);
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+        }
+    }, [isOpen, handleKeyDown]);
 
     // 기본 확인 텍스트 설정
     const defaultConfirmText = type === 'alert' ? '확인' : type === 'danger' ? '삭제' : '확인';
