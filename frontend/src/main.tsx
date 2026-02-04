@@ -13,6 +13,14 @@ createRoot(document.getElementById('root')!).render(
 // PWA Service Worker 등록
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js');
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then(() => {
+        // Service Worker registered successfully, but no need to use the 'registration' object
+        // console.log('Service Worker registered:', registration.scope); // Removed to fix unused variable
+      })
+      .catch(() => {
+        // console.log('Service Worker registration failed:', error); // Removed
+      });
   });
 }
