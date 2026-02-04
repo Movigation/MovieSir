@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { LogOut } from 'lucide-react';
 import CloseButton from '@/components/ui/CloseButton';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { MyPageModalProps, MyPageView } from '@/services/mypage/MyPageModal/myPage.types';
 import UserProfile from '@/services/mypage/MyPageModal/components/UserProfile';
 import MenuList from '@/services/mypage/MyPageModal/components/MenuList';
@@ -13,6 +14,7 @@ import OTTSelection from '@/services/mypage/MyPageModal/components/OTTSelection'
 
 export default function MyPageModal({ isOpen, onClose, userName, fullScreen = false }: MyPageModalProps & { fullScreen?: boolean }) {
     const [currentView, setCurrentView] = useState<MyPageView>('main');
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const { logout } = useAuth();
 
     // ESC 키로 모달 닫기 및 스크롤 잠금
@@ -54,12 +56,14 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
     };
 
     // 로그아웃 핸들러
-    const handleLogout = async () => {
-        if (window.confirm('로그아웃 하시겠습니까?')) {
-            console.log('🚪 마이페이지: 로그아웃 실행');
-            onClose(); // 우선 모달 닫기
-            await logout(); // 실제 로그아웃 처리 (전역 상태 및 스토리지 정리)
-        }
+    const handleLogoutClick = () => {
+        setShowLogoutConfirm(true);
+    };
+
+    const handleLogoutConfirm = async () => {
+        setShowLogoutConfirm(false);
+        onClose(); // 우선 모달 닫기
+        await logout(); // 실제 로그아웃 처리 (전역 상태 및 스토리지 정리)
     };
 
     if (!isOpen) return null;
@@ -100,7 +104,7 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                             {/* 로그아웃 버튼 (푸터) */}
                             <div className="p-4 border-t border-gray-100 dark:border-gray-700">
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={handleLogoutClick}
                                     className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
                                 >
                                     <LogOut size={20} />
@@ -154,7 +158,7 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                                 {/* 로그아웃 버튼 (푸터) */}
                                 <div className="p-4 border-t border-gray-100 dark:border-gray-700">
                                     <button
-                                        onClick={handleLogout}
+                                        onClick={handleLogoutClick}
                                         className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
                                     >
                                         <LogOut size={20} />
@@ -172,6 +176,16 @@ export default function MyPageModal({ isOpen, onClose, userName, fullScreen = fa
                     </div>
                 </div>
             )}
+
+            {/* 로그아웃 확인 모달 */}
+            <ConfirmModal
+                isOpen={showLogoutConfirm}
+                title="로그아웃"
+                message="정말 로그아웃 하시겠습니까?"
+                confirmText="로그아웃"
+                onConfirm={handleLogoutConfirm}
+                onCancel={() => setShowLogoutConfirm(false)}
+            />
         </>,
         document.body
     );

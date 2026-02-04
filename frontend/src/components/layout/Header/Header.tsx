@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { HelpCircle, User, LogOut, Moon, Sun, Home } from 'lucide-react';
 // import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoginModal from "@/services/auth/components/LoginModal/LoginModal";
 import SignupModal from "@/services/auth/components/SignupModal/SignupModal";
 import ForgotPasswordModal from "@/services/auth/components/ForgotPasswordModal/ForgotPasswordModal";
@@ -20,6 +21,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
   const [isLoginOpen, setLoginOpen] = useState(false);
   const [isSignupOpen, setSignupOpen] = useState(false);
   const [isForgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
   // AuthContext에서 인증 상태 가져오기
@@ -37,11 +39,14 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
   }, [searchParams, setSearchParams]);
 
   // 로그아웃 핸들러
-  const handleLogout = () => {
-    if (window.confirm('로그아웃 하시겠습니까?')) {
-      logout();
-      resetChatbot();
-    }
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(false);
+    logout();
+    resetChatbot();
   };
 
   // 모바일 하단 헤더에서 스크롤 방지 (모바일에서만)
@@ -150,7 +155,7 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
 
             {/* 로그아웃 (데스크톱에서 보이고, 모바일에서 공간 유지용 투명 박스) */}
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="text-l sm:text-l font-medium hover:scale-105 text-gray-900 dark:text-white transition-colors transition-transform flex items-center gap-1 order-4 sm:order-none invisible sm:visible"
             >
               <LogOut size={20} className="sm:hidden" />
@@ -243,6 +248,16 @@ export default function Header({ isDark, handleDarkToggle, resetChatbot }: Heade
       <ForgotPasswordModal
         isOpen={isForgotPasswordOpen}
         onClose={() => setForgotPasswordOpen(false)}
+      />
+
+      {/* 로그아웃 확인 모달 */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="로그아웃"
+        message="정말 로그아웃 하시겠습니까?"
+        confirmText="로그아웃"
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setShowLogoutConfirm(false)}
       />
     </header>
   );
