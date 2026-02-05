@@ -19,6 +19,7 @@ export function useSignupForm() {
     // 공통 상태
     const [generalError, setGeneralError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [sentEmail, setSentEmail] = useState(''); // 인증번호가 발송된 이메일 기입
 
     // 회원가입 가능 여부
     const canSignup =
@@ -40,6 +41,25 @@ export function useSignupForm() {
     const handleEmailChange = useCallback((value: string) => {
         emailValidation.handleEmailChange(value);
         codeValidation.handleEmailChange();
+        setSentEmail('');
+    }, [emailValidation, codeValidation]);
+
+    const handleEmailIdChange = useCallback((value: string) => {
+        emailValidation.handleEmailIdChange(value);
+        codeValidation.handleEmailChange();
+        setSentEmail('');
+    }, [emailValidation, codeValidation]);
+
+    const handleEmailDomainChange = useCallback((value: string) => {
+        emailValidation.handleEmailDomainChange(value);
+        codeValidation.handleEmailChange();
+        setSentEmail('');
+    }, [emailValidation, codeValidation]);
+
+    const handleCustomDomainChange = useCallback((value: string) => {
+        emailValidation.handleCustomDomainChange(value);
+        codeValidation.handleEmailChange();
+        setSentEmail('');
     }, [emailValidation, codeValidation]);
 
     // 인증 코드 전송 (중복 체크 포함)
@@ -80,6 +100,7 @@ export function useSignupForm() {
             // useVerificationCode.sendCode를 직접 쓰지 않는 경우를 위해.
             codeValidation.setCodeSent(true);
             codeValidation.setTimeLeft(600);
+            setSentEmail(emailValidation.email); // 발송 시점의 이메일 기록
 
         } catch (err: any) {
             // 에러 발생 시 입력창 다시 숨김
@@ -143,6 +164,13 @@ export function useSignupForm() {
     const handleSignup = useCallback(async () => {
         if (!canSignup) return;
 
+        // 🛡️ 보안 강화: 현재 이메일과 인증번호가 발송된 이메일이 일치하는지 재검증
+        if (emailValidation.email !== sentEmail) {
+            setGeneralError('이메일 정보가 변경되었습니다. 다시 인증해주세요.');
+            codeValidation.setCodeVerified(false);
+            return { success: false };
+        }
+
         try {
             setIsSubmitting(true);
             setGeneralError('');
@@ -197,9 +225,9 @@ export function useSignupForm() {
         emailError: emailValidation.emailError,
         isEmailValid: emailValidation.isEmailValid,
         handleEmailChange,
-        handleEmailIdChange: emailValidation.handleEmailIdChange,
-        handleEmailDomainChange: emailValidation.handleEmailDomainChange,
-        handleCustomDomainChange: emailValidation.handleCustomDomainChange,
+        handleEmailIdChange,
+        handleEmailDomainChange,
+        handleCustomDomainChange,
 
         // 닉네임
         nickname: nicknameValidation.nickname,
